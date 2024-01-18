@@ -1,6 +1,6 @@
 // Game record
 let totalCharacters = 0;
-let characters = [];
+let allCharacters = [];
 let players = [];
 
 
@@ -57,10 +57,6 @@ class Character {
     }
 }
 
-class Player {
-    constructor(name, health, strength, attack, speed, superPower) {}
-}
-  
 
 // Function to create a team
 function createTeam(character1, character2, character3) {
@@ -70,6 +66,10 @@ function createTeam(character1, character2, character3) {
     character1.setId(myCharactersId + 1);
     character2.setId(myCharactersId + 2);
     character3.setId(myCharactersId + 3);
+
+    allCharacters.push(character1);
+    allCharacters.push(character2);
+    allCharacters.push(character3);
 
     character1.displayInfo();
     character2.displayInfo();
