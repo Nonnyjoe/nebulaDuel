@@ -2,10 +2,10 @@ totalPlayers = 0;
 allPlayers = [];
 
 class Player {
-    constructor(Monika, walletAddress, avararURI) {
+    constructor(Monika, walletAddress, avatarURI) {
         this.Monika = Monika;
         this.walletAddress = walletAddress;
-        this.avararURI = avararURI;
+        this.avatarURI = avatarURI;
         this.characters = [];
         this.id = 0;
     }
@@ -14,7 +14,7 @@ class Player {
         console.log(`
             Monika: ${this.name}
             walletAddress: ${this.walletAddress}
-            avararURI: ${this.avararURI}
+            avatarURI: ${this.avatarURI}
             characters: ${this.characters}
             id: ${this.id}
         `);
@@ -26,10 +26,10 @@ class Player {
 }
   
 // Function to create a player
-function createPlayer(Monika, walletAddress, avararURI) {
+function createPlayer(Monika, walletAddress, avatarURI) {
     totalPlayers = totalPlayers + 1;
 
-    const newPlayer = new Player(Monika, walletAddress, avararURI);
+    const newPlayer = new Player(Monika, walletAddress, avatarURI);
 
     newPlayer.setId(totalPlayers);
 
