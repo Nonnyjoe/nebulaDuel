@@ -8,11 +8,12 @@ class Player {
         this.avatarURI = avatarURI;
         this.characters = [];
         this.id = 0;
-    }
+        this.point = 1000;   
+     }
 
     displayInfo() {
         console.log(`
-            Monika: ${this.name}
+            Monika: ${this.Monika}
             walletAddress: ${this.walletAddress}
             avatarURI: ${this.avatarURI}
             characters: ${this.characters}
