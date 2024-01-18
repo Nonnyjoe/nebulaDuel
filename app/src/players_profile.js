@@ -55,4 +55,4 @@ function createPlayer(Monika, walletAddress, avatarURI) {
 // Example: Create a new Player
 // createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
 
-export { allPlayers, createPlayer, Player, totalPlayers };
+module.exports = { allPlayers, createPlayer, Player, totalPlayers }; 
