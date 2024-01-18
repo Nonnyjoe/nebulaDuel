@@ -37,6 +37,11 @@ class Player {
   
 // Function to create a player
 function createPlayer(Monika, walletAddress, avatarURI) {
+    //check if player already exist
+    if(findPlayer(allPlayers, walletAddress)) {
+        throw new Error("Player already exist");
+    }
+
     totalPlayers = totalPlayers + 1;
 
     const newPlayer = new Player(Monika, walletAddress, avatarURI);

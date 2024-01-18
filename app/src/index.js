@@ -2,12 +2,9 @@
 // it will be used by any DApp, so we are already including it here
 const { ethers } = require("ethers");
 const { viem } = require("viem");
-<<<<<<< HEAD
-const { createPlayer } = require("./players_profile.js");
-=======
-import * as playersProfile from "./players_profile"
-import * as gameCharacters from "./game_characters";
->>>>>>> 25ff24631a99b9cb2f9fb628907bf26a04623c79
+const playersProfile = require("./players_profile");
+const gameCharacters = require("./game_characters");
+
 
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);
@@ -15,26 +12,6 @@ const DAPP_ADDRESS_REALY = "0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE";
 let DAPP_ADDRESS = "null";
 
 
-// let profile = {}
-
-  // function create_profile(useraddress, name) {
-  //   if (profile[useraddress] !== undefined) {
-  //     console.log("profile already exists");
-  //     return profile[useraddress];
-  //   }
-
-  //   profile[useraddress] = {
-  //     addresss: useraddress,
-  //     username: name,
-  //     rank: 0,
-  //     point: 1000,
-  //     characters: [],
-  //   }
-  // }
-
-  // function get_profile(useraddress) {
-  //   return profile[useraddress];
-  // }
 
 
 async function handle_advance(data) {
@@ -82,7 +59,6 @@ async function handle_advance(data) {
         console.log("created profile is:", createdProfile);
 
         const result = JSON.stringify({ createdProfile: createdProfile });
-        console.log("The result is :", result);
         // convert result to hex
         const hexresult = stringToHex(result);
         console.log("The result is :", hexresult);
