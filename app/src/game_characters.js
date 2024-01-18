@@ -63,6 +63,11 @@ function createTeam(playerAddress, character1, character2, character3) {
     // search array of players for specific player.
     let foundPlayer = findPlayer(allPlayers, playerAddress);
 
+    //Throw an error if player dows not exist.
+    if (!foundPlayer) {
+        throw new Error(`Player with wallet address ${playerAddress} not found.`);
+    }
+
     // NOTE: filter through all players then get the active player;
     if (foundPlayer.point < totalPrice) {
         throw new Error("Insufficient points to make the purchase");

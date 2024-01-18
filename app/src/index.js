@@ -175,7 +175,7 @@ async function handle_advance(data) {
       const result = JSON.stringify({
         error: String("method undefined:" + JSONpayload.method),
       });
-      const hexresult = viem.stringToHex(result);
+      const hexresult = stringToHex(result);
       await fetch(rollup_server + "/report", {
         method: "POST",
         headers: {
@@ -195,7 +195,7 @@ async function handle_advance(data) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        payload: viem.stringToHex(JSON.stringify({ error: e })),
+        payload: stringToHex(JSON.stringify({ error: e })),
       }),
     });
     return "reject";
@@ -223,7 +223,7 @@ function stringToHex(str) {
     const charCode = str.charCodeAt(i).toString(16);
     hex += charCode.padStart(2, '0'); // Ensure each byte is represented by two characters
   }
-  return hex;
+  return `0x${hex}`;
 }
 
 var handlers = {
