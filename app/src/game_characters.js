@@ -1,7 +1,7 @@
 // Game record
 let totalCharacters = 0;
 let allCharacters = [];
-let players = [];
+let players = []; //unused variable
 
 
 // Archer..
@@ -79,4 +79,4 @@ function createTeam(character1, character2, character3) {
   
   // Example: Create a team with Archer, Knight, and Medic
   createTeam(archer, knight, medic);
-  
+  export {allCharacters};

@@ -1,5 +1,6 @@
 totalPlayers = 0;
 allPlayers = [];
+let playerMap = {};
 
 class Player {
     constructor(Monika, walletAddress, avatarURI) {
@@ -31,6 +32,10 @@ function createPlayer(Monika, walletAddress, avatarURI) {
     totalPlayers = totalPlayers + 1;
 
     const newPlayer = new Player(Monika, walletAddress, avatarURI);
+    
+    for (const player of allPlayers) {
+        playerMap[player.id] = player;
+    }
 
     newPlayer.setId(totalPlayers);
 
@@ -40,6 +45,7 @@ function createPlayer(Monika, walletAddress, avatarURI) {
 
     console.log("New Player Created:");
 }
+export {playerMap};
 
 // Example: Create a new Player
 createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
