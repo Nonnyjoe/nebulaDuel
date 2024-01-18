@@ -8,7 +8,8 @@ class Player {
         this.avatarURI = avatarURI;
         this.characters = [];
         this.id = 0;
-        this.point = 1000;   
+        this.point = 1000; 
+        this.nebulaBalance = 0;  
      }
 
     displayInfo() {
@@ -23,6 +24,14 @@ class Player {
 
     setId(id){
         this.id = id;
+    }
+
+    modifyMonika( newMonika) {
+        this.Monika = newMonika;
+    }
+
+    modifyAvatar( newAvatar ) { 
+        this.avatarURI = newAvatar;
     }
 }
   
@@ -42,4 +51,6 @@ function createPlayer(Monika, walletAddress, avatarURI) {
 }
 
 // Example: Create a new Player
-createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
+// createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
+
+export { allPlayers, createPlayer, Player, totalPlayers };
