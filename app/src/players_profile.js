@@ -1,5 +1,5 @@
-totalPlayers = 0;
-allPlayers = [];
+let totalPlayers = 0;
+let allPlayers = [];
 
 class Player {
     constructor(Monika, walletAddress, avatarURI) {
@@ -48,6 +48,8 @@ function createPlayer(Monika, walletAddress, avatarURI) {
     newPlayer.displayInfo();
 
     console.log("New Player Created:");
+    
+    return newPlayer;
 }
 
 // Example: Create a new Player

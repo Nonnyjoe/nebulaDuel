@@ -1,6 +1,8 @@
 // XXX even though ethers is not used in the code below, it's very likely
 // it will be used by any DApp, so we are already including it here
 const { ethers } = require("ethers");
+const { viem } = require("viem");
+import {createPlayer} from "./players_profile"
 
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);
@@ -42,10 +44,13 @@ async function handle_advance(data) {
       DAPP_ADDRESS = payload;
     }
 
-    const payloadStr = viem.hexToString(payload);
+    console.log("payload:" + JSON.stringify(payload));
+    const payloadStr = ethers.toUtf8String(payload);
     JSONpayload = JSON.parse(payloadStr);
     console.log(`received request ${JSON.stringify(JSONpayload)}`);
+
   } catch (e) {
+
     console.log("error is:", e);
     console.log(`Adding notice with binary value "${payload}"`);
     await fetch(rollup_server + "/report", {
@@ -60,17 +65,19 @@ async function handle_advance(data) {
    
   let advance_req;
   try {
-     //{"method":"create_profile","name":"0xblackadam"}
+     //{"method":"create_profile","name":"0xreadyPlayer1","avatarURI":"X7sdsa8ycn"}
     if (JSONpayload.method === "create_profile") {
         console.log("creating profile....");
-        const createdProfile = create_profile(
+        const createdProfile = createPlayer(
+          JSONpayload.name,
           data.metadata.msg_sender,
-          JSONpayload.name
+          JSONpayload.avatarURI,
         );
         console.log("created profile is:", createdProfile);
 
         const result = JSON.stringify({ createdProfile: createdProfile });
-        const hexresult = viem.stringToHex(result);
+        // convert result to hex
+        const hexresult = stringToHex(result);
         console.log("The result is :", hexresult);
         advance_req = await fetch(rollup_server + "/notice", {
           method: "POST",
@@ -171,6 +178,16 @@ async function handle_advance(data) {
 async function handle_inspect(data) {
   console.log("Received inspect request data " + JSON.stringify(data));
   return "accept";
+}
+
+// convert string to hex
+function stringToHex(str) {
+  let hex = "";
+  for (let i = 0; i < str.length; i++) {
+    const charCode = str.charCodeAt(i).toString(16);
+    hex += charCode.padStart(2, '0'); // Ensure each byte is represented by two characters
+  }
+  return hex;
 }
 
 var handlers = {
