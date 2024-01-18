@@ -2,7 +2,12 @@
 // it will be used by any DApp, so we are already including it here
 const { ethers } = require("ethers");
 const { viem } = require("viem");
+<<<<<<< HEAD
 const { createPlayer } = require("./players_profile.js");
+=======
+import * as playersProfile from "./players_profile"
+import * as gameCharacters from "./game_characters";
+>>>>>>> 25ff24631a99b9cb2f9fb628907bf26a04623c79
 
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);
@@ -69,7 +74,7 @@ async function handle_advance(data) {
      //{"method":"create_profile","name":"0xreadyPlayer1","avatarURI":"X7sdsa8ycn"}
     if (JSONpayload.method === "create_profile") {
         console.log("creating profile....");
-        const createdProfile = createPlayer(
+        const createdProfile = playersProfile.createPlayer(
           JSONpayload.name,
           data.metadata.msg_sender,
           JSONpayload.avatarURI,
@@ -92,6 +97,41 @@ async function handle_advance(data) {
         //{"method":"get_profile"}
     } else if(JSONpayload.method === "get_profile"){
       console.log("getting  profile....");
+
+    }
+    //{"method":"create_team","char1": 1,"char2": 8, "char3": 5}
+    else if (JSONpayload.method === "create_team") {
+      console.log("creating team...");
+      let characters = gameCharacters.createTeam(
+        data.metadata.msg_sender,
+        gameCharacters.resolveCharacters(JSONpayload.char1),
+        gameCharacters.resolveCharacters(JSONpayload.char2),
+        gameCharacters.resolveCharacters(JSONpayload.char3)
+      ); 
+      const result1 = JSON.stringify({ purchasedCharacters: characters });
+      console.log("Purchased Characters are:" + characters);
+      const hexresult1 = stringToHex(result1);
+      // console.log("result1 in hex is:", hexresult1);
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult1 }),
+      });
+
+      let player = playersProfile.findPlayer(playersProfile.allPlayers, data.metadata.msg_sender);
+      const result2 = JSON.stringify({ updatedProfile: player});
+      console.log("players profile after purchase is:" + JSON.stringify(player));
+      const hexresult2 = stringToHex(result2);
+      // console.log("result2 in hex is:", hexresult2);
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult2 }),
+      });
 
     }
     
@@ -141,7 +181,7 @@ async function handle_advance(data) {
       const result = JSON.stringify({
         error: String("method undefined:" + JSONpayload.method),
       });
-      const hexresult = viem.stringToHex(result);
+      const hexresult = stringToHex(result);
       await fetch(rollup_server + "/report", {
         method: "POST",
         headers: {
@@ -161,7 +201,7 @@ async function handle_advance(data) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        payload: viem.stringToHex(JSON.stringify({ error: e })),
+        payload: stringToHex(JSON.stringify({ error: e })),
       }),
     });
     return "reject";
@@ -189,7 +229,7 @@ function stringToHex(str) {
     const charCode = str.charCodeAt(i).toString(16);
     hex += charCode.padStart(2, '0'); // Ensure each byte is represented by two characters
   }
-  return hex;
+  return `0x${hex}`;
 }
 
 var handlers = {

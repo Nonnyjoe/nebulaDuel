@@ -45,11 +45,15 @@ function createPlayer(Monika, walletAddress, avatarURI) {
 
     allPlayers.push(newPlayer);
 
-    newPlayer.displayInfo();
-
     console.log("New Player Created:");
     
     return newPlayer;
+}
+
+// Function to find a specific player from players list
+function findPlayer (allPlayers, playerAddress) {
+    const foundPlayer = allPlayers.find(player => player.walletAddress === playerAddress);
+    return foundPlayer;
 }
 
 // Example: Create a new Player
