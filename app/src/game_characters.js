@@ -133,6 +133,9 @@ function selectFightters( playerAddress, characterID1, characterID2, characterID
 // character exists and also belongs to the specified address, finally it returns the character ID.
 function confirmOwnership(userAddress, characterId) {
     let selectedCharacter = allCharacters.find(character => character.id === characterId);
+    if(!findPlayer(allPlayers, userAddress)) {
+        throw new Error("Player does not exist");
+    }
     if (!selectedCharacter) {
         throw new Error(`Invalid character Id: "${characterId}" received`);
     }

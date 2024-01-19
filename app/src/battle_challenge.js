@@ -72,7 +72,7 @@ function createDuel(creatorAddress, creatorWarriors) {
     allDuels.push(newDuel);
 
     console.log("New Duel created....");
-    return newDuel.duelId;
+    return newDuel;
 }
 
 // Function to create a new duel, it collects a duel Id, the participant address and an array of participant warriors
@@ -89,6 +89,9 @@ function joinDuel(duelID, participantAddress, participantWarriors) {
     }
     if (participantWarriors.length < 3) {
         throw new Error("Player must have at least 3 characters for battle");
+    }
+    if (selectedDuel.duelCreator == participantAddress) {
+        throw new Error("You cannot accept your own Duel!!");
     }
 
     let participantsWarriors = gameCharacters.selectFightters(participantAddress, participantWarriors[0], participantWarriors[1], participantWarriors[2]);
@@ -122,7 +125,7 @@ function revealBothWarriors(duelId) {
         Creator Warriors: ${selectedDuel.creatorWarriors}
         Participant Warriors: ${selectedDuel.participantWarriors}
     `);
-    return [selectedDuel.creatorWarriors, selectedDuel.participantWarriors];
+    return [JSON.stringify(selectedDuel.creatorWarriors), JSON.stringify(selectedDuel.participantWarriors)];
 }
 
 
@@ -217,8 +220,8 @@ function fight(duelID){
         selectedDuel.isCompleted = true;
 
         return selectedDuel.duelWinner;
-
-
     }
 
 }
+
+module.export = {allDuels, totalDuels, availableDuels, Duel, createDuel, joinDuel, displayDuelInfo, revealBothWarriors, };

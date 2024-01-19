@@ -4,6 +4,7 @@ const { ethers } = require("ethers");
 const { viem } = require("viem");
 const playersProfile = require("./players_profile");
 const gameCharacters = require("./game_characters");
+const battleChallenge = require("./battle_challenge");
 
 // const { allPlayers, createPlayer, Player, totalPlayers } = playersProfile;
 // const { allCharacters, totalCharacters, Character, createTeam, resolveCharacters} = gameCharacters;
@@ -112,7 +113,36 @@ async function handle_advance(data) {
         },
         body: JSON.stringify({ payload: hexresult2 }),
       });
+    }
 
+    //{"method": "create_duel", "selectedCharacters": "[1, 8, 5]"}
+    else if (JSONpayload.method === "create_duel") {
+      console.log("creating a duel.....");
+      let newDuel = battleChallenge.createDuel(data.metadata.msg_sender, JSONpayload.selectedCharacters);
+      console.log("New duel created, duel data is:" + JSON.stringify(newDuel));
+      const hexresult = stringToHex(newDuel);
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
+
+    //{"method": "join_duel", "dielId": 1 , "selectedCharacters": "[1, 8, 5]"}
+    else if (JSONpayload.method === "join_duel") {
+      console.log("Joining an existing duel....");
+      let bothWarriors = battleChallenge.joinDuel(JSONpayload.dielId, data.metadata.msg_sender, JSONpayload.selectedCharacters);
+      console.log("Join successfully, competing characters are: " + JSON.stringify(bothWarriors));
+      const hexresult = stringToHex(bothWarriors);
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
     }
     
     //{"method":"decompress","id":"000c7899-96bb-498b-8820-691d5e04ba33"}
