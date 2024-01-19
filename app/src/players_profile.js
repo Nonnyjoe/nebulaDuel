@@ -2,6 +2,12 @@ totalPlayers = 0;
 allPlayers = [];
 let playerMap = {};
 
+// Function to find a specific player from players list
+function findPlayer (allPlayers, playerAddress) {
+    const foundPlayer = allPlayers.find(player => player.walletAddress === playerAddress);
+    return foundPlayer;
+}
+
 class Player {
     constructor(Monika, walletAddress, avatarURI) {
         this.Monika = Monika;
@@ -56,11 +62,13 @@ function createPlayer(Monika, walletAddress, avatarURI) {
 }
 export {playerMap};
 
-// Function to find a specific player from players list
-function findPlayer (allPlayers, playerAddress) {
-    const foundPlayer = allPlayers.find(player => player.walletAddress === playerAddress);
-    return foundPlayer;
+// View profile
+function getProfile(userAddress) {
+    let playersProfile = findPlayer(allPlayers, userAddress);
+    return playersProfile;
 }
+
+
 
 // Example: Create a new Player
 // createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
