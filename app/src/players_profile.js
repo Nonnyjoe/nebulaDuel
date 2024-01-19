@@ -72,4 +72,4 @@ function getProfile(userAddress) {
 // Example: Create a new Player
 // createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
 
-module.exports = { allPlayers, createPlayer, Player, totalPlayers , findPlayer}; 
+module.exports = { allPlayers, createPlayer, Player, totalPlayers , findPlayer, getProfile}; 

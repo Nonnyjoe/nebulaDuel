@@ -95,5 +95,104 @@ function joinDuel(duelID, participantAddress, participantWarriors) {
     selectedDuel.joinDuel(participantAddress, participantsWarriors);
 
     console.log("Duel joined....");
+    selectedDuel.isActive = true;
     return selectedDuel.duelId;
+}
+
+
+function setStrategy(duelID, playerAddress, strategy) {
+    let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
+    if (!selectedDuel) {
+        throw new Error(`Invalid duel Id: "${duelID}" received`);
+    }
+    if (!selectedDuel.isActive) {
+        throw new Error("Duel not active");
+    }
+    if (selectedDuel.isCompleted) {
+        throw new Error("Duel already completed");
+    }
+    if (selectedDuel.duelCreator === playerAddress) {
+        selectedDuel.creatorStrategy = strategy;
+    } else if (selectedDuel.duelParticipant === playerAddress) {
+        selectedDuel.participantStrategy = strategy;
+    } else {
+        throw new Error("Player not part of duel");
+    }
+
+    console.log("Strategy set....");
+    return selectedDuel.duelId;
+}
+
+function getDuelInfo(duelID) {
+    let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
+    if (!selectedDuel) {
+        throw new Error(`Invalid duel Id: "${duelID}" received`);
+    }
+
+    return selectedDuel;
+}
+
+function fight(duelID){
+    let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
+    if (!selectedDuel) {
+        throw new Error(`Invalid duel Id: "${duelID}" received`);
+    }
+    if (!selectedDuel.isActive) {
+        throw new Error("Duel not active");
+    }
+    if (selectedDuel.isCompleted) {
+        throw new Error("Duel already completed");
+    }
+    if (selectedDuel.creatorStrategy === "" || selectedDuel.participantStrategy === "") {
+        throw new Error("Strategy not set");
+    }
+
+    let creatorStrategy = selectedDuel.creatorStrategy;
+    let participantStrategy = selectedDuel.participantStrategy;
+
+    let creatorWarriors = selectedDuel.creatorWarriors;
+    let participantWarriors = selectedDuel.participantWarriors;
+
+    let creatorScore = 0;
+    let participantScore = 0;
+
+    for (let i = 0; i < 3; i++) {
+        let creatorWarrior = gameCharacters.findCharacter(creatorWarriors[i]);
+        let participantWarrior = gameCharacters.findCharacter(participantWarriors[i]);
+        let creatorWarriorPower = creatorWarrior.power;
+        let participantWarriorPower = participantWarrior.power;
+
+        if (creatorStrategy[i] === "A" && participantStrategy[i] === "D") {
+            creatorScore += creatorWarriorPower;
+        } else if (creatorStrategy[i] === "D" && participantStrategy[i] === "A") {
+            participantScore += participantWarriorPower;
+        } else if (creatorStrategy[i] === "A" && participantStrategy[i] === "A") {
+            if (creatorWarriorPower > participantWarriorPower) {
+                creatorScore += creatorWarriorPower;
+            } else if (creatorWarriorPower < participantWarriorPower) {
+                participantScore += participantWarriorPower;
+            }
+        } else if (creatorStrategy[i] === "D" && participantStrategy[i] === "D") {
+            if (creatorWarriorPower > participantWarriorPower) {
+                participantScore += participantWarriorPower;
+            } else if (creatorWarriorPower < participantWarriorPower) {
+                creatorScore += creatorWarriorPower;
+            }
+        }
+    }
+
+    if (creatorScore > participantScore) {
+        selectedDuel.duelWinner = selectedDuel.duelCreator;
+        selectedDuel.duelLooser = selectedDuel.duelParticipant;
+
+        console.log("Duel Winner: " + selectedDuel.duelWinner);
+        console.log("Duel Looser: " + selectedDuel.duelLooser);
+
+        selectedDuel.isCompleted = true;
+
+        return selectedDuel.duelWinner;
+
+
+    }
+
 }

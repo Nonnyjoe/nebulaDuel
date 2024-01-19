@@ -172,7 +172,7 @@ function resolveCharacters( id ) {
     }
 }
 
-module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters};
+module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails};
 
   // ATTEMPT PURCHASE IN A TRY AND CATCH BLOCK
   //try {
