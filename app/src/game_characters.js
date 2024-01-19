@@ -16,6 +16,7 @@ class Character {
       this.totalWins = 0;
       this.totalLoss = 0;
       this.price = price;
+      this.owner = "";
     }
   
     displayInfo() {
@@ -30,11 +31,16 @@ class Character {
         totalWins: ${this.totalWins}
         totalLoss: ${this.totalLoss}
         price: ${this.price}
+        owner: ${this.owner}
       `);
     }
 
     setId(id) {
         this.id = id;
+    }
+
+    setOwnerAddress(ownerAddress) {
+        this.owner = ownerAddress;
     }
 }
 
@@ -85,6 +91,11 @@ function createTeam(playerAddress, character1, character2, character3) {
     character2.setId(myCharactersId + 2);
     character3.setId(myCharactersId + 3);
 
+    // set the owner of the character
+    character1.setOwner(playerAddress);
+    character2.setOwner(playerAddress);
+    character3.setOwner(playerAddress);
+
     // populate all characters array
     allCharacters.push(character1);
     allCharacters.push(character2);
@@ -98,12 +109,55 @@ function createTeam(playerAddress, character1, character2, character3) {
     console.log("Purchase successful!!!");
     return [JSON.stringify(character1), JSON.stringify(character2), JSON.stringify(character3)];
 }
-  
+
+// function to return an array containing the Id's of a users characters
+function getCharacters( playerAddress) {
+    let player = findPlayer(allPlayers, playerAddress);
+    return player.characters;
+}
+
+// function that collects a users address and the id of the 3 characters he selected
+// we run a check to confirm that the character exists and also belongs to the said address
+// then we return an array of the selected characters id
+function selectFightters( playerAddress, characterID1, characterID2, characterID3) {
+    let selectedChampions = [];
+    selectedChampions.push(confirmOwnership(playerAddress, characterID1));
+    selectedChampions.push(confirmOwnership(playerAddress, characterID2));
+    selectedChampions.push(confirmOwnership(playerAddress, characterID3));
+
+    console.log("Champions selected");
+    return selectedChampions;
+}
+
+// function that takes an address and a character id, then verifies that that 
+// character exists and also belongs to the specified address, finally it returns the character ID.
+function confirmOwnership(userAddress, characterId) {
+    let selectedCharacter = allCharacters.find(character => character.id === characterId);
+    if (!selectedCharacter) {
+        throw new Error(`Invalid character Id: "${characterId}" received`);
+    }
+    if (selectedCharacter.owner!== userAddress) {
+        throw new Error(`Player not owner of character Id: "${characterId}"`);
+    }
+
+    return characterId;
+}
+
+
+function getCharacterDetails( characterId ) {
+    let selectedCharacter = allCharacters.find(character => character.id === characterId);
+    if (!selectedCharacter) {
+        throw new Error(`Invalid character Id: "${characterId}" received`);
+    }
+    return selectedCharacter;
+}
+   
 // Example: Create a team with Archer, Knight, and Medic
 //   createTeam(archer, knight, medic);
   
 
-
+// function to help handle a users selection during character createion
+// such that the user passes in an ID the n using this function we get the character a user wishes to crate.
 function resolveCharacters( id ) {
     switch (id) {
         case 1 : return archer;

@@ -12,8 +12,6 @@ const DAPP_ADDRESS_REALY = "0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE";
 let DAPP_ADDRESS = "null";
 
 
-
-
 async function handle_advance(data) {
   console.log("Received advance request data " + JSON.stringify(data));
   const payload = data.payload;
@@ -70,11 +68,14 @@ async function handle_advance(data) {
           body: JSON.stringify({ payload: hexresult }),
         });
 
-        //{"method":"get_profile"}
+    //{"method":"get_profile", "user": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"}
+    // NOTE: replace the address in user above with your own address.
     } else if(JSONpayload.method === "get_profile"){
+      let userProfile = playersProfile.getProfile(ethers.getAddress(JSONpayload.user));
       console.log("getting  profile....");
-
+      console.log("player profile: " + JSON.stringify(userProfile)); 
     }
+
     //{"method":"create_team","char1": 1,"char2": 8, "char3": 5}
     else if (JSONpayload.method === "create_team") {
       console.log("creating team...");
@@ -125,7 +126,7 @@ async function handle_advance(data) {
         body: JSON.stringify({ payload: hash }),
       });
 
-      //{"method":"mint"}
+    //{"method":"mint"}
     // } else if (JSONpayload.method === "faucet") {
     //   console.log("sending erc20 tokens.....");
     //   if (DAPP_ADDRESS === "null") {
@@ -151,7 +152,8 @@ async function handle_advance(data) {
     //     body: JSON.stringify(voucher),
     //   });
     //   console.log("starting a voucher");
-      //{"method":"faucet","value":"150000"}
+    //{"method":"faucet","value":"150000"}
+
     } else {
       console.log("method undefined");
       const result = JSON.stringify({
