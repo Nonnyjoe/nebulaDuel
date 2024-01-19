@@ -1,6 +1,5 @@
 totalPlayers = 0;
 allPlayers = [];
-let playerMap = {};
 
 // Function to find a specific player from players list
 function findPlayer (allPlayers, playerAddress) {
@@ -47,10 +46,6 @@ function createPlayer(Monika, walletAddress, avatarURI) {
     totalPlayers = totalPlayers + 1;
 
     const newPlayer = new Player(Monika, walletAddress, avatarURI);
-    
-    for (const player of allPlayers) {
-        playerMap[player.id] = player;
-    }
 
     newPlayer.setId(totalPlayers);
 
@@ -60,7 +55,6 @@ function createPlayer(Monika, walletAddress, avatarURI) {
     
     return newPlayer;
 }
-export {playerMap};
 
 // View profile
 function getProfile(userAddress) {
@@ -73,4 +67,4 @@ function getProfile(userAddress) {
 // Example: Create a new Player
 // createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
 
-export { allPlayers, createPlayer, Player, totalPlayers, findPlayer, playerMap };
+export { allPlayers, createPlayer, Player, totalPlayers, findPlayer };
