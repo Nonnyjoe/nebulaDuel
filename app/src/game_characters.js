@@ -92,9 +92,9 @@ function createTeam(playerAddress, character1, character2, character3) {
     character3.setId(myCharactersId + 3);
 
     // set the owner of the character
-    character1.setOwner(playerAddress);
-    character2.setOwner(playerAddress);
-    character3.setOwner(playerAddress);
+    character1.setOwnerAddress(playerAddress);
+    character2.setOwnerAddress(playerAddress);
+    character3.setOwnerAddress(playerAddress);
 
     // populate all characters array
     allCharacters.push(character1);

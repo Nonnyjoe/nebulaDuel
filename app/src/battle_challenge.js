@@ -74,7 +74,7 @@ function createDuel(creatorAddress, creatorWarriors) {
     return newDuel.duelId;
 }
 
-
+// Function to create a new duel, it collects a duel Id, the participant address and an array of participant warriors
 function joinDuel(duelID, participantAddress, participantWarriors) {
     let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
     if (!selectedDuel) {
@@ -97,3 +97,14 @@ function joinDuel(duelID, participantAddress, participantWarriors) {
     console.log("Duel joined....");
     return selectedDuel.duelId;
 }
+
+// Function to display a duel info, it collects a duel Id
+function displayDuelInfo(duelID) {
+    let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
+    if (!selectedDuel) {
+        throw new Error(`Invalid duel Id: "${duelID}" received`);
+    }
+    selectedDuel.displayDuelInfo();
+}
+
+export {allDuels, totalDuels, Duel, createDuel, joinDuel, displayDuelInfo};
