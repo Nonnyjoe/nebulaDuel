@@ -13,6 +13,7 @@ import * as gameCharacters from "./game_characters";
 //     duelLooser;
 // }
 let allDuels = [];
+let availableDuels = [];
 let totalDuels = 0;
 
 class Duel {
@@ -92,10 +93,15 @@ function joinDuel(duelID, participantAddress, participantWarriors) {
 
     let participantsWarriors = gameCharacters.selectFightters(participantAddress, participantWarriors[0], participantWarriors[1], participantWarriors[2]);
 
+    selectedDuel.isActive = true;
     selectedDuel.joinDuel(participantAddress, participantsWarriors);
 
     console.log("Duel joined....");
-    return selectedDuel.duelId;
+    console.log("Displaying both participants characters....");
+    
+    let bothWarriours = revealBothWarriors(duelID);
+
+    return bothWarriours;
 }
 
 // Function to display a duel info, it collects a duel Id
@@ -107,4 +113,16 @@ function displayDuelInfo(duelID) {
     selectedDuel.displayDuelInfo();
 }
 
-export {allDuels, totalDuels, Duel, createDuel, joinDuel, displayDuelInfo};
+function revealBothWarriors(duelId) {
+    let selectedDuel = allDuels.find(duel => duel.duelId === duelId);
+    if (!selectedDuel) {
+        throw new Error(`Invalid duel Id: "${duelId}" received`);
+    }
+    console.log(`
+        Creator Warriors: ${selectedDuel.creatorWarriors}
+        Participant Warriors: ${selectedDuel.participantWarriors}
+    `);
+    return [selectedDuel.creatorWarriors, selectedDuel.participantWarriors];
+}
+
+export {allDuels, totalDuels, availableDuels, Duel, createDuel, joinDuel, displayDuelInfo, revealBothWarriors, };
