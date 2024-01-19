@@ -19,6 +19,7 @@ class Duel {
     constructor(duelCreator, creatorWarriors) {
         this.duelId = 0;
         this.isActive = false;
+        this.isCompleted = false;
         this.duelCreator = duelCreator;
         this.duelParticipant = "";
         this.creatorWarriors = creatorWarriors;
@@ -59,7 +60,7 @@ class Duel {
 // an array of players Id to for the duel.
 function createDuel(creatorAddress, creatorWarriors) {
     if (creatorWarriors.length < 3) {
-        throw new Error("Character must have at least 3 characters for battle");
+        throw new Error("Player must have at least 3 characters for battle");
     }
 
     let creatorsWarriors = gameCharacters.selectFightters(creatorAddress, creatorWarriors[0], creatorWarriors[1], creatorWarriors[2]);
@@ -68,4 +69,31 @@ function createDuel(creatorAddress, creatorWarriors) {
     totalDuels += 1;
     newDuel.duelId = totalDuels;
     allDuels.push(newDuel);
+
+    console.log("New Duel created....");
+    return newDuel.duelId;
+}
+
+
+function joinDuel(duelID, participantAddress, participantWarriors) {
+    let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
+    if (!selectedDuel) {
+        throw new Error(`Invalid duel Id: "${duelID}" received`);
+    }
+    if (selectedDuel.isActive) {
+        throw new Error("Duel already active");
+    }
+    if (selectedDuel.isCompleted) {
+        throw new Error("Duel already completed");
+    }
+    if (participantWarriors.length < 3) {
+        throw new Error("Player must have at least 3 characters for battle");
+    }
+
+    let participantsWarriors = gameCharacters.selectFightters(participantAddress, participantWarriors[0], participantWarriors[1], participantWarriors[2]);
+
+    selectedDuel.joinDuel(participantAddress, participantsWarriors);
+
+    console.log("Duel joined....");
+    return selectedDuel.duelId;
 }
