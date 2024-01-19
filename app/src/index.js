@@ -2,8 +2,12 @@
 // it will be used by any DApp, so we are already including it here
 const { ethers } = require("ethers");
 const { viem } = require("viem");
-import * as playersProfile from "./players_profile"
-import * as gameCharacters from "./game_characters";
+const playersProfile = require("./players_profile");
+const gameCharacters = require("./game_characters");
+
+// const { allPlayers, createPlayer, Player, totalPlayers } = playersProfile;
+// const { allCharacters, totalCharacters, Character, createTeam, resolveCharacters} = gameCharacters;
+
 
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);

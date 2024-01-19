@@ -1,4 +1,4 @@
-import { allPlayers, findPlayer} from "./players_profile"
+const { allPlayers, findPlayer } = require("./players_profile");
 
 // Game record
 let totalCharacters = 0;
@@ -172,7 +172,7 @@ function resolveCharacters( id ) {
     }
 }
 
-export {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails};
+module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails};
 
   // ATTEMPT PURCHASE IN A TRY AND CATCH BLOCK
   //try {

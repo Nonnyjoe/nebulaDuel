@@ -43,6 +43,11 @@ class Player {
   
 // Function to create a player
 function createPlayer(Monika, walletAddress, avatarURI) {
+    //check if player already exist
+    if(findPlayer(allPlayers, walletAddress)) {
+        throw new Error("Player already exist");
+    }
+
     totalPlayers = totalPlayers + 1;
 
     const newPlayer = new Player(Monika, walletAddress, avatarURI);
@@ -67,4 +72,4 @@ function getProfile(userAddress) {
 // Example: Create a new Player
 // createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
 
-export { allPlayers, createPlayer, Player, totalPlayers, findPlayer, getProfile };
+module.exports = { allPlayers, createPlayer, Player, totalPlayers , findPlayer, getProfile}; 
