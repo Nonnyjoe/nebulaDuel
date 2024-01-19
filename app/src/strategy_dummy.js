@@ -1,8 +1,7 @@
 allStrategies = [];
 //TODO: attack function
-import {allPlayers} from './players_profile.js';
 import { allCharacters } from './game_characters.js';
-import { playerMap } from './players_profile.js';
+import { playerMap, allPlayers } from './players_profile.js';
 
 function attack_strongest_character() {
     let characters = allCharacters;
@@ -84,12 +83,14 @@ function attack_slowest_character() {
 }
 
 // function strengthComparator()
+///TODO - not completed
 
-function freestyle_attack(char1, char2, char3, playerId) {
+function manual_strategy(char1, char2, char3, playerId) {
     let characters = allCharacters;
     let chosenAttacker = allCharacters[0];
     
     let player = playerMap[playerId];
+
 
     
 }
