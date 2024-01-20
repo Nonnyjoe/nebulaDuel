@@ -1,0 +1,76 @@
+#!/usr/bin/expect
+
+## START FIRST INTEACTION TO CREATE PROFILE.
+
+# Your commands
+send "Running Create Profile Command ##"
+spawn sunodo send generic
+
+# Select the chain to use (1 = foundry)
+sleep 2
+send "1\r"
+
+# Select the RPC URL to use here we just hit enter to represent (RPC URL (http://127.0.0.1:8545))
+sleep 1
+send "\r"
+
+# Select the Mnemonic phrase to use here we just hit enter to represent the default
+sleep 1
+send "\r"
+
+# Select a wallet address to use here we just hit enter to represent the first wallet
+sleep 1
+send "\r"
+
+# Select the Address of the Dapp to interact with here we hit enter to interact with the default.
+sleep 1
+send "\r"
+
+# select the input type to use here we hit enter to use the string to hex method;
+sleep 1
+send "\r"
+
+# PASS AN INPUT AS STRING
+sleep 1
+set variable_name "{\"method\":\"create_profile\",\"name\":\"0xreadyPlayer1\",\"avatarURI\":\"X7sdsa8ycn\"}"
+send "$variable_name\r"
+interact
+
+
+## START SECOND INTERACTION TO CREATE DUEL
+
+# Your commands
+expect "✔ Input sent *"   
+
+send "Running Create Duel Command ##"
+spawn sunodo send generic
+
+# Select the chain to use (1 = foundry)
+sleep 2
+send "1\r"
+
+# Select the RPC URL to use here we just hit enter to represent (RPC URL (http://127.0.0.1:8545))
+sleep 1
+send "\r"
+
+# Select the Mnemonic phrase to use here we just hit enter to represent the default
+sleep 1
+send "\r"
+
+# Select a wallet address to use here we just hit enter to represent the first wallet
+sleep 1
+send "\r"
+
+# Select the Address of the Dapp to interact with here we hit enter to interact with the default.
+sleep 1
+send "\r"
+
+# select the input type to use here we hit enter to use the string to hex method;
+sleep 1
+send "\r"
+
+# PASS AN INPUT AS STRING
+sleep 1
+set create_team "{"method":"create_team","char1": 1,"char2": 8, "char3": 5}"
+send "$create_team\r"
+interact

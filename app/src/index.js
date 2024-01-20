@@ -85,9 +85,9 @@ async function handle_advance(data) {
       console.log("creating team...");
       let characters = gameCharacters.createTeam(
         data.metadata.msg_sender,
-        gameCharacters.resolveCharacters(JSONpayload.char1),
-        gameCharacters.resolveCharacters(JSONpayload.char2),
-        gameCharacters.resolveCharacters(JSONpayload.char3)
+        gameCharacters.resolveCharacters(parseInt(JSONpayload.char1, 10)),
+        gameCharacters.resolveCharacters(parseInt(JSONpayload.char2, 10)),
+        gameCharacters.resolveCharacters(parseInt(JSONpayload.char3, 10))
       ); 
       const result1 = JSON.stringify({ purchasedCharacters: characters });
       console.log("Purchased Characters are:" + characters);
@@ -115,7 +115,7 @@ async function handle_advance(data) {
       });
     }
 
-    //{"method": "create_duel", "selectedCharacters": "[1, 8, 5]"}
+    //{"method": "create_duel", "selectedCharacters": [2, 1, 3]}
     else if (JSONpayload.method === "create_duel") {
       console.log("creating a duel.....");
       let newDuel = battleChallenge.createDuel(data.metadata.msg_sender, JSONpayload.selectedCharacters);
@@ -130,18 +130,30 @@ async function handle_advance(data) {
       });
     }
 
-    //{"method": "join_duel", "dielId": 1 , "selectedCharacters": "[1, 8, 5]"}
+    //{"method": "join_duel", "dielId": 1 , "selectedCharacters": [4, 5, 6]}
     else if (JSONpayload.method === "join_duel") {
       console.log("Joining an existing duel....");
       let bothWarriors = battleChallenge.joinDuel(JSONpayload.dielId, data.metadata.msg_sender, JSONpayload.selectedCharacters);
       console.log("Join successfully, competing characters are: " + JSON.stringify(bothWarriors));
-      const hexresult = stringToHex(bothWarriors);
+      const hexresult = stringToHex(JSON.stringify(bothWarriors));
       advance_req = await fetch(rollup_server + "/notice", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ payload: hexresult }),
+      });
+
+      // emit a notice of the duel data
+      let duelData = battleChallenge.displayDuelInfo(JSONpayload.dielId);
+      console.log("Duel data is: " + JSON.stringify(duelData));
+      const hexresult2 = stringToHex(duelData);
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult2 }),
       });
     }
     

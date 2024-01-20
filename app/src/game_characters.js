@@ -39,8 +39,25 @@ class Character {
         this.id = id;
     }
 
+    getId(){
+        return this.id;
+    }
+
     setOwnerAddress(ownerAddress) {
         this.owner = ownerAddress;
+    }
+
+    clone() {
+        // Create a new instance with the same properties
+        return new Character(
+            this.name,
+            this.health,
+            this.strength,
+            this.attack,
+            this.speed,
+            this.superPower,
+            this.price
+        );
     }
 }
 
@@ -82,15 +99,21 @@ function createTeam(playerAddress, character1, character2, character3) {
     // subtract the total price from his total balance.
     foundPlayer.point -= totalPrice;
 
-    // update total characters Id
     let myCharactersId = totalCharacters;
-    totalCharacters = totalCharacters + 3;
+    
+    // Create new instances for each player
+    character1 = character1.clone();
+    character2 = character2.clone();
+    character3 = character3.clone();
 
     // set all characters ID
-    character1.setId(myCharactersId + 1);
-    character2.setId(myCharactersId + 2);
-    character3.setId(myCharactersId + 3);
+    character1.id = myCharactersId + 1;
+    character2.id = myCharactersId + 2;
+    character3.id = myCharactersId + 3;
 
+    // update total characters Id
+    totalCharacters = totalCharacters + 3;
+    
     // set the owner of the character
     character1.setOwnerAddress(playerAddress);
     character2.setOwnerAddress(playerAddress);
@@ -132,7 +155,11 @@ function selectFightters( playerAddress, characterID1, characterID2, characterID
 // function that takes an address and a character id, then verifies that that 
 // character exists and also belongs to the specified address, finally it returns the character ID.
 function confirmOwnership(userAddress, characterId) {
-    let selectedCharacter = allCharacters.find(character => character.id === characterId);
+    let selectedCharacter = allCharacters.find(character => character.getId() == characterId);
+    console.log("selected character is: " + selectedCharacter);
+    console.log("character Id is: " + characterId)
+    console.log("all characters are: " + JSON.stringify(allCharacters));
+
     if(!findPlayer(allPlayers, userAddress)) {
         throw new Error("Player does not exist");
     }

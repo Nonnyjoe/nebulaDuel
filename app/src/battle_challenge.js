@@ -53,6 +53,7 @@ class Duel {
             Duel Winner: ${this.duelWinner}
             Duel Looser: ${this.duelLooser}
         `);
+        return this
     }
 }
 
@@ -113,7 +114,7 @@ function displayDuelInfo(duelID) {
     if (!selectedDuel) {
         throw new Error(`Invalid duel Id: "${duelID}" received`);
     }
-    selectedDuel.displayDuelInfo();
+    return selectedDuel.displayDuelInfo();
 }
 
 function revealBothWarriors(duelId) {
