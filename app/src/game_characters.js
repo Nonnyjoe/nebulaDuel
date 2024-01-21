@@ -202,16 +202,17 @@ function resolveCharacters( id ) {
     }
 }
 
-module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails};
+//Function to return a clone of the complete warriors data before each battle, it collects an array of players Id.
+function getWarriorsClone(warrioursId) {
+    if (warrioursId.length < 3) {
+        throw new Error("Invalid number of characters");
+    }
+    let warriorsData = [];
+    for (let i = 0; i < warrioursId.length; i++) {
+        let warrior = getCharacterDetails(warrioursId[i]);
+        warriorsData.push(warrior.clone());
+    }
+    return warriorsData;
+}
 
-  // ATTEMPT PURCHASE IN A TRY AND CATCH BLOCK
-  //try {
-    // Example usage
-    //const player = { points: 50 };
-    //const totalPrice = 100;
-    //const result = purchaseItems(player, totalPrice);
-    //console.log(result);
- // } catch (error) {
-    // Handle the error here
-   // console.error(error.message);
-  //}
+module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails, getWarriorsClone};

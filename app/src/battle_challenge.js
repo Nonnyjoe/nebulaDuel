@@ -1,4 +1,5 @@
 import * as gameCharacters from "./game_characters";
+import * as strategySimulation from "./strategy_simulation";
 
 // {
 //     duelId;
@@ -15,6 +16,33 @@ import * as gameCharacters from "./game_characters";
 let allDuels = [];
 let availableDuels = [];
 let totalDuels = 0;
+let WhoPlaysFirst = 1;
+
+class TurnsTracker {
+    constructor() {
+        this.turns = 0;
+    }
+
+    increaseTurns() {
+        if (this.turns == 2) {
+            this.turns = 0;
+        } else {
+            this.turns++;
+        }
+    }
+
+    checkTurn(){
+        return this.turns;
+    }
+
+    clone() {
+        return new TurnsTracker(
+            this.turns,
+        );
+    }
+
+
+}
 
 class Duel {
     constructor(duelCreator, creatorWarriors) {
@@ -129,7 +157,7 @@ function revealBothWarriors(duelId) {
     return [JSON.stringify(selectedDuel.creatorWarriors), JSON.stringify(selectedDuel.participantWarriors)];
 }
 
-
+// function to set a players strategy if takes the duelID, the player address and a number representing the strategy index.
 function setStrategy(duelID, playerAddress, strategy) {
     let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
     if (!selectedDuel) {
@@ -141,6 +169,7 @@ function setStrategy(duelID, playerAddress, strategy) {
     if (selectedDuel.isCompleted) {
         throw new Error("Duel already completed");
     }
+    let strategyType = strategySimulation.decodeStrategy(strategy);
     if (selectedDuel.duelCreator === playerAddress) {
         selectedDuel.creatorStrategy = strategy;
     } else if (selectedDuel.duelParticipant === playerAddress) {
@@ -149,18 +178,29 @@ function setStrategy(duelID, playerAddress, strategy) {
         throw new Error("Player not part of duel");
     }
 
-    console.log("Strategy set....");
-    return selectedDuel.duelId;
+    console.log(`Strategy set as ${strategyType}....`);
+    return selectedDuel;
 }
+
 
 function getDuelInfo(duelID) {
     let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
     if (!selectedDuel) {
         throw new Error(`Invalid duel Id: "${duelID}" received`);
     }
-
     return selectedDuel;
 }
+
+
+function determineWhoPlaysFirst(number) {
+    if (typeof number !== 'number') {
+      throw new Error('Input must be a number');
+    }
+  
+    // Use the remainder operator (%) to check if the number is odd or even
+    return number % 2 === 0 ? 1 : 0;
+  }
+
 
 function fight(duelID){
     let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
@@ -180,11 +220,35 @@ function fight(duelID){
     let creatorStrategy = selectedDuel.creatorStrategy;
     let participantStrategy = selectedDuel.participantStrategy;
 
-    let creatorWarriors = selectedDuel.creatorWarriors;
-    let participantWarriors = selectedDuel.participantWarriors;
+    let creatorWarriors = gameCharacters.getWarriorsClone(selectedDuel.creatorWarriors);
+    let participantWarriors = gameCharacters.getWarriorsClone(selectedDuel.participantWarriors);
 
     let creatorScore = 0;
     let participantScore = 0;
+
+    let turnTracker = (new TurnsTracker).clone();
+    let firstPlayer = determineWhoPlaysFirst(WhoPlaysFirst) == 0 ? creatorWarriors : participantWarriors;
+    let secondPlayer = determineWhoPlaysFirst(WhoPlaysFirst) == 0? participantWarriors : creatorWarriors;
+
+    while (true) {
+        if (firstPlayer.length == 0) {
+            break;
+        } else if (secondPlayer.length == 0) {
+            break;
+        } else {
+            let attacker = firstPlayer[turnTracker.checkTurn()];
+            let opponent = secondPlayer == participantWarriors ? 
+                strategySimulation.decideVictim(creatorStrategy, participantWarriors) :
+                strategySimulation.decideVictim(participantStrategy, creatorWarriors)
+            ;
+
+            duel(attacker, opponent);
+
+            attacker = secondPlayer == 
+            turnTracker.increaseTurns();
+        }
+    }
+    
 
     for (let i = 0; i < 3; i++) {
         let creatorWarrior = gameCharacters.findCharacter(creatorWarriors[i]);
