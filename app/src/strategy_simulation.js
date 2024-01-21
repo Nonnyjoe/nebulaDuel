@@ -65,11 +65,9 @@ const strategy = {
         return selectedChar;
     }
 
-    // Functio to get the character with the highest health, it takes in an array of characters as argument
-  function findMaxHealth(characters) {
-    let selectedChar = getCharacterDetails(characters);
+    // Functio to get the character with the highest health, it takes in an array of characters{} as argument
+  function findMaxHealth(selectedChar) {
     let highestHealthCharacter = selectedChar[0];
-
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].health > highestHealthCharacter.health) {
         highestHealthCharacter = selectedChar[i];
@@ -78,11 +76,9 @@ const strategy = {
     return highestHealthCharacter;
   }
 
-    // Functio to get the character with the lowest health, it takes in an array of characters as argument
-  function findMinHealth(characters) {
-    let selectedChar = getCharacterDetails(characters);
+    // Functio to get the character with the lowest health, it takes in an array of characters{} as argument
+  function findMinHealth(selectedChar) {
     let lowestHealthCharacter = selectedChar[0];
-
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].health < lowestHealthCharacter.health) {
         lowestHealthCharacter = selectedChar[i];
@@ -91,11 +87,9 @@ const strategy = {
     return lowestHealthCharacter;
   }
 
-    // Functio to get the character with the highest strength, it takes in an array of characters as argument
-  function findMaxStrength(characters) {
-    let selectedChar = getCharacterDetails(characters);
+    // Functio to get the character with the highest strength, it takes in an array of characters{} as argument
+  function findMaxStrength(selectedChar) {
     let highestStrengthCharacter = selectedChar[0];
-
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].strength > highestStrengthCharacter.strength) {
         highestStrengthCharacter = selectedChar[i];
@@ -104,11 +98,9 @@ const strategy = {
     return highestStrengthCharacter;
   }
 
-    // Functio to get the character with the lowest strength, it takes in an array of characters as argument
-  function findMinStrength(characters) {
-    let selectedChar = getCharacterDetails(characters);
+    // Functio to get the character with the lowest strength, it takes in an array of characters{} as argument
+  function findMinStrength(selectedChar) {
     let lowestStrengthCharacter = selectedChar[0];
-
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].strength < lowestStrengthCharacter.strength) {
         lowestStrengthCharacter = selectedChar[i];
