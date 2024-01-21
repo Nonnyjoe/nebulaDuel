@@ -1,12 +1,10 @@
-const {allCharacters} = require("./game_characters.js");
-
-//TODO: attack function
-import { allCharacters } from './game_characters.js';
-import { playerMap, allPlayers } from './players_profile.js';
+//TODO: attack functions';
+import * as allCharacters from "./game_characters.js";
+//import {playerMap, allPlayers } from './players_profile.js';
 
 
 // Define an "enum" for strategy using an object
-const strategy = {
+const allStrategy = {
     MaxHealthToLowest: 'M2LH',
     LowestHealthToMax: 'L2MH',
     MaxStrengthToLowest: 'M2LS',
@@ -18,13 +16,13 @@ const strategy = {
   function decodeStrategy(strategyId) {
     switch (strategyId) {
         case 1:
-            return strategy.MaxHealthToLowest;
+            return allStrategy.MaxHealthToLowest;
         case 2:
-            return strategy.LowestHealthToMax;
+            return allStrategy.LowestHealthToMax;
         case 3:
-            return strategy.MaxStrengthToLowest;
+            return allStrategy.MaxStrengthToLowest;
         case 4:
-            return strategy.LowestStrengthToMax;
+            return allStrategy.LowestStrengthToMax;
         default:
             throw new Error("Invalid strategy Id: " + strategyId);
     }
@@ -33,18 +31,19 @@ const strategy = {
     // Function to determine who the victim of an attack is going to be, 
     // it collects the strategy and also an array of opponentsId as arguments.
   function decideVictim(strategy, opponents) {
+    console.log("strategy", strategy)
     let victim;
-    switch (strategy) {
-      case strategy.MaxHealthToLowest:
+    switch (decodeStrategy(strategy)) {
+      case allStrategy.MaxHealthToLowest:
         victim = findMaxHealth(opponents);
         break;
-      case strategy.LowestHealthToMax:
+      case allStrategy.LowestHealthToMax:
         victim = findMinHealth(opponents);
         break;
-      case strategy.MaxStrengthToLowest:
+      case allStrategy.MaxStrengthToLowest:
         victim = findMaxStrength(opponents);
         break;
-      case strategy.LowestStrengthToMax:
+      case allStrategy.LowestStrengthToMax:
         victim = findMinStrength(opponents);
         break;
       default: throw new Error("Invalid strategy");
@@ -56,7 +55,7 @@ const strategy = {
     function getCharacterDetails(characters) {
         let selectedChar = []
         for (let i = 0; i < characters.length; i++) {
-            let selectedCharacter = allCharacters.find(character => character.getId() == characters[i]);
+            let selectedCharacter = allCharacters.allCharacters.find(character => character.getId() == characters[i]);
             selectedChar.push(selectedCharacter);
         }
         if (selectedChar.length < 3) {
@@ -65,9 +64,13 @@ const strategy = {
         return selectedChar;
     }
 
-    // Functio to get the character with the highest health, it takes in an array of characters{} as argument
+    // Functio to get the character with the highest health, it takes in an array of characters as argument
   function findMaxHealth(selectedChar) {
+    // let selectedChar = getCharacterDetails(characters);
     let highestHealthCharacter = selectedChar[0];
+
+    console.log("selectedChar", selectedChar, "characters", selectedChar)
+
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].health > highestHealthCharacter.health) {
         highestHealthCharacter = selectedChar[i];
@@ -76,9 +79,11 @@ const strategy = {
     return highestHealthCharacter;
   }
 
-    // Functio to get the character with the lowest health, it takes in an array of characters{} as argument
+    // Functio to get the character with the lowest health, it takes in an array of characters as argument
   function findMinHealth(selectedChar) {
+    //let selectedChar = getCharacterDetails(characters);
     let lowestHealthCharacter = selectedChar[0];
+
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].health < lowestHealthCharacter.health) {
         lowestHealthCharacter = selectedChar[i];
@@ -87,9 +92,11 @@ const strategy = {
     return lowestHealthCharacter;
   }
 
-    // Functio to get the character with the highest strength, it takes in an array of characters{} as argument
+    // Functio to get the character with the highest strength, it takes in an array of characters as argument
   function findMaxStrength(selectedChar) {
+   // let selectedChar = getCharacterDetails(characters);
     let highestStrengthCharacter = selectedChar[0];
+
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].strength > highestStrengthCharacter.strength) {
         highestStrengthCharacter = selectedChar[i];
@@ -98,9 +105,11 @@ const strategy = {
     return highestStrengthCharacter;
   }
 
-    // Functio to get the character with the lowest strength, it takes in an array of characters{} as argument
+    // Functio to get the character with the lowest strength, it takes in an array of characters as argument
   function findMinStrength(selectedChar) {
+    //let selectedChar = getCharacterDetails(characters);
     let lowestStrengthCharacter = selectedChar[0];
+
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].strength < lowestStrengthCharacter.strength) {
         lowestStrengthCharacter = selectedChar[i];
@@ -114,12 +123,12 @@ const strategy = {
 // function strengthComparator()
 ///TODO - not completed
 
-function manual_strategy(char1, char2, char3, playerId) {
-    let characters = allCharacters;
-    let chosenAttacker = allCharacters[0];
+// function manual_strategy(char1, char2, char3, playerId) {
+//     let characters = allCharacters;
+//     let chosenAttacker = allCharacters[0];
     
-    let player = playerMap[playerId];  
-}
+//     let player = playerMap[playerId];  
+// }
 
-module.exports = { decideVictim, decodeStrategy }
+export { decideVictim, decodeStrategy }
 
