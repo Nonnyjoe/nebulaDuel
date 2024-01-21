@@ -68,7 +68,7 @@ const cleric = new Character("Knight", 95, 10, 13, 7, "Heavy Strike", 390);
 // Medic..
 const medic = new Character("Medic", 60, 5, 10, 8, "Healing Aura", 250);
 // mage..
-const mage = new Character("Mage", 90, 10, 16, 9, "Fireball arcane blast", 380);
+const mage = new Character("Mage", 90, 9, 15, 9, "Fireball arcane blast", 380);
 // rogue
 const rogue = new Character("Rogue", 75, 7, 13, 9, "Stealth Attack", 300);
 // warrior..

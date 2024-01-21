@@ -265,7 +265,7 @@ function fight(duelID){
 
             // Check if the opponent is dead
             if (opponent_.health < 1){
-                let deadWarrior = participantWarriors.splice(opponentIndex, 1)
+                let deadWarrior = participantWarriors.splice(opponentIndex, 1);
                 console.log(`Participant warrior: ${deadWarrior} is dead`);
             } else {
                 participantWarriors[opponentIndex] = opponent_;
@@ -289,45 +289,15 @@ function fight(duelID){
             console.log(`Another battle round over, participant statistics is creator: ${JSON.stringify(creatorWarriors)}, Participants ${JSON.stringify(participantWarriors)}`, );
         }
     }
-    
-
-    for (let i = 0; i < 3; i++) {
-        let creatorWarrior = gameCharacters.findCharacter(creatorWarriors[i]);
-        let participantWarrior = gameCharacters.findCharacter(participantWarriors[i]);
-        let creatorWarriorPower = creatorWarrior.power;
-        let participantWarriorPower = participantWarrior.power;
-
-        if (creatorStrategy[i] === "A" && participantStrategy[i] === "D") {
-            creatorScore += creatorWarriorPower;
-        } else if (creatorStrategy[i] === "D" && participantStrategy[i] === "A") {
-            participantScore += participantWarriorPower;
-        } else if (creatorStrategy[i] === "A" && participantStrategy[i] === "A") {
-            if (creatorWarriorPower > participantWarriorPower) {
-                creatorScore += creatorWarriorPower;
-            } else if (creatorWarriorPower < participantWarriorPower) {
-                participantScore += participantWarriorPower;
-            }
-        } else if (creatorStrategy[i] === "D" && participantStrategy[i] === "D") {
-            if (creatorWarriorPower > participantWarriorPower) {
-                participantScore += participantWarriorPower;
-            } else if (creatorWarriorPower < participantWarriorPower) {
-                creatorScore += creatorWarriorPower;
-            }
-        }
-    }
-
-    if (creatorScore > participantScore) {
-        selectedDuel.duelWinner = selectedDuel.duelCreator;
-        selectedDuel.duelLooser = selectedDuel.duelParticipant;
-
-        console.log("Duel Winner: " + selectedDuel.duelWinner);
-        console.log("Duel Looser: " + selectedDuel.duelLooser);
-
-        selectedDuel.isCompleted = true;
-
-        return selectedDuel.duelWinner;
-    }
-
 }
 
-export {allDuels, totalDuels, availableDuels, Duel, createDuel, joinDuel, displayDuelInfo, revealBothWarriors, };
+// Function to carrry out a duel, it takes 2 warriors object, simulates a duel then returns their updated self. 
+function duel(attacker, opponent) {
+    const damage = attacker.strength + (attacker.attack / 2);
+    opponent.health -= damage;
+    attacker.attack -= damage / 5;
+    attacker.strength -= damage / 7;
+    return [attacker, opponent];
+}
+
+export {allDuels, totalDuels, availableDuels, Duel, createDuel, joinDuel, displayDuelInfo, revealBothWarriors, fight, setStrategy };
