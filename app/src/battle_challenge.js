@@ -21,10 +21,11 @@ let WhoPlaysFirst = 1;
 class TurnsTracker {
     constructor() {
         this.turns = 0;
+        this.max = 0
     }
 
     increaseTurns() {
-        if (this.turns == 2) {
+        if (this.turns == this.max) {
             this.turns = 0;
         } else {
             this.turns++;
@@ -234,10 +235,11 @@ function fight(duelID){
     let creatorWarriors = gameCharacters.getWarriorsClone(selectedDuel.creatorWarriors);
     let participantWarriors = gameCharacters.getWarriorsClone(selectedDuel.participantWarriors);
 
-    let creatorScore = 0;
-    let participantScore = 0;
 
-    let turnTracker = (new TurnsTracker).clone();
+    let AttackerTurnTracker = (new TurnsTracker).clone();
+    let OpponentTurnTracker = (new TurnsTracker).clone();
+    AttackerTurnTracker.max = 2;
+    OpponentTurnTracker.max = 2;
     // let firstPlayer = determineWhoPlaysFirst(WhoPlaysFirst) == 0 ? creatorWarriors : participantWarriors;
     // let secondPlayer = determineWhoPlaysFirst(WhoPlaysFirst) == 0? participantWarriors : creatorWarriors;
 
@@ -256,39 +258,42 @@ function fight(duelID){
             break;
         } else {
             // Creator Attacks First
-            let attacker = creatorWarriors[turnTracker.checkTurn()];
+            let attacker = creatorWarriors[AttackerTurnTracker.checkTurn()];
             let opponent = strategySimulation.decideVictim(creatorStrategy, participantWarriors);
             let opponentIndex = findIndexInArray(opponent, participantWarriors);
 
-            console.log("turnTracker.checkTurn()", turnTracker.checkTurn())
+            console.log("turnTracker.checkTurn()", AttackerTurnTracker.checkTurn())
             console.log("attacker in fight", attacker)
 
             let [attacker_ , opponent_] = duel(attacker, opponent);
-            creatorWarriors[turnTracker.checkTurn()] = attacker_;
+            creatorWarriors[AttackerTurnTracker.checkTurn()] = attacker_;
 
             // Check if the opponent is dead
             if (opponent_.health < 1){
                 let deadWarrior = participantWarriors.splice(opponentIndex, 1);
+                OpponentTurnTracker.max -= 1;
                 console.log(`Participant warrior: ${deadWarrior} is dead`);
             } else {
                 participantWarriors[opponentIndex] = opponent_;
             }
 
             // Participant Attacks Second
-            attacker = participantWarriors[turnTracker.checkTurn()];
+            attacker = participantWarriors[OpponentTurnTracker.checkTurn()];
             opponent = strategySimulation.decideVictim(participantStrategy, creatorWarriors);
             opponentIndex = findIndexInArray(opponent, creatorWarriors);
             [attacker_ , opponent_] = duel(attacker, opponent);
-            participantWarriors[turnTracker.checkTurn()] = attacker_;
+            participantWarriors[OpponentTurnTracker.checkTurn()] = attacker_;
 
             // Check if the opponent is dead
             if (opponent_.health < 1){
-                let deadWarrior = creatorWarriors.splice(opponentIndex, 1)
+                let deadWarrior = creatorWarriors.splice(opponentIndex, 1);
+                AttackerTurnTracker.max -= 1;
                 console.log(`Creator Warrior: ${deadWarrior} is dead`);
             } else {
                 creatorWarriors[opponentIndex] = opponent_;
             }
-            turnTracker.increaseTurns();
+            AttackerTurnTracker.increaseTurns();
+            OpponentTurnTracker.increaseTurns();
             console.log(`Another battle round over, participant statistics is creator: ${JSON.stringify(creatorWarriors)}, Participants ${JSON.stringify(participantWarriors)}`, );
         }
     }
