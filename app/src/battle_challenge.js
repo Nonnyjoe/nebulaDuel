@@ -1,5 +1,5 @@
-import * as gameCharacters from "./game_characters";
-import * as strategySimulation from "./strategy_simulation";
+import * as gameCharacters from "./game_characters.js";
+import * as strategySimulation from "./strategy_simulation.js";
 
 // {
 //     duelId;
@@ -183,13 +183,13 @@ function setStrategy(duelID, playerAddress, strategy) {
 }
 
 
-function getDuelInfo(duelID) {
-    let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
-    if (!selectedDuel) {
-        throw new Error(`Invalid duel Id: "${duelID}" received`);
-    }
-    return selectedDuel;
-}
+// function getDuelInfo(duelID) {
+//     let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
+//     if (!selectedDuel) {
+//         throw new Error(`Invalid duel Id: "${duelID}" received`);
+//     }
+//     return selectedDuel;
+// }
 
 
 function determineWhoPlaysFirst(number) {
@@ -260,6 +260,9 @@ function fight(duelID){
             let opponent = strategySimulation.decideVictim(creatorStrategy, participantWarriors);
             let opponentIndex = findIndexInArray(opponent, participantWarriors);
 
+            console.log("turnTracker.checkTurn()", turnTracker.checkTurn())
+            console.log("attacker in fight", attacker)
+
             let [attacker_ , opponent_] = duel(attacker, opponent);
             creatorWarriors[turnTracker.checkTurn()] = attacker_;
 
@@ -294,7 +297,7 @@ function fight(duelID){
 
 // Function to carrry out a duel, it takes 2 warriors object, simulates a duel then returns their updated self. 
 function duel(attacker, opponent) {
-    console.log(`Attacker: ${attacker}, about to attack opponent: ${opponent}.`)
+    console.log("attacker", attacker, "opponent", opponent)
     const damage = attacker.strength + (attacker.attack / 2);
     opponent.health -= damage;
     attacker.attack -= damage / 5;
