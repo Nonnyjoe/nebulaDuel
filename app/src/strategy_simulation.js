@@ -14,6 +14,7 @@ const allStrategy = {
   // function to decode the strategy a player selected, it collects a numerical argument
   // and returns the strategy thats mapped to that id.
   function decodeStrategy(strategyId) {
+    console.log(`Decoding strategy: ${strategyId}`);
     switch (strategyId) {
         case 1:
             return allStrategy.MaxHealthToLowest;
@@ -69,7 +70,7 @@ const allStrategy = {
     // let selectedChar = getCharacterDetails(characters);
     let highestHealthCharacter = selectedChar[0];
 
-    console.log("selectedChar", selectedChar, "characters", selectedChar)
+    // console.log("selectedChar", selectedChar, "characters", selectedChar)
 
     for (let i = 0; i < selectedChar.length; i++) {
       if (selectedChar[i].health > highestHealthCharacter.health) {

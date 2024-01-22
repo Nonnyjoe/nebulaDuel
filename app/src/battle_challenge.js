@@ -21,28 +21,33 @@ let WhoPlaysFirst = 1;
 class TurnsTracker {
     constructor() {
         this.turns = 0;
-        this.max = 0
+        this.max = 0;
     }
 
     increaseTurns() {
-        if (this.turns == this.max) {
+        if (this.turns == this.max || this.turns > this.max || this.max < 1) {
             this.turns = 0;
         } else {
             this.turns++;
         }
     }
 
-    checkTurn(){
+    checkTurn() {
         return this.turns;
     }
 
-    clone() {
-        return new TurnsTracker(
-            this.turns,
-        );
+    sync() {
+        if (this.turns > this.max) {
+            this.turns = this.max;
+        }
     }
 
-
+    clone() {
+        const clonedTracker = new TurnsTracker();
+        clonedTracker.turns = this.turns;
+        clonedTracker.max = this.max;
+        return clonedTracker;
+    }
 }
 
 class Duel {
@@ -214,8 +219,8 @@ function determineWhoPlaysFirst(number) {
 }
 
 
-function fight(duelID){
-    let selectedDuel = allDuels.find(duel => duel.duelId === duelID);
+function fight(duelID) {
+    let selectedDuel = allDuels.find((duel) => duel.duelId === duelID);
     if (!selectedDuel) {
         throw new Error(`Invalid duel Id: "${duelID}" received`);
     }
@@ -235,22 +240,20 @@ function fight(duelID){
     let creatorWarriors = gameCharacters.getWarriorsClone(selectedDuel.creatorWarriors);
     let participantWarriors = gameCharacters.getWarriorsClone(selectedDuel.participantWarriors);
 
-
     let AttackerTurnTracker = (new TurnsTracker).clone();
     let OpponentTurnTracker = (new TurnsTracker).clone();
     AttackerTurnTracker.max = 2;
     OpponentTurnTracker.max = 2;
-    // let firstPlayer = determineWhoPlaysFirst(WhoPlaysFirst) == 0 ? creatorWarriors : participantWarriors;
-    // let secondPlayer = determineWhoPlaysFirst(WhoPlaysFirst) == 0? participantWarriors : creatorWarriors;
 
     while (true) {
-        if (creatorWarriors.length == 0) {
+        // Check if any player has no more warriors
+        if (creatorWarriors.length === 0) {
             selectedDuel.duelWinner = selectedDuel.duelParticipant;
             selectedDuel.duelLooser = selectedDuel.duelCreator;
             selectedDuel.isCompleted = true;
             console.log("Opponent wins.....");
             break;
-        } else if (participantWarriors.length == 0) {
+        } else if (participantWarriors.length === 0) {
             selectedDuel.duelWinner = selectedDuel.duelCreator;
             selectedDuel.duelLooser = selectedDuel.duelParticipant;
             selectedDuel.isCompleted = true;
@@ -260,36 +263,53 @@ function fight(duelID){
             // Creator Attacks First
             let attacker = creatorWarriors[AttackerTurnTracker.checkTurn()];
             let opponent = strategySimulation.decideVictim(creatorStrategy, participantWarriors);
-            let opponentIndex = findIndexInArray(opponent, participantWarriors);
 
-            console.log("turnTracker.checkTurn()", AttackerTurnTracker.checkTurn())
-            console.log("attacker in fight", attacker)
-
-            let [attacker_ , opponent_] = duel(attacker, opponent);
+            let [attacker_, opponent_] = duel(attacker, opponent);
             creatorWarriors[AttackerTurnTracker.checkTurn()] = attacker_;
 
             // Check if the opponent is dead
             if (opponent_.health < 1){
+                let opponentIndex = findIndexInArray(opponent, participantWarriors);
                 let deadWarrior = participantWarriors.splice(opponentIndex, 1);
+
                 OpponentTurnTracker.max -= 1;
-                console.log(`Participant warrior: ${deadWarrior} is dead`);
             } else {
+                let opponentIndex = findIndexInArray(opponent, participantWarriors);
+                console.log('index we modified is:', opponentIndex);
+
                 participantWarriors[opponentIndex] = opponent_;
             }
 
+            // CHECK IF THE FIRST PART OF THE DUEL ENDED THE BATTLE;
+            if (creatorWarriors.length === 0) {
+                selectedDuel.duelWinner = selectedDuel.duelParticipant;
+                selectedDuel.duelLooser = selectedDuel.duelCreator;
+                selectedDuel.isCompleted = true;
+                console.log("Opponent wins.....");
+                break;
+            } else if (participantWarriors.length === 0) {
+                selectedDuel.duelWinner = selectedDuel.duelCreator;
+                selectedDuel.duelLooser = selectedDuel.duelParticipant;
+                selectedDuel.isCompleted = true;
+                console.log("Creator wins.....");
+                break;
+            } 
+
             // Participant Attacks Second
+            OpponentTurnTracker.sync();
             attacker = participantWarriors[OpponentTurnTracker.checkTurn()];
             opponent = strategySimulation.decideVictim(participantStrategy, creatorWarriors);
-            opponentIndex = findIndexInArray(opponent, creatorWarriors);
             [attacker_ , opponent_] = duel(attacker, opponent);
             participantWarriors[OpponentTurnTracker.checkTurn()] = attacker_;
 
             // Check if the opponent is dead
             if (opponent_.health < 1){
+                let opponentIndex = findIndexInArray(opponent, creatorWarriors);
                 let deadWarrior = creatorWarriors.splice(opponentIndex, 1);
                 AttackerTurnTracker.max -= 1;
-                console.log(`Creator Warrior: ${deadWarrior} is dead`);
+                console.log(`Creator Warrior: ${JSON.stringify(deadWarrior)} is dead`);
             } else {
+                let opponentIndex = findIndexInArray(opponent, creatorWarriors)
                 creatorWarriors[opponentIndex] = opponent_;
             }
             AttackerTurnTracker.increaseTurns();
@@ -297,17 +317,18 @@ function fight(duelID){
             console.log(`Another battle round over, participant statistics is creator: ${JSON.stringify(creatorWarriors)}, Participants ${JSON.stringify(participantWarriors)}`, );
         }
     }
+    console.log(`Battle is over creators remaining warriors are: ${JSON.stringify(creatorWarriors)}, while opponent's remaining warriors are: ${JSON.stringify(participantWarriors)} `)
     return selectedDuel;
 }
 
 // Function to carrry out a duel, it takes 2 warriors object, simulates a duel then returns their updated self. 
 function duel(attacker, opponent) {
-    console.log("attacker", attacker, "opponent", opponent)
     const damage = attacker.strength + (attacker.attack / 2);
-    opponent.health -= damage;
-    attacker.attack -= damage / 5;
-    attacker.strength -= damage / 7;
-    console.log(`Attacker: ${attacker} dealt a damage of: ${damage} on ${opponent}`)
+    opponent.health = (opponent.health - damage) < 0 ? 0 : opponent.health - damage;
+    attacker.attack = (attacker.attack - (damage / 5)) > 5 ? attacker.attack - damage / 5 : attacker.attack;
+    attacker.strength = (attacker.strength - (damage / 7)) > 5 ? attacker.strength - damage / 7 : attacker.strength;
+    console.log(`Attacker: ${attacker.name} with id:${attacker.id} dealt a damage of: ${damage} on ${opponent.name} with id: ${opponent.id}`)
+    console.log(`Attackers strength is: ${attacker.strength}, while his attack is: ${attacker.attack}, then opponent's health is: ${opponent.health}`);
     return [attacker, opponent];
 }
 

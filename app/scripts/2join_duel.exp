@@ -97,9 +97,9 @@ proc set_strategy {user} {
 
 # sleep 7
 
-# Join_duel 2 4 5 6
+Join_duel 2 4 5 6
 
-# expect "*"
+expect "*"
 
 # call the set strategy function
 set_strategy 1

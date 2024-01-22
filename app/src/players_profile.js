@@ -3,6 +3,7 @@ let allPlayers = [];
 
 // Function to find a specific player from players list
 function findPlayer (allPlayers, playerAddress) {
+    console.log("allPlayers: ", allPlayers, "playerAddress: ", playerAddress);
     const foundPlayer = allPlayers.find(player => player.walletAddress === playerAddress);
     return foundPlayer;
 }
@@ -72,4 +73,4 @@ function getProfile(userAddress) {
 // Example: Create a new Player
 // createPlayer("Player Bot", "0xPlayerBot", "X7ysdsa8");
 
-module.exports = { allPlayers, createPlayer, Player, totalPlayers , findPlayer, getProfile}; 
+export { allPlayers, createPlayer, Player, totalPlayers , findPlayer, getProfile}; 

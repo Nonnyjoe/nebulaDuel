@@ -1,4 +1,4 @@
-const { allPlayers, findPlayer } = require("./players_profile");
+import { allPlayers, findPlayer } from "./players_profile.js";
 
 // Game record
 let totalCharacters = 0;
@@ -48,6 +48,7 @@ class Character {
     }
 
     clone() {
+        // console.log('lets see what we\'re cloning ', this);
         // Create a new instance with the same properties
         return new Character(
             this.name,
@@ -56,8 +57,18 @@ class Character {
             this.attack,
             this.speed,
             this.superPower,
-            this.price
+            this.price,
+            this.id,
+            this.owner
         );
+    }
+
+    battleClone() {
+        // Create a clone of the character for the new battle
+        console.log('lets see what we\'re cloning ', this.id);
+        let newPlayer = this;
+        console.log(`lets see newPlayer ${JSON.stringify(newPlayer)}`);
+        return newPlayer;
     }
 }
 
@@ -68,7 +79,7 @@ const cleric = new Character("Knight", 95, 10, 13, 7, "Heavy Strike", 390);
 // Medic..
 const medic = new Character("Medic", 60, 5, 10, 8, "Healing Aura", 250);
 // mage..
-const mage = new Character("Mage", 90, 9, 15, 9, "Fireball arcane blast", 380);
+const mage = new Character("Mage", 90, 10, 16, 9, "Fireball arcane blast", 380);
 // rogue
 const rogue = new Character("Rogue", 75, 7, 13, 9, "Stealth Attack", 300);
 // warrior..
@@ -82,6 +93,7 @@ const berserker = new Character("Berserker", 100, 12, 15, 6, "Berserk Rage", 420
 // Function to create a team
 function createTeam(playerAddress, character1, character2, character3) {
     let totalPrice = character1.price + character2.price + character3.price;
+    console.log("allPlayers....:", allPlayers,  "playerAddress....:", playerAddress)
 
     // search array of players for specific player.
     let foundPlayer = findPlayer(allPlayers, playerAddress);
@@ -143,6 +155,7 @@ function getCharacters( playerAddress) {
 // we run a check to confirm that the character exists and also belongs to the said address
 // then we return an array of the selected characters id
 function selectFightters( playerAddress, characterID1, characterID2, characterID3) {
+  console.log("playerAddress: ", playerAddress, "characterID1: ", characterID1, "characterID2: ", characterID2, "characterID3: ", characterID3)
     let selectedChampions = [];
     selectedChampions.push(confirmOwnership(playerAddress, characterID1));
     selectedChampions.push(confirmOwnership(playerAddress, characterID2));
@@ -210,9 +223,12 @@ function getWarriorsClone(warrioursId) {
     let warriorsData = [];
     for (let i = 0; i < warrioursId.length; i++) {
         let warrior = getCharacterDetails(warrioursId[i]);
-        warriorsData.push(warrior.clone());
+        console.log('warriorID..........', warrior.id)
+        let warriorsBattleClone = warrior.battleClone();
+        warriorsData.push(warriorsBattleClone);
+        console.log('warriorsID After..........', (warriorsBattleClone));
     }
     return warriorsData;
 }
 
-module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails, getWarriorsClone};
+export {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails, getWarriorsClone};
