@@ -289,14 +289,17 @@ function fight(duelID){
             console.log(`Another battle round over, participant statistics is creator: ${JSON.stringify(creatorWarriors)}, Participants ${JSON.stringify(participantWarriors)}`, );
         }
     }
+    return selectedDuel;
 }
 
 // Function to carrry out a duel, it takes 2 warriors object, simulates a duel then returns their updated self. 
 function duel(attacker, opponent) {
+    console.log(`Attacker: ${attacker}, about to attack opponent: ${opponent}.`)
     const damage = attacker.strength + (attacker.attack / 2);
     opponent.health -= damage;
     attacker.attack -= damage / 5;
     attacker.strength -= damage / 7;
+    console.log(`Attacker: ${attacker} dealt a damage of: ${damage} on ${opponent}`)
     return [attacker, opponent];
 }
 

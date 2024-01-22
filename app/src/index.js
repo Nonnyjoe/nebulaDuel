@@ -156,6 +156,37 @@ async function handle_advance(data) {
         body: JSON.stringify({ payload: hexresult2 }),
       });
     }
+
+    //{"method":"set_strategy", "duelId": 1, "strategy": 1}
+    //{"method":"set_strategy", "duelId": 1, "strategy": 3}
+    else if (JSONpayload.method === "set_strategy") {
+      console.log("setting strategy....");
+      let duel = battleChallenge.setStrategy(JSONpayload.duelId, data.metadata.msg_sender, JSONpayload.strategy);
+      console.log("New strategy set for duel: " + JSON.stringify(duel));
+      const hexresult = stringToHex(JSON.stringify(duel));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
+
+    //{"method":"fight", "duelId": 1}
+    else if (JSONpayload.method === "fight") {
+      console.log("fighting....");
+      let duel = battleChallenge.fight(JSONpayload.duelId);
+      console.log("winner is: " + JSON.stringify(duel));
+      const hexresult = stringToHex(JSON.stringify(duel));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
     
     //{"method":"decompress","id":"000c7899-96bb-498b-8820-691d5e04ba33"}
     else if (JSONpayload.method === "hash") {

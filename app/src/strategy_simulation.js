@@ -1,7 +1,6 @@
 const {allCharacters} = require("./game_characters.js");
 
 //TODO: attack function
-import { allCharacters } from './game_characters.js';
 import { playerMap, allPlayers } from './players_profile.js';
 
 

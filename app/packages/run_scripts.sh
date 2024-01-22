@@ -44,9 +44,9 @@ fi
 
   # CD into scripts folder
   cd "$scripts_folder" || exit 1
-
+  echo "searching for specified file ...."
   # Find all files in the scripts folder with a name prefix with default in ".exp"
-  files=($(find . -maxdepth 1 -type f -name "$script_name.sh" | sort))
+  files=($(find . -maxdepth 1 -type f -name "$script_name.exp" | sort))
 
 # Execute the script
 # Execute the scripts
