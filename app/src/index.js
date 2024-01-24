@@ -187,6 +187,36 @@ async function handle_advance(data) {
         body: JSON.stringify({ payload: hexresult }),
       });
     }
+
+    //{"method": "getCharacterDetails", "characterId": 1}
+    else if (JSONpayload.method === "getCharacterDetails") {
+      console.log("getting CharacterDetails....");
+      let characterDetails = gameCharacters.getCharacterDetails(JSONpayload.characterId);
+      console.log("character Details is: " + JSON.stringify(characterDetails));
+      const hexresult = stringToHex(JSON.stringify(characterDetails));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
+
+    //{"method": "allCharacters"}
+    else if (JSONpayload.method === "allCharacters") {
+      console.log("getting allCharacters....");
+      let allCharacters = gameCharacters.allCharacters;
+      console.log("allCharacters Details is: " + JSON.stringify(allCharacters));
+      const hexresult = stringToHex(JSON.stringify(allCharacters));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
     
     //{"method":"decompress","id":"000c7899-96bb-498b-8820-691d5e04ba33"}
     else if (JSONpayload.method === "hash") {

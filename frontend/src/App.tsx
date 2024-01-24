@@ -14,6 +14,9 @@ import { FC } from "react";
 import injectedModule from "@web3-onboard/injected-wallets";
 import { init } from "@web3-onboard/react";
 import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Form } from "react-router-dom";
+import Home  from "./Home";
+import Main from "./Main";
 
 import { GraphQLProvider } from "./GraphQL";
 import { Notices } from "./Notices";
@@ -45,8 +48,16 @@ const App: FC = () => {
 
     return (
         <div>
-            <Network />
-            <GraphQLProvider>
+             <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/main" element={<Main />} />
+                
+
+             </Routes>
+
+
+             <Network />
+            {/* <GraphQLProvider>
                 <div>
                     Dapp Address: <input
                         type="text"
@@ -65,7 +76,8 @@ const App: FC = () => {
                 <Notices />
                 <h2>Vouchers</h2>
                 <Vouchers dappAddress={dappAddress} />
-            </GraphQLProvider>
+            </GraphQLProvider> */}
+
         </div>
     );
 };
