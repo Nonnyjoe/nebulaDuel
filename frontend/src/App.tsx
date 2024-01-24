@@ -11,9 +11,11 @@
 // under the License.
 
 import { FC } from "react";
+import "./App.css";
 import injectedModule from "@web3-onboard/injected-wallets";
 import { init } from "@web3-onboard/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import WebFont from "webfontloader";
 import { BrowserRouter as Router, Routes, Route, Form } from "react-router-dom";
 import Home  from "./Home";
 import Main from "./Main";
@@ -40,18 +42,23 @@ init({
 
 const App: FC = () => {
     const [dappAddress, setDappAddress] = useState<string>("0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C");
+    useEffect(() => {
+        WebFont.load({
+          google: {
+            families: ["Tilt Neon", "Roboto", "Droid Sans", "Chilanka"],
+          },
+        });
+      }, []);
 
     return (
         <div>
              <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/main" element={<Main />} />
-                
-
              </Routes>
 
 
-             <Network />
+             {/* <Network /> */}
 
         </div>
     );
