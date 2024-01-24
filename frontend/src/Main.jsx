@@ -1,12 +1,16 @@
 import React from 'react'
-import scrollButton from './component/scrollButton'
+import Header from './Components/header/Header'
+import Banner from './Components/banner/Banner'
+import ScrollButton from './Components/ScrollButton'
+import Footer from './Components/footer/Footer'
 
 const Main = () => {
   return (
     <div>
-      <p>Mian page</p>
-
-        <scrollButton />
+      <Header />
+      <Banner />
+      <ScrollButton />
+      <Footer />
 
 
     </div>

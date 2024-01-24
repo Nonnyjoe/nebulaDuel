@@ -11,20 +11,17 @@
 // under the License.
 
 import { FC } from "react";
+import "./App.css";
 import injectedModule from "@web3-onboard/injected-wallets";
 import { init } from "@web3-onboard/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import WebFont from "webfontloader";
 import { BrowserRouter as Router, Routes, Route, Form } from "react-router-dom";
 import Home  from "./Home";
 import Main from "./Main";
 
-import { GraphQLProvider } from "./GraphQL";
-import { Notices } from "./Notices";
-import { Input } from "./Input";
-import { Inspect } from "./Inspect";
+
 import { Network } from "./Network";
-import { Vouchers } from "./Vouchers";
-import { Reports } from "./Reports";
 import configFile from "./config.json";
 
 const config: any = configFile;
@@ -34,9 +31,9 @@ init({
     wallets: [injected],
     chains: Object.entries(config).map(([k, v]: [string, any], i) => ({id: k, token: v.token, label: v.label, rpcUrl: v.rpcUrl})),
     appMetadata: {
-        name: "Cartesi Rollups Test DApp",
+        name: "Nebula Duel",
         icon: "<svg><svg/>",
-        description: "Demo app for Cartesi Rollups",
+        description: "Demo app for Nebula Duel",
         recommendedInjectedWallets: [
             { name: "MetaMask", url: "https://metamask.io" },
         ],
@@ -45,38 +42,23 @@ init({
 
 const App: FC = () => {
     const [dappAddress, setDappAddress] = useState<string>("0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C");
+    useEffect(() => {
+        WebFont.load({
+          google: {
+            families: ["Tilt Neon", "Roboto", "Droid Sans", "Chilanka"],
+          },
+        });
+      }, []);
 
     return (
         <div>
              <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/main" element={<Main />} />
-                
-
              </Routes>
 
 
-             <Network />
-            {/* <GraphQLProvider>
-                <div>
-                    Dapp Address: <input
-                        type="text"
-                        value={dappAddress}
-                        onChange={(e) => setDappAddress(e.target.value)}
-                    />
-                    <br /><br />
-                </div>
-                <h2>Inspect</h2>
-                <Inspect />
-                <h2>Input</h2>
-                <Input dappAddress={dappAddress} />
-                <h2>Reports</h2>
-                <Reports />
-                <h2>Notices</h2>
-                <Notices />
-                <h2>Vouchers</h2>
-                <Vouchers dappAddress={dappAddress} />
-            </GraphQLProvider> */}
+             {/* <Network /> */}
 
         </div>
     );

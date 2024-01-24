@@ -1,0 +1,41 @@
+nav li {
+    margin: 0 10px;
+    overflow: hidden;
+  }
+  nav .active,
+  nav li a:hover {
+    color: var(--commonGreen);
+  }
+  nav li a {
+      position: relative;
+      z-index: 99;
+  }
+  
+  nav .active::after,
+  nav li a::after {
+    content: "";
+    width: 100%;
+    height: 1px;
+    background: var(--commonGreen);
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: rotate(0deg);
+    transition: 1s;
+    z-index: -1;
+    opacity: 0;
+  }
+  
+  nav .active::after,
+  nav li a:hover::after {
+    transform: rotate(30deg);
+    opacity: 1;
+  }
+  
+  
+  @media (max-width: 1100px) {
+      nav li {
+          margin: 0 10px;
+          overflow: hidden;
+        }
+  }
