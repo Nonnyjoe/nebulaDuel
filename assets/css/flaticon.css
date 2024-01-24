@@ -1,0 +1,195 @@
+@font-face {
+    font-family: "flaticon";
+    src: url("../fonts/flaticonf1e7.ttf?bfbb5becf4cba6c4e0dd52e574bb002b") format("truetype"),
+url("../fonts/flaticonf1e7.woff?bfbb5becf4cba6c4e0dd52e574bb002b") format("woff"),
+url("../fonts/flaticonf1e7.woff2?bfbb5becf4cba6c4e0dd52e574bb002b") format("woff2"),
+url("../fonts/flaticonf1e7.eot?bfbb5becf4cba6c4e0dd52e574bb002b#iefix") format("embedded-opentype"),
+url("../fonts/flaticonf1e7.svg?bfbb5becf4cba6c4e0dd52e574bb002b#flaticon") format("svg");
+}
+
+i[class^="flaticon-"]:before, i[class*=" flaticon-"]:before {
+    font-family: flaticon !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+i[class*="flaticon-"] {
+    display: block;
+    line-height: 0;
+}
+
+.flaticon-internet:before {
+    content: "\f101";
+}
+.flaticon-worldwide:before {
+    content: "\f102";
+}
+.flaticon-international:before {
+    content: "\f103";
+}
+.flaticon-login:before {
+    content: "\f104";
+}
+.flaticon-import:before {
+    content: "\f105";
+}
+.flaticon-lock:before {
+    content: "\f106";
+}
+.flaticon-padlock:before {
+    content: "\f107";
+}
+.flaticon-edit:before {
+    content: "\f108";
+}
+.flaticon-search:before {
+    content: "\f109";
+}
+.flaticon-duel:before {
+    content: "\f10a";
+}
+.flaticon-swords-in-cross-arrangement:before {
+    content: "\f10b";
+}
+.flaticon-crossed-swords:before {
+    content: "\f10c";
+}
+.flaticon-right-arrow:before {
+    content: "\f10d";
+}
+.flaticon-facebook:before {
+    content: "\f10e";
+}
+.flaticon-twitter:before {
+    content: "\f10f";
+}
+.flaticon-instagram:before {
+    content: "\f110";
+}
+.flaticon-youtube:before {
+    content: "\f111";
+}
+.flaticon-discord:before {
+    content: "\f112";
+}
+.flaticon-twitch:before {
+    content: "\f113";
+}
+.flaticon-right-arrow-1:before {
+    content: "\f114";
+}
+.flaticon-right-arrow-2:before {
+    content: "\f115";
+}
+.flaticon-magnifying-glass:before {
+    content: "\f116";
+}
+.flaticon-swords:before {
+    content: "\f117";
+}
+.flaticon-swords-1:before {
+    content: "\f118";
+}
+.flaticon-chess:before {
+    content: "\f119";
+}
+.flaticon-invoice:before {
+    content: "\f11a";
+}
+.flaticon-withdrawal:before {
+    content: "\f11b";
+}
+.flaticon-web:before {
+    content: "\f11c";
+}
+.flaticon-add-user:before {
+    content: "\f11d";
+}
+.flaticon-checked:before {
+    content: "\f11e";
+}
+.flaticon-message:before {
+    content: "\f11f";
+}
+.flaticon-nft:before {
+    content: "\f120";
+}
+.flaticon-wallet:before {
+    content: "\f121";
+}
+.flaticon-wallet-1:before {
+    content: "\f122";
+}
+.flaticon-paper-plane:before {
+    content: "\f123";
+}
+.flaticon-send:before {
+    content: "\f124";
+}
+.flaticon-loupe:before {
+    content: "\f125";
+}
+.flaticon-search-1:before {
+    content: "\f126";
+}
+.flaticon-play:before {
+    content: "\f127";
+}
+.flaticon-right-arrow-3:before {
+    content: "\f128";
+}
+.flaticon-next:before {
+    content: "\f129";
+}
+.flaticon-diamond:before {
+    content: "\f12a";
+}
+.flaticon-ethereum:before {
+    content: "\f12b";
+}
+.flaticon-star:before {
+    content: "\f12c";
+}
+.flaticon-settings:before {
+    content: "\f12d";
+}
+.flaticon-settings-1:before {
+    content: "\f12e";
+}
+.flaticon-guru:before {
+    content: "\f12f";
+}
+.flaticon-best-employee:before {
+    content: "\f130";
+}
+.flaticon-user-profile:before {
+    content: "\f131";
+}
+.flaticon-quote:before {
+    content: "\f132";
+}
+.flaticon-circle:before {
+    content: "\f133";
+}
+.flaticon-repeat:before {
+    content: "\f134";
+}
+.flaticon-repeat-2:before {
+    content: "\f135";
+}
+.flaticon-quotation:before {
+    content: "\f136";
+}
+.flaticon-quote-1:before {
+    content: "\f137";
+}
+.flaticon-play-1:before {
+    content: "\f138";
+}
+.flaticon-play-button:before {
+    content: "\f139";
+}

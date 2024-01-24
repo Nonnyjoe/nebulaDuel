@@ -1,5 +1,6 @@
 //TODO: attack functions';
-import * as allCharacters from "./game_characters.js";
+//import * as allCharacters from "./game_characters.js";
+const allCharacters = require("./game_characters.js");
 //import {playerMap, allPlayers } from './players_profile.js';
 
 
@@ -131,5 +132,5 @@ const allStrategy = {
 //     let player = playerMap[playerId];  
 // }
 
-export { decideVictim, decodeStrategy }
+module.exports =  { decideVictim, decodeStrategy }
 

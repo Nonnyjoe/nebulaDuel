@@ -1,5 +1,7 @@
-import * as gameCharacters from "./game_characters.js";
-import * as strategySimulation from "./strategy_simulation.js";
+// import * as gameCharacters from "./game_characters.js";
+// import * as strategySimulation from "./strategy_simulation.js";
+const gameCharacters = require("./game_characters.js");
+const strategySimulation = require("./strategy_simulation.js")
 
 // {
 //     duelId;
@@ -332,4 +334,4 @@ function duel(attacker, opponent) {
     return [attacker, opponent];
 }
 
-export {allDuels, totalDuels, availableDuels, Duel, createDuel, joinDuel, displayDuelInfo, revealBothWarriors, fight, setStrategy };
+module.exports = {allDuels, totalDuels, availableDuels, Duel, createDuel, joinDuel, displayDuelInfo, revealBothWarriors, fight, setStrategy };

@@ -2,6 +2,7 @@
   "name": "my-dapp",
   "version": "0.1.0",
   "description": "JS DApp",
+  "type": "commonjs",
   "dependencies": {
     "ethers": "^6.7.1",
     "viem": "^2.2.0"

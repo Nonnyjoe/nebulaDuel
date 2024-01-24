@@ -1,4 +1,5 @@
-import { allPlayers, findPlayer } from "./players_profile.js";
+//import { allPlayers, findPlayer } from "./players_profile.js";
+const { allPlayers, findPlayer } = require("./players_profile.js");
 
 // Game record
 let totalCharacters = 0;
@@ -231,4 +232,4 @@ function getWarriorsClone(warrioursId) {
     return warriorsData;
 }
 
-export {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails, getWarriorsClone};
+module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails, getWarriorsClone};
