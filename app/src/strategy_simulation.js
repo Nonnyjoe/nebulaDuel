@@ -15,7 +15,7 @@ const allStrategy = {
   // and returns the strategy thats mapped to that id.
   function decodeStrategy(strategyId) {
     console.log(`Decoding strategy: ${strategyId}`);
-    switch (strategyId) {
+    switch (parseInt(strategyId)) {
         case 1:
             return allStrategy.MaxHealthToLowest;
         case 2:
