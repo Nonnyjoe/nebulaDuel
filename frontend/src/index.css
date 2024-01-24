@@ -1,0 +1,62 @@
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+      "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+      monospace;
+  }
+  /* body{
+    cursor: none;
+  } */
+  
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+  ::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 50px rgb(0, 0, 0);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--commonGreen);
+    border-radius: 10px;
+    height: 100px;
+    transition: 0.5s;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #fff;
+  }
+  
+  .arrow img {
+    width: 100%;
+  }
+  .arrow {
+    position: absolute;
+    z-index: 9999999999999999999999999999999999999999999999999999999999;
+    width: 20px;
+    pointer-events: none;
+    transform: translateX(-20%);
+  }
+  
+  :root {
+    --white: #fff;
+    --commonGreen: #45f882;
+    --commonGreenLight: #45f88157;
+    --darkBlackTransprant: rgba(15, 22, 27, 0.9);
+    --darkBlack: #0b0e13;
+    --yellow: #ffbe18;
+    --grayText: #adb0bc;
+    --forCirclBorder: linear-gradient(
+        180deg,
+        #10181f 0%,
+        #e3b17d 48%,
+        #10181f 100%
+      )
+      border-box;
+      --darkGrayLightBlack: #1c242f;
+  }
+  

@@ -1,0 +1,110 @@
+.mainBanner {
+    padding: 100px 0 0px 0;
+    width: 100%;
+    float: left;
+    background: url("../../../public/assets/img/slider_bg.jpg");
+    position: relative;
+    z-index: -1;
+  }
+  .mainBanner .content {
+    width: 50%;
+    margin-top: -100px;
+  }
+  .mainBanner .content h3:first-child {
+    background: linear-gradient(
+      to right,
+      rgba(69, 248, 130, 0.5),
+      rgba(255, 255, 255, 0)
+    );
+    display: inline-block;
+    padding: 10px 70px 10px 20px;
+    border-radius: 10px;
+  }
+  .mainBanner .image img:hover {
+    animation: shakeImg 2s ease-in-out;
+  }
+  @keyframes shakeImg {
+    0% {
+      transform: translate(0px, 20px);
+    }
+    20% {
+      transform: translate(10px);
+    }
+    40% {
+      transform: translate(20px, 20px);
+    }
+    60% {
+      transform: translate(0px);
+    }
+    80% {
+      transform: translate(10px, 10px);
+    }
+    100% {
+      transform: translate(0px);
+    }
+  }
+  .mainBanner .image img {
+    width: 80%;
+    float: right;
+  }
+  .mainBanner .image {
+    width: 50%;
+  }
+  
+  .mainBanner .glButtonFill {
+    margin-top: 50px;
+  }
+  .mainBanner::after {
+    content: "";
+    position: absolute;
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+    height: 50px;
+    width: 50%;
+    bottom: 0;
+    left: 0;
+    background: var(--commonGreen);
+  }
+  .mainBanner::before {
+    content: "";
+    position: absolute;
+    clip-path: polygon(100% 0, 0 100%, 100% 100%);
+    height: 50px;
+    width: 50%;
+    bottom: 0;
+    right: 0;
+    background: var(--commonGreen);
+  }
+  
+  @media (max-width: 551px) {
+    .mainBanner .content {
+      text-align: center;
+      width: 100%;
+    }
+    .mainBanner {
+      padding: 250px 0 50px 0;
+    }
+    .mainBanner .image {
+      margin-top: 30px;
+      width: 80%;
+    }
+    .mainBanner .content h3:first-child {
+      padding: 5px 30px;
+      margin-bottom: 20px;
+    }
+    .mainBanner .glButtonFill {
+      margin-top: 25px;
+    }
+    .mainBanner .container {
+      flex-direction: column;
+      justify-content: center;
+    }
+  
+    .mainBanner .image img {
+      width: 100%;
+      float: right;
+    }
+    .mainBanner .image {
+      width: 60%;
+    }
+  }
+  
