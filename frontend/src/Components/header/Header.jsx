@@ -8,6 +8,7 @@ import { BsTwitter } from "react-icons/bs";
 import { GiCrossedSwords } from "react-icons/gi";
 import { FaFacebookF, FaLinkedinIn, FaYoutube, FaBars } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { Network } from "../../Network";
 
 const Header = () => {
   const sideBar = useRef();
@@ -67,9 +68,9 @@ const Header = () => {
             <span onClick={togleSearchBox} className="search flex alignCenter">
               <BiSearchAlt2 />
             </span>
-            <a className="glButtonBorder flex alignCenter" href="/">
-              <TbEditCircle /> ~Sign In
-            </a>
+            <span className="glButtonBorder flex alignCenter" >
+              <TbEditCircle /> ~Connect Wallet {Network}
+            </span>
             <div onClick={NavInPhone} className="phoneMenu flex alignCenter">
               <FaBars />
             </div>

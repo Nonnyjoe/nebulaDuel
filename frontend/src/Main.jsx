@@ -1,8 +1,10 @@
 import React from 'react'
 import Header from './Components/header/Header'
 import Banner from './Components/banner/Banner'
+import GameBid from './Components/gameBid/GameBid'
 import ScrollButton from './Components/ScrollButton'
 import Footer from './Components/footer/Footer'
+
 
 const Main = () => {
   return (
@@ -10,6 +12,7 @@ const Main = () => {
       <Header />
       <Banner />
       <ScrollButton />
+      <GameBid />
       <Footer />
 
 

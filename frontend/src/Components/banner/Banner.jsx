@@ -8,7 +8,7 @@ const Banner = () => {
         <div className="container flex alignCenter">
           <div className="content">
             <h3>LIVE GAMING</h3>
-            <h1 className="textGreenShadow">STEAMING</h1>
+            <h1 className="textGreenShadow">POKEMONING</h1>
             <h3>VIDEO GAMES ONLINE</h3>
             <a className="glButtonFill" href="/">
               <span className="flex alignCenter">CONTACT US</span>
