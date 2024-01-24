@@ -16,7 +16,8 @@ class Player {
         this.characters = [];
         this.id = 0;
         this.point = 1000; 
-        this.nebulaBalance = 0;  
+        this.nebulaBalance = 0;
+        this.NebulaTokenBalance = 0;  
      }
 
     displayInfo() {
@@ -26,6 +27,7 @@ class Player {
             avatarURI: ${this.avatarURI}
             characters: ${this.characters}
             id: ${this.id}
+            NebulaTokenBalance: ${this.NebulaTokenBalance}
         `);
     }
 
