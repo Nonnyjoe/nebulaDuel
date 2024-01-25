@@ -286,7 +286,20 @@ async function handle_advance(data) {
       });
     }
 
-    else if (JSONpayload.)
+    // {"method": "buyCharacters", "characterId": 2}
+    else if (JSONpayload.method === "buyCharacters") {
+      console.log("buying characters....");
+      let purchaseResult = marketplace.BuyCharacter(JSONpayload.characterId, data.metadata.msg_sender);
+      console.log("buyCharacters Details is: " + JSON.stringify(purchaseResult));
+      const hexresult = stringToHex(JSON.stringify(purchaseResult));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
 
     //{"method": "withdraw", amount: 1000}
     else if (JSONpayload.method === "withdraw") {
