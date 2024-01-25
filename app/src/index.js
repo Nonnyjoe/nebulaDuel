@@ -5,6 +5,7 @@ const { viem } = require("viem");
 const playersProfile = require("./players_profile");
 const gameCharacters = require("./game_characters");
 const battleChallenge = require("./battle_challenge");
+const marketplace = require("./marketplace");
 
 // const { allPlayers, createPlayer, Player, totalPlayers } = playersProfile;
 // const { allCharacters, totalCharacters, Character, createTeam, resolveCharacters} = gameCharacters;
@@ -13,6 +14,9 @@ const battleChallenge = require("./battle_challenge");
 const rollup_server = process.env.ROLLUP_HTTP_SERVER_URL;
 console.log("HTTP rollup_server url is " + rollup_server);
 const DAPP_ADDRESS_REALY = "0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE";
+const ERC_20_PORTAL = "0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB";
+const ERC_721_PORTAL = "0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87";
+const nebula_token_address = "";
 let DAPP_ADDRESS = "null";
 
 
@@ -27,6 +31,26 @@ async function handle_advance(data) {
     ) {
       console.log("setting Dapp address:", payload);
       DAPP_ADDRESS = payload;
+    }
+
+    if (
+      String(data.metadata.msg_sender).toLowerCase() ===
+      ERC_20_PORTAL.toLowerCase()
+    ) {
+      try {
+        let payloads = marketplace.erc20_deposit_process(payload);
+        const hexresult = stringToHex(payloads);
+        console.log("The result is :", hexresult);
+        advance_req = await fetch(rollup_server + "/notice", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ payload: hexresult }),
+        });
+      } catch (e) {
+        return new Error_out(`failed to process ERC20 deposti ${payload} ${e}`);
+      }
     }
 
     console.log("payload:" + JSON.stringify(payload));
@@ -216,6 +240,87 @@ async function handle_advance(data) {
         },
         body: JSON.stringify({ payload: hexresult }),
       });
+    }
+
+    //{"method": "transferTokens", receiver: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" , amount: 1000}
+    else if (JSONpayload.method === "transferTokens") {
+      console.log("Transfering tokens.....");
+      let transferTokens = marketplace.transferToken(data.metadata.msg_sender, JSONpayload.receiver , JSONpayload.amount);
+      const hexresult = stringToHex(JSON.stringify(transferTokens));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
+
+  //{"method": "listCharacter", characterId: 2 , amount: 1000}
+    else if (JSONpayload.method === "listCharacter") {
+      console.log("getting listCharacter....");
+      let listCharacter = marketplace.listCharacter(data.metadata.msg_sender, JSONpayload.characterId , JSONpayload.amount);
+      console.log("listCharacter Details is: " + JSON.stringify(listCharacter));
+      const hexresult = stringToHex(JSON.stringify(listCharacter));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
+
+    //{"method": "modifyListPrice", characterId: 2, amount: 1000}
+    else if (JSONpayload.method === "modifyListPrice") {
+      console.log("modifying listPrice....");
+      let modifyListPrice = marketplace.modifyListPrice(data.metadata.msg_sender, JSONpayload.characterId, JSONpayload.amount);
+      console.log("modifyListPrice Details is: " + JSON.stringify(modifyListPrice));
+      const hexresult = stringToHex(JSON.stringify(modifyListPrice));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+    }
+
+    else if (JSONpayload.)
+
+    //{"method": "withdraw", amount: 1000}
+    else if (JSONpayload.method === "withdraw") {
+      console.log("withdrawing....");
+      let withdraw = marketplace.withdraw(data.metadata.msg_sender, parseInt(JSONpayload.amount));
+      console.log("withdraw is: " + JSON.stringify(withdraw));
+      const hexresult = stringToHex(JSON.stringify(withdraw));
+      advance_req = await fetch(rollup_server + "/notice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ payload: hexresult }),
+      });
+
+      // EMIT A VOUCHER TO BE PROCESSED ON L1
+      const call = viem.encodeFunctionData({
+        abi: erc20abi,
+        functionName: "transfer",
+        args: [data.metadata.msg_sender, BigInt(JSONpayload.value)],
+      });
+      let voucher = {
+        destination: nebula_token_address, // Nebula token Address
+        payload: call,
+      };
+      console.log(voucher);
+      advance_req = await fetch(rollup_server + "/voucher", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(voucher),
+      });
+      console.log("starting a voucher");
     }
     
     //{"method":"decompress","id":"000c7899-96bb-498b-8820-691d5e04ba33"}
