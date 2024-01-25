@@ -63,6 +63,7 @@ class Duel {
         this.participantWarriors = [];
         this.creatorStrategy = "";
         this.participantStrategy = "";
+        this.battleLog = [];
         this.duelWinner = "";
         this.duelLooser = "";
     }
@@ -86,6 +87,7 @@ class Duel {
             Participant Warriors: ${this.participantWarriors}
             Creator Strategy: ${this.creatorStrategy}
             Participant Strategy: ${this.participantStrategy}
+            battleLog: ${this.battleLog}
             Duel Winner: ${this.duelWinner}
             Duel Looser: ${this.duelLooser}
         `);
@@ -269,11 +271,14 @@ function fight(duelID) {
             let [attacker_, opponent_] = duel(attacker, opponent);
             creatorWarriors[AttackerTurnTracker.checkTurn()] = attacker_;
 
+            // Populate the log of the entire battle.
+            let duelLog = [attacker_, opponent_];
+            selectedDuel.battleLog.push(duelLog);
+
             // Check if the opponent is dead
             if (opponent_.health < 1){
                 let opponentIndex = findIndexInArray(opponent, participantWarriors);
                 let deadWarrior = participantWarriors.splice(opponentIndex, 1);
-
                 OpponentTurnTracker.max -= 1;
             } else {
                 let opponentIndex = findIndexInArray(opponent, participantWarriors);
@@ -303,6 +308,10 @@ function fight(duelID) {
             opponent = strategySimulation.decideVictim(participantStrategy, creatorWarriors);
             [attacker_ , opponent_] = duel(attacker, opponent);
             participantWarriors[OpponentTurnTracker.checkTurn()] = attacker_;
+
+            // Populate the log of the entire battle.
+            duelLog = [attacker_, opponent_];
+            selectedDuel.battleLog.push(duelLog);
 
             // Check if the opponent is dead
             if (opponent_.health < 1){
