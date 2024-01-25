@@ -1,0 +1,286 @@
+.knowAboutUs {
+  background: url(../../../public/assets/img/about.jpg);
+  background-size: cover;
+  background-position: top;
+}
+
+.knowAboutUs .buttons {
+  margin-top: 70px;
+  gap: 20px;
+}
+
+.tabPower {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-top: 50px;
+}
+.tabPower .tabs {
+  padding: 20px 0;
+  position: relative;
+  gap: 10px;
+}
+.tabPower .tabs::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--commonGreen) 50%,
+    transparent 100%
+  );
+}
+.tabPower .tabs::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--commonGreen) 50%,
+    transparent 100%
+  );
+}
+.tabPower .tabs button img {
+  border-radius: 50%;
+  width: 100%;
+}
+.tabPower .tabs button {
+  width: 80px;
+  position: relative;
+  outline: none;
+  border: 1px solid transparent;
+  background: linear-gradient(180deg, #10181f 0%, #e3b17d 48%, #10181f 100%)
+    border-box;
+  border-radius: 50%;
+  transition: 1s;
+}
+.tabPower .tabs .buttonActive,
+.tabPower .tabs button:hover {
+  background: linear-gradient(
+      90deg,
+      var(--darkBlack) 0%,
+      var(--commonGreen) 50%,
+      var(--darkBlack) 100%
+    )
+    border-box;
+}
+
+.tabPower .allTabls {
+  position: relative;
+  margin-top: 30px;
+  overflow: hidden;
+}
+.tabPower .allTabls::after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--commonGreen) 50%,
+    var(--commonGreen) 50%
+  );
+}
+.tabPower .allTabls .tab {
+  display: none;
+  gap: 50px;
+  opacity: 0;
+  transition: 0.5s;
+}
+.tabPower .allTabls .ActiveTab {
+  opacity: 1;
+  display: flex;
+  animation: animateTab 0.3s linear;
+}
+@keyframes animateTab {
+  0% {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+.tabPower .allTabls .image img {
+  width: 100%;
+}
+.tabPower .allTabls .image {
+  width: 40%;
+  /* border: 1px solid red; */
+}
+.tabPower .allTabls .content {
+  width: 60%;
+  padding: 10px 0 0 0;
+  flex-direction: column;
+  /* border: 1px solid red; */
+}
+.tabPower .allTabls .content h4 {
+  color: var(--yellow);
+  margin-top: 10px;
+}
+.tabPower .allTabls .content p {
+  margin-top: 30px;
+  max-width: 505px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+.tabPower .allTabls .content .button {
+  margin-top: auto;
+}
+.tabPower .allTabls .content .button button:hover {
+  color: var(--commonGreen);
+}
+.tabPower .allTabls .content .button button {
+  width: 30%;
+  background: linear-gradient(
+    170deg,
+    var(--darkBlack) 0%,
+    transparent 50%,
+    #83838390 100%
+  );
+  border: none;
+  padding: 15px 0px;
+  color: var(--grayText);
+  font-size: 1.1rem;
+}
+
+.mainCrowsel.commonSection {
+  padding-bottom: 0px;
+}
+
+.mainCrowsel .slide .content h5 {
+  color: var(--grayText);
+}
+.mainCrowsel .slide .content {
+  padding: 30px 30px;
+  opacity: 0;
+}
+.mainCrowsel .slide .image img {
+  width: 100%;
+}
+.mainCrowsel .slide .image {
+  box-shadow: 0px 3px 7px 0px rgb(0 0 0 / 42%);
+  border: 8px solid #adb0bc36;
+  width: 100%;
+}
+.mainCrowsel .react-multi-carousel-item {
+  transform: scale(0.9);
+}
+.mainCrowsel .react-multi-carousel-item--active {
+  transform: scale(0.97);
+}
+.mainCrowsel .react-multi-carousel-item--active .content {
+  opacity: 1;
+}
+
+.mainCrowsel .react-multi-carousel-dot-list li button {
+  border-radius: 0;
+  margin: 0;
+  border: none;
+  width: 140px;
+  background: var(--commonGreen);
+  height: 5px;
+  transition: 0.3s;
+}
+.mainCrowsel
+  .react-multi-carousel-dot-list
+  .react-multi-carousel-dot--active
+  button {
+  height: 10px;
+  border-radius: 3px;
+  transform: translateY(3px);
+}
+
+@media (max-width: 1024px) {
+  .tabPower .allTabls .knowAboutTab {
+    flex-direction: column;
+    align-items: center;
+  }
+  .tabPower .allTabls .content {
+    width: 80%;
+  }
+  .tabPower .allTabls .image {
+    width: 40%;
+  }
+}
+
+@media (max-width: 768px) {
+  .tabPower .allTabls .image {
+    width: 60%;
+  }
+  .mainCrowsel .react-multi-carousel-item--active .content{
+    padding: 5px 5px;
+  }
+}
+
+@media (max-width: 551px) {
+  .knowAboutUs .buttons {
+    margin-top: 15px;
+    flex-direction: column;
+    align-items: center;
+  }
+  .knowAboutUs .buttons button {
+    display: inline-block;
+    width: 180px;
+    font-size: 1rem;
+    padding: 15px 15px;
+  }
+  .tabPower .allTabls .image {
+    width: 70%;
+  }
+  .tabPower .allTabls .content {
+    width: 100%;
+  }
+  .tabPower .allTabls .content .button button {
+    font-size: 0.7rem;
+  }
+  .mainCrowsel .react-multi-carousel-dot-list li button {
+    width: 50px;
+  }
+  .mainCrowsel .slide .image{
+    border: 3px solid #adb0bc36;
+  }
+  .mainCrowsel .react-multi-carousel-item--active .content h3{
+    font-size: 15px;
+  }
+  .tabPower .tabs button{
+    width: 50px;
+  }
+}
+@media (max-width: 426px) {
+    .mainCrowsel .react-multi-carousel-item--active .content h3{
+        font-size: 12px;
+    }
+    .mainCrowsel .react-multi-carousel-item--active .content h5{
+        font-size: 10px;
+    }
+  .tabPower .allTabls .image {
+    width: 100%;
+  }
+  .tabPower .allTabls .content .button button {
+    width: 34%;
+    padding: 7px 0;
+    font-size: 0.6rem;
+  }
+  .tabPower .allTabls .content p {
+    margin-top: 10px;
+  }
+  .tabPower .allTabls .tab {
+    gap: 0;
+  }
+}
+
+@media (max-width: 380px) {
+    
+}
