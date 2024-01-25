@@ -12,13 +12,9 @@ const Main = () => {
     <div>
       <Header />
       <Banner />
-      <ScrollButton />
       <GameBid />
       <KnowAboutUs />
-
       <Footer />
-
-
     </div>
   )
 }

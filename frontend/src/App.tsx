@@ -21,6 +21,7 @@ import { BrowserRouter as Router, Routes, Route, Form } from "react-router-dom";
 import Home  from "./Home";
 import Main from "./Main";
 import Arena from "./Arena";
+import {About} from "./About";
 
 
 import { Network } from "./Network";
@@ -58,11 +59,8 @@ const App: FC = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/main" element={<Main />} />
                 <Route path="/arena" element={<Arena />} />
+                <Route path="/about" element={<About />} />
              </Routes>
-
-
-             {/* <Network /> */}
-
         </div>
     );
 };
