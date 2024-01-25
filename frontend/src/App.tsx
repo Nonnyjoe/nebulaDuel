@@ -1,3 +1,4 @@
+
 // Copyright 2022 Cartesi Pte. Ltd.
 
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -19,6 +20,7 @@ import WebFont from "webfontloader";
 import { BrowserRouter as Router, Routes, Route, Form } from "react-router-dom";
 import Home  from "./Home";
 import Main from "./Main";
+import Arena from "./Arena";
 
 
 import { Network } from "./Network";
@@ -55,6 +57,7 @@ const App: FC = () => {
              <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/main" element={<Main />} />
+                <Route path="/arena" element={<Arena />} />
              </Routes>
 
 
