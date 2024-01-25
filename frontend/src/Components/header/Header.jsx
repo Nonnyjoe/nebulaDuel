@@ -9,7 +9,8 @@ import { GiCrossedSwords } from "react-icons/gi";
 import { FaFacebookF, FaLinkedinIn, FaYoutube, FaBars } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { Network } from "../../Network";
-import { useConnectWallet, useSetChain } from "@web3-onboard/react";
+
+export let checkStatus;
 
 const Header = () => {
   const sideBar = useRef();
@@ -17,6 +18,7 @@ const Header = () => {
   const searchBox = useRef();
   const headerMain = useRef();
   const overLayBackgroundPhone = useRef();
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
 
   useEffect(() => {
     window.onscroll = function () {
@@ -55,7 +57,7 @@ const Header = () => {
   };
 
 
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
+checkStatus = isWalletConnected;
 
   const handleConnectWallet = () => {
     setIsWalletConnected(true);

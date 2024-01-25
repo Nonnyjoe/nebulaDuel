@@ -93,6 +93,7 @@
     }
     .mainBanner .glButtonFill {
       margin-top: 25px;
+      cursor: pointer;
     }
     .mainBanner .container {
       flex-direction: column;

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import Heading from "../heading/Heading";
 import "./aboutUs.css";
@@ -54,7 +55,7 @@ const KnowAboutUs = () => {
           <Heading description="KNOW ABOUT US" title="TOP RATED Gamers" />
           <div className="buttons flex justifyCenter">
             <button className="buyGreen">BUY HERO</button>
-            <button className="buyYellow">BUY NFTS</button>
+            <button className="buyYellow">BUY POINTS</button>
           </div>
 
           <div className="tabPower">
