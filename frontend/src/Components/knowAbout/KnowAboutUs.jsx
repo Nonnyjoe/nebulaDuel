@@ -192,7 +192,7 @@ const KnowAboutUs = () => {
                   <img src="assets/img/about_img05.jpg" alt="" />
                 </div>
                 <div className="content flex">
-                  <h3>HUMAN GAME</h3>
+                  <h3>0XBLACKADAM</h3>
                   <h4>RATE 50%</h4>
                   <p>
                     Lorem ipsum dolor sit amet, consteur adipiscing Duis
@@ -213,7 +213,7 @@ const KnowAboutUs = () => {
                   <img src="assets/img/about_img06.jpg" alt="" />
                 </div>
                 <div className="content flex">
-                  <h3>HUMAN GAME</h3>
+                  <h3>NONNYJOE</h3>
                   <h4>RATE 50%</h4>
                   <p>
                     Lorem ipsum dolor sit amet, consteur adipiscing Duis

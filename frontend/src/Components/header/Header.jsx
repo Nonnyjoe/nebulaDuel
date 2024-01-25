@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Header.css";
 import Nav from "../navigation/Nav";
 import { BiSearchAlt2 } from "react-icons/bi";
@@ -9,6 +9,7 @@ import { GiCrossedSwords } from "react-icons/gi";
 import { FaFacebookF, FaLinkedinIn, FaYoutube, FaBars } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { Network } from "../../Network";
+import { useConnectWallet, useSetChain } from "@web3-onboard/react";
 
 const Header = () => {
   const sideBar = useRef();
@@ -53,6 +54,19 @@ const Header = () => {
     searchBoxEle.classList.toggle("showSearchBox");
   };
 
+
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+
+  const handleConnectWallet = () => {
+    setIsWalletConnected(true);
+  };
+
+  const handleDisconnectWallet = () => {
+    setIsWalletConnected(false);
+  };
+
+
+
   return (
     <>
       <header ref={headerMain}>
@@ -68,8 +82,13 @@ const Header = () => {
             <span onClick={togleSearchBox} className="search flex alignCenter">
               <BiSearchAlt2 />
             </span>
-            <span className="glButtonBorder flex alignCenter" >
-              <TbEditCircle /> ~Connect Wallet {Network}
+            <span className="glButtonBorder flex alignCenter" onClick={handleConnectWallet} >
+              <TbEditCircle />
+              <Network
+              onConnectWallet={handleConnectWallet}
+              onDisconnectWallet={handleDisconnectWallet}
+              isConnected={isWalletConnected}
+            />
             </span>
             <div onClick={NavInPhone} className="phoneMenu flex alignCenter">
               <FaBars />
