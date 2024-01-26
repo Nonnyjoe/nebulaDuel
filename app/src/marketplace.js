@@ -5,7 +5,6 @@ const ethers =  require("ethers");
 
 let listedCharacters = [];
 
-
 function _erc20_deposit_parse (_payload) {
     try {
       let input_data = [];
@@ -86,6 +85,17 @@ function transferToken(userAddress, receiverAddress, amount) {
     throw new Error("Index not found");
 }
 
+// findindex of anon json Object
+function findIndex2(characterId, listedCharacters) {
+  for (let i = 0; i < listedCharacters.length; i++) {
+      // Use JSON.stringify for deep equality comparison
+      if (parseInt(listedCharacters[i]) === parseInt(characterId)) {
+          return i;
+      }
+  }
+  throw new Error("Index not found");
+}
+
 function assertNotListed(characterId) {
     for (let i = 0; i < listedCharacters.length; i++) {
         // Use JSON.stringify for deep equality comparison
@@ -95,8 +105,8 @@ function assertNotListed(characterId) {
     }
 }
 
-function listCharacter(userAddress, characterId, price) {
-    let characterId = gameCharacters.confirmOwnership(userAddress, characterId);
+function listCharacter(userAddress, _characterId, price) {
+    let characterId = gameCharacters.confirmOwnership(userAddress, _characterId);
     assertNotListed(characterId);
     let saleDetails = {characterId: characterId, price: price, seller: userAddress};
     listedCharacters.push(saleDetails);
@@ -105,7 +115,7 @@ function listCharacter(userAddress, characterId, price) {
 
 function modifyListPrice(userAddress, characterId, listPrice) {
     let characterIndex = findIndexInArray(characterId, listedCharacters);
-    let characterId = gameCharacters.confirmOwnership(userAddress, characterId);
+    let characterId2 = gameCharacters.confirmOwnership(userAddress, characterId);
     listedCharacters[characterIndex].price = listPrice;
     return listedCharacters[characterIndex];
 }
@@ -124,13 +134,14 @@ function BuyCharacter(characterId, buyerAddress) {
     }
     gameCharacters.getCharacterDetails(characterId).owner = buyerAddress;
     let seller = findPlayer(allPlayers, listedCharacters[characterIndex].seller);
-
+    
     buyer.characters.push(characterId);
-    let characterIndexInSeller = findIndexInArray(characterId, seller.characters);
+    let characterIndexInSeller = findIndex2(characterId, seller.characters);
     seller.characters.splice(characterIndexInSeller, 1);
     listedCharacters.splice(characterIndex, 1);
     return [seller, buyer];
 }
+
 
 
 module.exports = {BuyCharacter, modifyListPrice, listCharacter, transferToken, withdraw, erc20_deposit_process};
