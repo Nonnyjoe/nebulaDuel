@@ -1,22 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Banner.css";
-import { checkStatus } from "../header/Header";
-import { useState } from "react";
-import { Network } from "../../Network";
 import { useNavigate } from "react-router-dom";
+import { Network } from "../../Network";
+import { checkStatus } from "../header/Header";
 
 const Banner = () => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const navigate = useNavigate();
 
+  const handleConnectWallet = () => {
+    setIsWalletConnected(true);
+  };
 
-  const handlePlayNow = (e) => {
-    console.log("clicked ")
+  const handlePlayNow = async (e) => {
     e.preventDefault();
-    if (!checkStatus) {
-      //connectWa(llet();
-      console.log("not connected")
+
+    // Check if the wallet is connected
+    if (!isWalletConnected) {
+      // If not connected, prompt user to connect wallet
+      await handleConnectWallet();
     } else {
+      // If wallet is connected, navigate to the arena page
       navigate("/arena");
     }
   };
@@ -29,15 +33,25 @@ const Banner = () => {
             <h3>LIVE GAMING</h3>
             <h1 className="textGreenShadow">POKEMONING</h1>
             <h3>VIDEO GAMES ONLINE</h3>
-            <a className="glButtonFill" onClick={handlePlayNow}>
-              <span className="flex alignCenter ">PLAY NOW</span>
-            </a>
+            <span className="glButtonFill" onClick={handlePlayNow}>
+              <span className="flex alignCenter">PLAY NOW</span>
+            </span>
           </div>
           <div className="image">
-           <img src="assets/img/slider_img01.png" alt="" />
+            <img src="assets/img/slider_img01.png" alt="" />
           </div>
         </div>
+
+              {/* Render the wallet connection component */}
+      <Network
+        onConnectWallet={() => {
+          // Set the wallet connected state to true
+          setIsWalletConnected(true);
+        }}
+      />
       </section>
+
+
     </>
   );
 };

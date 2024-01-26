@@ -19,17 +19,17 @@ const Nav = ({ closeFunction }) => {
             </NavLink>
           </li>
           <li>
-            <NavLink onClick={closeFunction} to="/aboutus">ABOUT US</NavLink>
+            <NavLink onClick={closeFunction} to="/about">ABOUT US</NavLink>
           </li>
           <li>
             <a onClick={closeFunction} href="/">TOURNAMENT</a>
           </li>
-          <li>
+          {/* <li>
             <a onClick={closeFunction} href="/">PAGES</a>
           </li>
           <li>
             <a onClick={closeFunction} href="/">NEWS</a>
-          </li>
+          </li> */}
           <li>
             <NavLink onClick={closeFunction} to="/contactus">CONTACT US</NavLink>
           </li>

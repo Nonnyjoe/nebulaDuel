@@ -1,0 +1,129 @@
+.powerFulService {
+  background: var(--darkBlack);
+}
+
+.powerFulService .container {
+  column-gap: 40px;
+}
+.powerFulService .content .heading::after {
+  left: 0;
+  transform: translateX(0%);
+}
+
+.powerFulService .content .heading {
+  text-align: left;
+}
+
+.powerFulService .content .heading h6 {
+  width: 100%;
+  max-width: 520px;
+}
+
+.powerFulService .content {
+  width: 50%;
+}
+
+.powerFulService .image img {
+  width: 90%;
+  border-radius: 30px;
+  transition: 0.5s;
+}
+
+.powerFulService .image {
+  width: 50%;
+  overflow: hidden;
+  position: relative;
+  transition: 0.5s;
+}
+
+.powerFulService .arrowPower a {
+  font-size: 5rem;
+}
+.powerFulService .arrowPower {
+  position: absolute;
+  background: var(--yellow);
+  width: 200px;
+  height: 200px;
+  bottom: 0;
+  right: 0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transform: rotate(35deg);
+}
+.powerFulService .image .arrowPower:hover {
+  transform: rotate(0);
+}
+
+.powerFulService .content .cards {
+  margin-top: 40px;
+}
+
+.powerFulService .content .cards .card {
+  width: 50%;
+  padding: 20px 20px;
+  cursor: pointer;
+}
+.powerFulService .content .cards .card svg {
+  color: var(--commonGreen);
+  font-size: 3rem;
+}
+
+.powerFulService .content .cards .card p,
+.powerFulService .content .cards .card h4 {
+  margin-top: 10px;
+}
+
+@media (max-width: 1025px) {
+  .powerFulService .image img {
+    width: 100%;
+  }
+  .powerFulService .image {
+    width: 40%;
+    height: 100%;
+  }
+  .powerFulService .content {
+    width: 60%;
+  }
+  .powerFulService .arrowPower a {
+    font-size: 3rem;
+  }
+  .powerFulService .arrowPower {
+    width: 100px;
+    height: 100px;
+  }
+}
+@media (max-width: 770px) {
+  .powerFulService .container {
+    flex-direction: column;
+    align-items: center;
+  }
+  .powerFulService .content .cards .card {
+    width: 100%;
+  }
+  .powerFulService .image {
+    width: 70%;
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 551px) {
+  .powerFulService .content{
+    width: 100%;
+  }
+  .powerFulService .content .cards .card{
+    padding: 10px 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .powerFulService .content{
+    width: 100%;
+  }
+  .powerFulService .image {
+    width: 100%;
+    margin-top: 30px;
+  }
+}
