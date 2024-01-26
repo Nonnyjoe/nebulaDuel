@@ -232,4 +232,4 @@ function getWarriorsClone(warrioursId) {
     return warriorsData;
 }
 
-module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails, getWarriorsClone};
+module.exports = {allCharacters, totalCharacters, Character, createTeam, resolveCharacters, selectFightters, getCharacters, getCharacterDetails, getWarriorsClone, confirmOwnership};

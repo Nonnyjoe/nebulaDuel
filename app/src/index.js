@@ -6,7 +6,7 @@ const playersProfile = require("./players_profile");
 const gameCharacters = require("./game_characters");
 const battleChallenge = require("./battle_challenge");
 const marketplace = require("./marketplace");
-
+var erc20abi = require("../utils/contract.json");
 // const { allPlayers, createPlayer, Player, totalPlayers } = playersProfile;
 // const { allCharacters, totalCharacters, Character, createTeam, resolveCharacters} = gameCharacters;
 
@@ -304,6 +304,10 @@ async function handle_advance(data) {
     //{"method": "withdraw", amount: 1000}
     else if (JSONpayload.method === "withdraw") {
       console.log("withdrawing....");
+      if (DAPP_ADDRESS === "null") {
+        console.log("Dapp address is not set");
+        return "reject";
+      }
       let withdraw = marketplace.withdraw(data.metadata.msg_sender, parseInt(JSONpayload.amount));
       console.log("withdraw is: " + JSON.stringify(withdraw));
       const hexresult = stringToHex(JSON.stringify(withdraw));
@@ -335,50 +339,9 @@ async function handle_advance(data) {
       });
       console.log("starting a voucher");
     }
-    
-    //{"method":"decompress","id":"000c7899-96bb-498b-8820-691d5e04ba33"}
-    else if (JSONpayload.method === "hash") {
-      console.log("hashing....");
-      const hash = keccak256(toUtf8Bytes(JSONpayload.data));
-      console.log("hash is:", hash);
 
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hash }),
-      });
 
-    //{"method":"mint"}
-    // } else if (JSONpayload.method === "faucet") {
-    //   console.log("sending erc20 tokens.....");
-    //   if (DAPP_ADDRESS === "null") {
-    //     console.log("Dapp address is not set");
-    //     return "reject";
-    //   }
-    //   // console.log("abi is", erc20abi);
-    //   const call = viem.encodeFunctionData({
-    //     abi: erc20abi,
-    //     functionName: "transfer",
-    //     args: [data.metadata.msg_sender, BigInt(JSONpayload.value)],
-    //   });
-    //   let voucher = {
-    //     destination: erc20_contract_address, // dapp Address
-    //     payload: call,
-    //   };
-    //   console.log(voucher);
-    //   advance_req = await fetch(rollup_server + "/voucher", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(voucher),
-    //   });
-    //   console.log("starting a voucher");
-    //{"method":"faucet","value":"150000"}
-
-    } else {
+    else {
       console.log("method undefined");
       const result = JSON.stringify({
         error: String("method undefined:" + JSONpayload.method),
