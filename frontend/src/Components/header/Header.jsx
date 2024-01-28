@@ -95,19 +95,19 @@ checkStatus = isWalletConnected;
             <div onClick={NavInPhone} className="phoneMenu flex alignCenter">
               <FaBars />
             </div>
-            <div onClick={() => togleSideBar()} className="bar">
+            {/* <div onClick={() => togleSideBar()} className="bar">
               <span></span>
               <span></span>
               <span></span>
-            </div>
+            </div> */}
           </div>
         </div>
-        <div
+        {/* <div
           onClick={() => togleSideBar()}
           ref={sideBarFull}
           className="wholeScreen"
-        ></div>
-        <div ref={sideBar} className="headerSideBar">
+        ></div> */}
+        {/* <div ref={sideBar} className="headerSideBar">
           <div className="logo">
             <span onClick={() => togleSideBar()} className="swordClose">
               <GiCrossedSwords />
@@ -169,7 +169,7 @@ checkStatus = isWalletConnected;
               COPYRIGHT © 2023 - BY <span>Nebula Duel</span>
             </p>
           </div>
-        </div>
+        </div> */}
       </header>
       <div className="searchBox" ref={searchBox}>
         <div className="container flex justifyCenter alignCenter">

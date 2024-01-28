@@ -1,9 +1,16 @@
-
 import React from 'react'
+
+import ProfileForm from '../src/Components/profileForm/Profileform'
+
+
 
 const Profile = () => {
   return (
-    <div>Profile</div>
+    <div>
+        <ProfileForm />
+
+
+    </div>
   )
 }
 

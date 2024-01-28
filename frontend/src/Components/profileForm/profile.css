@@ -1,0 +1,118 @@
+.contactUs{
+    background: var(--darkBlack);
+}
+.contactUs .container{
+    gap: 30px;
+}
+.contactUs .content p{
+    margin-top: 5px;
+}
+.contactUs .content h6{
+    color: var(--white);
+    width: 100%;
+    max-width: 500px;
+}
+.contactUs .content{
+    width: 50%;
+    /* border: 1px solid red; */
+}
+.contactUs .content h4{
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.contactUs .content h4 .green{
+    color: var(--commonGreen);
+}
+.contactUs .content h4 .text{
+    margin-left: 10px;
+}
+.contactUs .content p a{
+    color: var(--grayText);
+}
+.contactUs .content p a:hover{
+    color: var(--commonGreen);
+}
+.contactUs .form{
+    /* border: 1px solid red; */
+    width: 50%;
+    padding: 20px;
+}
+.contactUs .form form .two{
+    width: 100%;
+    gap: 20px;
+}
+.contactUs .form form textarea::placeholder,
+.contactUs .form form .two input::placeholder{
+    color: var(--grayText);
+}
+.contactUs .form form .two input{
+    width: 50%;
+    border: 1px solid #262f39;
+    background: transparent;
+    color: var(--white);
+    padding: 15px 25px;
+    outline: none;
+    font-size: 1.1rem;
+    /* clip-path: polygon(100% 0, 100% 60%, 95% 100%, 0 100%, 0 0); */
+}
+.contactUs .form form textarea{
+    width: 100%;
+    border: 1px solid #262f39;
+    background: transparent;
+    color: var(--white);
+    padding: 15px 25px;
+    outline: none;
+    /* clip-path: polygon(100% 0, 100% 60%, 95% 100%, 0 100%, 0 0); */
+    margin-top: 20px;
+    font-size: 1.1rem;
+}
+.contactUs .form form .submitButton:hover{
+    background: var(--yellow);
+}
+.contactUs .form form .submitButton{
+    clip-path: polygon(100% 0, 100% 65%, 89% 100%, 0 100%, 0 0);
+    background: var(--commonGreen);
+    color: var(--darkBlack);
+    border: none;
+    padding: 14px 30px;
+    outline: none;
+    transition: .5s;
+    margin-top: 20px;
+    font-weight: 900;
+}
+
+@media (max-width: 1025px) {
+    .contactUs .form form textarea,
+    .contactUs .form form .two input{
+        font-size: 1rem;
+    }
+}
+@media (max-width: 768px) {
+    .contactUs .form{
+        padding: 0;
+    }
+    .contactUs .form form textarea,
+    .contactUs .form form .two input{
+        padding: 10px 15px;
+    }
+}
+@media (max-width: 551px) {
+    .contactUs .container{
+        gap: 0;
+        flex-direction: column;
+    }
+    .contactUs .container >div{
+        width: 100%;
+    }
+    .contactUs .form{
+        margin-top: 20px;
+    }
+    .contactUs .form form .two input{
+        width: 100%;
+        margin-top: 10px;
+    }
+    .contactUs .form form .two{
+        gap: 0px;
+        flex-direction: column;
+    }
+}

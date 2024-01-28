@@ -34,6 +34,7 @@ const Home: FC = () => {
     return (
         <div>
 
+            <p>Cartesi Rollups Test DApp</p>
 
              {/* <Network /> */}
             <GraphQLProvider>

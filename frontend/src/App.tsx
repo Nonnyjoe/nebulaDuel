@@ -22,7 +22,7 @@ import Home  from "./Home";
 import Main from "./Main";
 import Arena from "./Arena";
 import {About} from "./About";
-
+import Profile from "./Profile";
 
 import { Network } from "./Network";
 import configFile from "./config.json";
@@ -57,9 +57,11 @@ const App: FC = () => {
         <div>
              <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/main" element={<Main />} />
                 <Route path="/arena" element={<Arena />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/profile" element={<Profile />} />
              </Routes>
         </div>
     );
