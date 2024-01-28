@@ -17,15 +17,31 @@ import injectedModule from "@web3-onboard/injected-wallets";
 import { init } from "@web3-onboard/react";
 import { useState, useEffect } from "react";
 import WebFont from "webfontloader";
-import { BrowserRouter as Router, Routes, Route, Form } from "react-router-dom";
+// import { BrowserRouter as Router, Routes, Route, Form } from "react-router-dom";
+import {  createBrowserRouter, Route, createRoutesFromElements, RouterProvider } from "react-router-dom";
 import Home  from "./Home";
 import Main from "./Main";
 import Arena from "./Arena";
 import {About} from "./About";
 import Profile from "./Profile";
+import CardDetails from "./Components/characters/CardDetails";
+
 
 import { Network } from "./Network";
 import configFile from "./config.json";
+
+const router = createBrowserRouter(createRoutesFromElements(
+  <Route>
+    <Route path="/" element={<Home />} />
+    <Route path="/home" element={<Home />} />
+    <Route path="/main" element={<Main />} />
+    <Route path="/arena" element={<Arena />} />
+    <Route path="/about" element={<About />} />
+    <Route path="/profile" element={<Profile />} />
+    <Route path='/:profileId' element={<CardDetails />} /> 
+  </Route>
+))
+
 
 const config: any = configFile;
 
@@ -43,6 +59,7 @@ init({
     },
 });
 
+
 const App: FC = () => {
     const [dappAddress, setDappAddress] = useState<string>("0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C");
     useEffect(() => {
@@ -54,16 +71,9 @@ const App: FC = () => {
       }, []);
 
     return (
-        <div>
-             <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/main" element={<Main />} />
-                <Route path="/arena" element={<Arena />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/profile" element={<Profile />} />
-             </Routes>
-        </div>
+      <div className="App">
+        <RouterProvider router={router} />
+     </div>
     );
 };
 

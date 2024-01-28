@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #101018;
+  font-family: "Space Grotesk", sans-serif;
+  color: white;
+}
+
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  text-align: center;
+  font-size: 18px;
+  background: #fff;
+  display: flex;
+  width: 22%;
+  border-radius: 15px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* .swiper-slide img {
+  border-radius: 15px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+} */
+
+.card {
+  border-radius: 15px;
+  width: 100%;
+  height: 50vh;
+  display: flex;
+  background-color: #57575a;
+  background-blend-mode: overlay;
+  border: 4px solid grey;
+  color: white;
+  padding: 1em;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+
+.overlay {
+  background-image: linear-gradient(rgb(92, 255, 47) 20%, rgb(92, 255, 47) 80%);
+  transition: .5s ease;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  text-align: center;
+  width: 100%;
+  height: 50vh;
+}
+
+.player-bio, .gameCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-bio {
+  width: 80%;
+  margin: 3em auto;
+}
+
+.game-container {
+  width: 60%;
+}
+
+.gameCard {
+  background-color: #57575acf;
+  padding: 2em;
+  width: 70%;
+  font-size: 1.2rem;
+  border-radius: 13px;
+}
+
+.player-bio img {
+  width: 35%;
+}
+
+.card:hover .overlay {
+  opacity: 0.5;
+}
+
+.card:hover,
+.card:focus {
+  border: 5px solid rgb(92, 255, 47);
+  background-blend-mode: overlay;
+}
+
+.greenText, .gameCard h3 {
+  color: rgb(92, 255, 47);
+}
+
+.greenText {
+  margin-top: 0;
+}
+
+.score {
+  align-self: baseline;
+}
+
+.icon {
+  font-size: 1.2rem;
+  margin-right: .5em;
+  vertical-align: middle;
+}
+
+.name {
+  margin: auto;
+  margin-bottom: 0;
+  font-size: 2rem;
+}
+
+.card-container {
+  width: 90%;
+  margin: 2em auto;
+}
+
+.swiper-pagination-bullet {
+  padding: .5em;
+  transition: transform 0.3s;
+}
+
+.swiper-pagination-bullet {
+  background-color: #fff !important;
+  opacity: 0.9;
+}
+
+.swiper-pagination-bullet-active {
+  background-color: rgb(92, 255, 47) !important;
+}
+
+@media (max-width: 600px) {
+  .player-bio, .gameCard {
+    flex-direction: column;
+  }
+
+  .player-bio {
+    width: 90%;
+  }
+
+  .gameCard, .game-container {
+    width: 100%;
+  }
+
+  .player-bio img {
+    order: 1;
+    width: 100%;
+    margin-bottom: 2em;
+  }
+
+  .game-container {
+    order: 2;
+  }
+
+  .health {
+    align-self: baseline;
+  }
+}

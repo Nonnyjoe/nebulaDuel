@@ -16,7 +16,7 @@ const Banner = () => {
     e.preventDefault();
 
     // Check if the wallet is connected
-    if (!isWalletConnected) {
+    if (isWalletConnected === false) {
       // If not connected, prompt user to connect wallet
       await handleConnectWallet();
     } else {

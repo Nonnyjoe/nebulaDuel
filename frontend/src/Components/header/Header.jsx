@@ -3,10 +3,11 @@ import "./Header.css";
 import Nav from "../navigation/Nav";
 import { BiSearchAlt2 } from "react-icons/bi";
 import { TbEditCircle } from "react-icons/tb";
-import { RiSendPlane2Fill } from "react-icons/ri";
-import { BsTwitter } from "react-icons/bs";
+// import { RiSendPlane2Fill } from "react-icons/ri";
+// import { BsTwitter } from "react-icons/bs";
+// FaFacebookF, FaLinkedinIn, FaYoutube,
 import { GiCrossedSwords } from "react-icons/gi";
-import { FaFacebookF, FaLinkedinIn, FaYoutube, FaBars } from "react-icons/fa";
+import { FaBars } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { Network } from "../../Network";
 

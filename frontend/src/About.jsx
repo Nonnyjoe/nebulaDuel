@@ -11,9 +11,7 @@ export const About = () => {
     <CommonPageBanner title="About Us" img="assets/img/breadcrumb_img01.png" />
     <WhoWeAre />
     <PowerFulSer />
-    <Footer />
-        
-
-    </div>
+    <Footer />   
+   </div>
   )
 }

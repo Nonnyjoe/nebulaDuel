@@ -79,7 +79,7 @@ interface NetworkProps {
 
 export const Network: FC<NetworkProps> = ({ onConnectWallet }) => {
   const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
-  const [{ chains, connectedChain, settingChain }, setChain] = useSetChain();
+  // const [{ chains, connectedChain, settingChain }, setChain] = useSetChain();
   const [isConnected, setIsConnected] = useState(false);
 
   const handleConnectWallet = async () => {

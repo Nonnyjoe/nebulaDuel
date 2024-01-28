@@ -1,5 +1,5 @@
 import React from "react";
-import { BsFillCaretRightFill, BsFillCaretLeftFill } from "react-icons/bs";
+// import { BsFillCaretRightFill, BsFillCaretLeftFill } from "react-icons/bs";
 import "./profile.css";
 import TeamCard from "../Cards/TeamCard";
 
