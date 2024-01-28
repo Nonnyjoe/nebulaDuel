@@ -73,22 +73,22 @@ class Character {
     }
 }
 
-// Pikachu..
-const Pikachu = new Character("Pikachu", 80, 8, 15, 10, "Thunderbolt", 270);
-// Knight..
-const Charizard = new Character("Charizard", 95, 10, 13, 7, "Flamethrower", 390);
-// Bulbasaur..
-const Bulbasaur = new Character("Bulbasaur", 60, 5, 10, 8, "Vine Whip", 250);
-// Squirtle..
-const Squirtle = new Character("Squirtle", 90, 10, 16, 9, "Water Gun", 380);
-// Jigglypuff
-const Jigglypuff = new Character("Jigglypuff", 75, 7, 13, 9, "Sleep Song", 300);
-// Mewtwo..
-const Mewtwo = new Character("Mewtwo", 90, 12, 16, 6, "Psychic", 380);
-// Eevee..
-const Eevee = new Character("Eevee", 100, 11, 15, 7, "Adaptability", 410);
-// Gengar..
-const Gengar = new Character("Gengar", 100, 12, 15, 6, "Shadow Ball", 420);
+// Godzilla..
+const Godzilla = new Character("Godzilla", 80, 8, 15, 10, "Thunderbolt", 270);
+// Dragon..
+const Dragon = new Character("Dragon", 95, 10, 13, 7, "Flamethrower", 390);
+// Komodo..
+const Komodo = new Character("Komodo", 60, 5, 10, 8, "Vine Whip", 250);
+// IceBeever..
+const IceBeever = new Character("IceBeever", 90, 10, 16, 9, "Water Gun", 380);
+// KomodoDragon
+const KomodoDragon = new Character("KomodoDragon", 75, 7, 13, 9, "Sleep Song", 300);
+// Fox..
+const Fox = new Character("Fox", 90, 12, 16, 6, "Psychic", 380);
+// Hound..
+const Hound = new Character("Hound", 100, 11, 15, 7, "Adaptability", 410);
+// Rhyno..
+const Rhyno = new Character("Rhyno", 100, 12, 15, 6, "Shadow Ball", 420);
 
 
 // Function to create a team
@@ -204,14 +204,14 @@ function getCharacterDetails( characterId ) {
 // such that the user passes in an ID the n using this function we get the character a user wishes to crate.
 function resolveCharacters( id ) {
     switch (id) {
-        case 1 : return Pikachu;
-        case 2 : return Charizard;
-        case 3 : return Bulbasaur;
-        case 4 : return Squirtle;
-        case 5 : return Jigglypuff;
-        case 6 : return Mewtwo;
-        case 7 : return Eevee;
-        case 8 : return Gengar;
+        case 1 : return Godzilla;
+        case 2 : return Dragon;
+        case 3 : return Komodo;
+        case 4 : return IceBeever;
+        case 5 : return KomodoDragon;
+        case 6 : return Fox;
+        case 7 : return Hound;
+        case 8 : return Rhyno;
         default: throw new Error(`Invalid character Id: "${id}" received`);
     }
 }
