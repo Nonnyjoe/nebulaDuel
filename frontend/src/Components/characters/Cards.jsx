@@ -28,7 +28,7 @@ const Cards = () => {
 
   return (
     <div className='card-container'>   
-        <p>Select Your Characters</p>
+        <p>All Your Characters</p>
         <br />
         <br />
         <Swiper
@@ -42,7 +42,7 @@ const Cards = () => {
         className="mySwiper">
           {data.map(info => (
             <SwiperSlide key={info.id}>
-            <Link key={info.id} to={`/${info.id}`}>
+            <Link key={info.id} to={`/${info.id}`} className='linkStyle'>
             <div style={{ backgroundImage: `url(${info.img})` }} className='card'>
               <div className='overlay'></div>
             <h3 className='name'>{info.name}</h3>
