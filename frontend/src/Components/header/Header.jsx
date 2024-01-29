@@ -21,23 +21,23 @@ const Header = () => {
   const overLayBackgroundPhone = useRef();
   const [isWalletConnected, setIsWalletConnected] = useState(false);
 
-  useEffect(() => {
-    window.onscroll = function () {
-      scrollFunction();
-    };
-  }, []);
+  // useEffect(() => {
+  //   window.onscroll = function () {
+  //     scrollFunction();
+  //   };
+  // }, []);
 
-  function scrollFunction() {
-    const mainHeader = headerMain.current;
-    if (
-      document.body.scrollTop > 50 ||
-      document.documentElement.scrollTop > 50
-    ) {
-      mainHeader.classList.add("scrollHeader");
-    } else {
-      mainHeader.classList.remove("scrollHeader");
-    }
-  }
+  // function scrollFunction() {
+  //   const mainHeader = headerMain.current;
+  //   if (
+  //     document.body.scrollTop > 50 ||
+  //     document.documentElement.scrollTop > 50
+  //   ) {
+  //     mainHeader.classList.add("scrollHeader");
+  //   } else {
+  //     mainHeader.classList.remove("scrollHeader");
+  //   }
+  // }
 
   const NavInPhone = () => {
     const navBackGround = overLayBackgroundPhone.current;

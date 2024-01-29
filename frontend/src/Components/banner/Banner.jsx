@@ -38,7 +38,7 @@ const Banner = () => {
             </span>
           </div>
           <div className="image">
-            <img src="assets/img/slider_img01.png" alt="" />
+            <img src="assets/img/Dragon.png" alt="" />
           </div>
         </div>
 

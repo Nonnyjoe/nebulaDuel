@@ -28,6 +28,9 @@ const Cards = () => {
 
   return (
     <div className='card-container'>   
+        <p>Select Your Characters</p>
+        <br />
+        <br />
         <Swiper
         slidesPerView={4}
         spaceBetween={30}
@@ -47,6 +50,10 @@ const Cards = () => {
         </Link>
         </SwiperSlide>
           ))}
+          <br />
+          <br />
+          <br />
+          <br />
             </Swiper> 
     </div>
   )

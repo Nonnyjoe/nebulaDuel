@@ -32,8 +32,9 @@ import configFile from "./config.json";
 
 const router = createBrowserRouter(createRoutesFromElements(
   <Route>
-    <Route path="/" element={<Home />} />
-    <Route path="/home" element={<Home />} />
+    {/* <Route path="/" element={<Home />} /> */}
+    {/* <Route path="/home" element={<Home />} /> */}
+    <Route path="/" element={<Main />} />
     <Route path="/main" element={<Main />} />
     <Route path="/arena" element={<Arena />} />
     <Route path="/about" element={<About />} />

@@ -26,7 +26,7 @@ const CardDetails = () => {
     <div>
         <section className='player-bio'>
             <div className='game-container'>
-            <h2 className='name'>Player: {cardDetails.name}</h2>
+            <h2 className='name'>Character: {cardDetails.name}</h2>
             <p className='greenText'>{cardDetails.superPower}</p>       
             <div className='gameCard'>
             <div className='health'>
