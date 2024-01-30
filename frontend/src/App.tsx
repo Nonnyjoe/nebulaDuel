@@ -21,7 +21,7 @@ import WebFont from "webfontloader";
 import {  createBrowserRouter, Route, createRoutesFromElements, RouterProvider } from "react-router-dom";
 import Home  from "./Home";
 import Main from "./Main";
-import Arena from "./Arena";
+import Arena from "./Components/Arena/Arena";
 import {About} from "./About";
 import Profile from "./Profile";
 import CardDetails from "./Components/characters/CardDetails";
