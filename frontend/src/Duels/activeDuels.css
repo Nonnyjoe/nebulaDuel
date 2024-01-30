@@ -1,0 +1,43 @@
+
+.duel-box {
+  width: 20%;
+  /* float: left; */
+  background: var(--darkBlack);
+}
+
+.duelCard {
+  transition: 1s;
+  /* width: 50%;
+  max-width: 450px; */
+  /* display: flex; */
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 20px 20px;
+  gap: 15px;
+  margin: 0 20px;
+  background: linear-gradient(0deg, #0c0e12 0%, rgba(31, 41, 53, 0.685) 100%);
+}
+
+.container-duel {
+  display: flex;
+  /* flex-wrap: nowrap; */
+}
+
+.duelCard:hover {
+  border: 1px solid var(--commonGreen);
+}
+
+.duel-img {
+  width: 150px;
+  /* margin-; */
+}
+
+.duel-img {
+  border-radius: 10px;
+  width: 100%;
+}
+
+.duel-stake {
+  position: relative;
+
+}

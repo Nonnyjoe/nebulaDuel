@@ -5,6 +5,7 @@ import GameBid from './Components/gameBid/GameBid'
 import ScrollButton from './Components/ScrollButton'
 import Footer from './Components/footer/Footer'
 import KnowAboutUs from './Components/knowAbout/KnowAboutUs'
+import ActiveDuels from './Duels/ActiveDuels'
 
 
 const Main = () => {
@@ -13,6 +14,7 @@ const Main = () => {
       <Header />
       <Banner />
       <GameBid />
+      <ActiveDuels />
       <KnowAboutUs />
       <Footer />
     </div>
