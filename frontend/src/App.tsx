@@ -25,6 +25,7 @@ import Arena from "./Components/Arena/Arena";
 import {About} from "./About";
 import Profile from "./Profile";
 import CardDetails from "./Components/characters/CardDetails";
+import ActiveDuels from "./Duels/ActiveDuels";
 
 
 
@@ -32,6 +33,7 @@ import { Network } from "./Network";
 import configFile from "./config.json";
 import SelectStrategy from "./Components/selectStrategy/selectStrategy";
 import SelectWarriors from "./Components/selectWarriors/selectWarriors";
+import Duels from "./Duels/duels";
 
 const router = createBrowserRouter(createRoutesFromElements(
   <Route>
@@ -45,6 +47,9 @@ const router = createBrowserRouter(createRoutesFromElements(
     <Route path='/:profileId' element={<CardDetails />} /> 
     <Route path='/selectStrategy' element={<SelectStrategy />} /> 
     <Route path='/selectWarriors' element={<SelectWarriors />} /> 
+    <Route path="/duels" element={<ActiveDuels />}/>
+    {/* <Route path="/duels" element={<ActiveDuels />}/>
+    <Route path="duels/:duelId" element={<Duels/>}/> */}
     
   </Route>
 ))

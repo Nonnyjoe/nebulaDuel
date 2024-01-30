@@ -14,7 +14,7 @@ const Main = () => {
       <Header />
       <Banner />
       <GameBid />
-      <ActiveDuels />
+      {/* <ActiveDuels /> */}
       <KnowAboutUs />
       <Footer />
     </div>

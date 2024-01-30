@@ -1,6 +1,7 @@
 import React from "react";
 import data from "./data";
 import "./activeDuels.css";
+import { Link } from "react-router-dom";
 
 const ActiveDuels = () => {
   return (
@@ -9,6 +10,7 @@ const ActiveDuels = () => {
         <h2>active duels</h2>
         <main className="card-container">
         {data.map((data) => (
+          <Link to={`/duels/${data.duelId}`} key={data.duelId}>
           <div className="duelCard">
             <div className="img-wrapper">
             <img className="duel-img" src={data.avatar} alt="clone" />
@@ -26,6 +28,7 @@ const ActiveDuels = () => {
             <p className="duel-creator">{data.duelCreator}</p>
             </div>
           </div>
+        </Link>
         ))}
         </main>
         
