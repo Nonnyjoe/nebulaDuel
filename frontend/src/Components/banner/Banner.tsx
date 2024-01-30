@@ -18,6 +18,8 @@ const Banner = () => {
     } else {
       // If wallet is connected, open the modal
       setIsModalOpen(true);
+      console.log("in sync");
+      
     }
   };
 
