@@ -21,7 +21,7 @@ const ActiveDuels = () => {
             </div>
             <div className="text-wrapper">
               <h4>Stake</h4>
-            <p className="duel-stake">{data.stake}</p>
+            <p className="duel-stake">${data.stake}</p>
             </div>
             <div className="text-wrapper">
               <h4>Creator</h4>
