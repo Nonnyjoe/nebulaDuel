@@ -23,7 +23,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
   const handleJoinDuel = async (e: any) => {
     e.preventDefault();
       // If wallet is connected, navigate to the arena page
-    navigate("/arena");
+    navigate("/duels");
   };
 
   if (!isOpen) {
