@@ -49,7 +49,7 @@ const Home: FC = () => {
                 <h2>Inspect</h2>
                 <Inspect />
                 <h2>Input</h2>
-                <Input dappAddress={dappAddress} />
+                <Input dappAddress={dappAddress}  input={"hello"} hexInput={false}/>
                 <h2>Reports</h2>
                 <Reports />
                 <h2>Notices</h2>

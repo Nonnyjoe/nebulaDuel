@@ -26,6 +26,7 @@ import {About} from "./About";
 import Profile from "./Profile";
 import CardDetails from "./Components/characters/CardDetails";
 import ActiveDuels from "./Duels/ActiveDuels";
+import { GraphQLProvider } from "./GraphQL";
 
 
 
