@@ -55,10 +55,7 @@
     margin-bottom: 2rem;
 }
 
-.selected-character {
-    display: flex;
-    gap: 0.5rem;
-}
+
 
 .character_list {
     margin-top: 1rem;
@@ -81,5 +78,7 @@
     background-color: rgba(255, 255, 255, 0.1);
     padding: 0.5rem;
     border-radius: 10px;
+    display: flex;
+    gap: 0.5rem;
 }
   

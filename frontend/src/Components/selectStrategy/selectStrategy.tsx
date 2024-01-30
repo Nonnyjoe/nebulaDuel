@@ -69,7 +69,6 @@ const navigate = useNavigate();
       <div
         key={character.id}
         className={`character ${isSelected ? "selected" : ""}`}
-        onClick={() => toggleCharacterSelection(character)}
       >
         <img src={character.img} alt={character.name} className="img" />
         <p className="characterName">{character.name}</p>
