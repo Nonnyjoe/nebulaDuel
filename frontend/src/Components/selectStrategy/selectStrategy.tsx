@@ -116,16 +116,16 @@ const navigate = useNavigate();
     );
   };
 
-  const handleCreateDuel = (e: any) => {
+  const handleSelectStrategy = (e: any) => {
     e.preventDefault();
-    if (selectedCharacters.length < 3) {
-        alert("Please select minimum of 3 characters");
+    if (selectedStrategy.length < 1) {
+        alert("Please select at least 1 strategy");
     }
     else {
       // submit transaction for signing.
-      console.log(selectedCharacters);
-      console.log("Creating Duel......");
-      navigate("/SelectStrategy");
+      console.log(selectedStrategy);
+      console.log("Registering Strategy......");
+      navigate("/Arena");
     }
   } 
 
@@ -150,7 +150,7 @@ const navigate = useNavigate();
           <div className="strategy_list">
             {strategy.map(renderStrategy)}
           </div>
-          <button className="Create_Duel" onClick={handleCreateDuel}>Set Strategy</button>
+          <button className="Create_Duel" onClick={handleSelectStrategy}>Set Strategy</button>
       </div>
     </div>
   );
