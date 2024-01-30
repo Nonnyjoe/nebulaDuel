@@ -1,15 +1,22 @@
 .mainBanner {
-  padding: 100px 0 0px 0;
+  padding: 10rem 0 0px 0;
   width: 100%;
   float: left;
   background: url("../../../public/assets/img/slider_bg.jpg");
   position: relative;
   z-index: -1;
 }
+
 .mainBanner .content {
+  margin-left: 2rem;
   width: 50%;
   margin-top: -100px;
 }
+
+.mainBanner .content .live {
+  margin-bottom: 2rem;
+}
+
 .mainBanner .content h3:first-child {
   background: linear-gradient(
     to right,
@@ -53,7 +60,7 @@
 }
 
 .mainBanner .glButtonFill {
-  margin-top: 50px;
+  margin-top: 1rem;
 }
 .mainBanner::after {
   content: "";
@@ -99,6 +106,7 @@
     flex-direction: column;
     justify-content: center;
   }
+
 
   .mainBanner .image img {
     width: 100%;

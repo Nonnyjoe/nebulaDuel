@@ -27,8 +27,11 @@ import Profile from "./Profile";
 import CardDetails from "./Components/characters/CardDetails";
 
 
+
 import { Network } from "./Network";
 import configFile from "./config.json";
+import SelectStrategy from "./Components/selectStrategy/selectStrategy";
+import SelectWarriors from "./Components/selectWarriors/selectWarriors";
 
 const router = createBrowserRouter(createRoutesFromElements(
   <Route>
@@ -40,6 +43,9 @@ const router = createBrowserRouter(createRoutesFromElements(
     <Route path="/about" element={<About />} />
     <Route path="/profile" element={<Profile />} />
     <Route path='/:profileId' element={<CardDetails />} /> 
+    <Route path='/selectStrategy' element={<SelectStrategy />} /> 
+    <Route path='/selectWarriors' element={<SelectWarriors />} /> 
+    
   </Route>
 ))
 

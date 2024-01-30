@@ -2,7 +2,9 @@ import React from 'react'
 
 const Arena = () => {
   return (
-    <div>Arena</div>
+    <div>
+      <p> Arena </p>
+    </div>
   )
 }
 

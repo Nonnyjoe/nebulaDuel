@@ -3,52 +3,58 @@ import "./Banner.css";
 import { useNavigate } from "react-router-dom";
 import { Network } from "../../Network";
 import { checkStatus } from "../header/Header";
+import Modal from './Modal';
+// import './Modal.css'; // Include your modal CSS file for styling
 
 const Banner = () => {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = async() => {
+    if (isWalletConnected === false) {
+      // If not connected, prompt user to connect wallet
+      await handleConnectWallet();
+    } else {
+      // If wallet is connected, open the modal
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   const handleConnectWallet = () => {
     setIsWalletConnected(true);
   };
 
-  const handlePlayNow = async (e) => {
+
+  const handleCreateDuel = async (e: any) => {
     e.preventDefault();
 
     // Check if the wallet is connected
-    if (isWalletConnected === false) {
-      // If not connected, prompt user to connect wallet
-      await handleConnectWallet();
-    } else {
-      // If wallet is connected, navigate to the arena page
-      navigate("/arena");
-    }
+
   };
+
 
   return (
     <>
       <section className="mainBanner">
         <div className="container flex alignCenter">
           <div className="content">
-            <h3>LIVE GAMING</h3>
+            <h3 className="live">LIVE GAMING</h3>
             <h1 className="textGreenShadow">POKEMONING</h1>
             <h3>VIDEO GAMES ONLINE</h3>
-            <span className="glButtonFill" onClick={handlePlayNow}>
+            <span className="glButtonFill" onClick={handleOpenModal}>
               <span className="flex alignCenter">PLAY NOW</span>
             </span>
+            <Modal isOpen={isModalOpen} onClose={handleCloseModal} />
           </div>
           <div className="image">
             <img src="assets/img/Dragon.png" alt="" />
           </div>
         </div>
-
-              {/* Render the wallet connection component */}
-      <Network
-        onConnectWallet={() => {
-          // Set the wallet connected state to true
-          setIsWalletConnected(true);
-        }}
-      />
       </section>
 
 
@@ -57,3 +63,4 @@ const Banner = () => {
 };
 
 export default Banner;
+// export default Modal;
