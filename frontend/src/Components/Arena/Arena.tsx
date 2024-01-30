@@ -9,7 +9,7 @@ const Arena: React.FC = () => {
         <h3>Your Characters</h3>
           <div className="character_list">
             {characters.map((character) => (
-              <div key={character.id} className="selected-character c_character">
+              <div key={character.id} className="c_character">
                 <div className="C_image_container">
                   <img src={character.img} alt={character.name} className="C_img" />
                 </div>
@@ -33,7 +33,7 @@ const Arena: React.FC = () => {
         <h3>Opponent Characters</h3>
           <div className="character_list">
             {characters.map((character) => (
-              <div key={character.id} className="selected-character c_character">
+              <div key={character.id} className="c_character">
                 <div className="C_image_container">
                   <img src={character.img} alt={character.name} className="C_img" />
                 </div>
