@@ -1,5 +1,8 @@
 .contactUs{
     background: var(--darkBlack);
+    padding: 2rem;
+    margin-top: 5rem;
+    padding-bottom: 5rem;
     
 }
 .contactUs .container{

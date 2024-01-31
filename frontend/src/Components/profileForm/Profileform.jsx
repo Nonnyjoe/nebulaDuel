@@ -2,25 +2,35 @@ import React, { useState } from "react";
 // import { BsFillCaretRightFill, BsFillCaretLeftFill } from "react-icons/bs";
 import "./profile.css";
 import TeamCard from "../Cards/TeamCard";
-import { Input } from "../../Input";
+// import { Input } from "../../Input";
+import { Input } from "../../utils/input";
+import { useRollups } from "../../useRollups";
+
 
 const ContactUsForm = () => {
   const [dappAddress, setDappAddress] = useState(
     "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
   );
   const [userName, setUsername] = useState("");
-  const [avatar, setAvatar] = useState(null);
+  const [avatar, setAvatar] = useState("MyAvatar");
   const [submitClicked, setSubmitClicked] = useState(false);
+  const rollups = useRollups(dappAddress);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setSubmitClicked(true);
-  };
   const functionParamsAsString = JSON.stringify({
     method: "create_profile",
     name: userName,
     avatar: avatar,
   });
+
+  const handleSubmit = (e) => {
+    if (rollups === undefined) {
+      alert ("Problem encountered creating profile, please reload your page and reconnect wallet");
+    }
+    e.preventDefault();
+    setSubmitClicked(true);
+    Input(rollups, dappAddress, functionParamsAsString, false);
+    // alert("working....")
+  };
 
   return (
     <>
@@ -35,11 +45,11 @@ const ContactUsForm = () => {
             <TeamCard
               img={"assets/img/team01.png"}
               name={"KILLER MASTER"}
-              title={"Blockchain Expert"}
+              title={"PLAYER"}
+              noChar={3}
+              gamePoints={250}
+              nebBal={0}
               />
-              <p>Game points: {250}</p>
-              <p>No of Charaters: {3}</p>
-              <p>$Nebula balance: {2}</p>
           </div>
 
           <div className="form">
@@ -71,13 +81,13 @@ const ContactUsForm = () => {
                 SUBMIT NOW
               </button>
             </form>
-            {submitClicked && (
+            {/* {submitClicked && (
               <Input
                 dappAddress={dappAddress}
                 input={functionParamsAsString}
                 hexInput={false}
               />
-            )}
+            )} */}
           </div>
         </div>
       </div>

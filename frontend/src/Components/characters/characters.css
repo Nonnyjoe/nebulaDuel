@@ -17,6 +17,12 @@ body {
   height: 100%;
 }
 
+.card-container {
+  margin-top: 15rem;
+  /* border: 3px solid red; */
+  padding-top: 3rem;
+}
+
 .swiper-slide {
   text-align: center;
   font-size: 18px;

@@ -23,6 +23,8 @@ export const Input: React.FC<IInputProps> = ({ dappAddress, input, hexInput }) =
             } catch (e) {
                 console.log(`${e}`);
             }
+        } else {
+            console.log("Rollups not found");
         }
     };
 

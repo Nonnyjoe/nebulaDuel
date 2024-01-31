@@ -6,8 +6,8 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import { Pagination , Navigation, Autoplay } from 'swiper/modules';
-import { Link } from "react-router-dom"
-
+import { Link } from "react-router-dom";
+import './characters.css';
 Swipercore.use([Autoplay, Navigation])
 
 const Cards = () => {
@@ -28,9 +28,8 @@ const Cards = () => {
 
   return (
     <div className='card-container'>   
-        <p>All Your Characters</p>
-        <br />
-        <br />
+        <h2>All Your Characters</h2>
+
         <Swiper
         slidesPerView={4}
         spaceBetween={30}
