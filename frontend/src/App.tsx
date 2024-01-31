@@ -48,6 +48,7 @@ const router = createBrowserRouter(createRoutesFromElements(
     <Route path='/selectStrategy' element={<SelectStrategy />} /> 
     <Route path='/selectWarriors' element={<SelectWarriors />} /> 
     <Route path="/duels" element={<ActiveDuels />}/>
+    <Route path="/duels/:duelId" element={<SelectWarriors />}/>
     {/* <Route path="/duels" element={<ActiveDuels />}/>
     <Route path="duels/:duelId" element={<Duels/>}/> */}
     
