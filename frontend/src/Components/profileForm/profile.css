@@ -1,8 +1,10 @@
 .contactUs{
     background: var(--darkBlack);
+    
 }
 .contactUs .container{
     gap: 30px;
+    margin-top: 2rem ;
 }
 .contactUs .content p{
     margin-top: 5px;
@@ -41,6 +43,26 @@
     width: 100%;
     gap: 20px;
 }
+
+.form {
+    margin: 6.5rem -6rem 0 0;
+}
+
+.child-team {
+    margin-bottom: 2rem;
+}
+
+.file-box{
+   margin-top: 10px;
+}
+
+.file-box input[type="file"] {
+    color: #262f39;
+    width: 50%;
+    padding: 15px;
+    border: 1px solid #262f39;
+}
+
 .contactUs .form form textarea::placeholder,
 .contactUs .form form .two input::placeholder{
     color: var(--grayText);
@@ -79,6 +101,7 @@
     transition: .5s;
     margin-top: 20px;
     font-weight: 900;
+    width: 50%;
 }
 
 @media (max-width: 1025px) {
