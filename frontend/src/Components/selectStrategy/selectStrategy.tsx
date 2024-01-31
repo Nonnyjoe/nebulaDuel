@@ -5,6 +5,8 @@ import characters from "./data";
 import { useNavigate } from "react-router-dom";
 import strategy from "./strategyData.js";
 import Header from "../header/Header";
+import { useRollups } from "../../useRollups";
+import { Input } from "../../utils/input";
 
 interface Character {
   id: number;
@@ -20,9 +22,23 @@ interface Character {
 // ];
 
 const SelectStrategy = () => {
+  const [dappAddress, setDappAddress] = useState(
+    "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
+  );
   const navigate = useNavigate();
+  const [duelId, setDuelId] = useState(1);
+  // strategy is already used as variable name, throws error
+  const [strategi, setStrategi] = useState(1);
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
   const [selectedStrategy, setSelectedStrategy] = useState<Character[]>([]);
+  const [submitClicked, setSubmitClicked] = useState(false);
+  const rollups = useRollups(dappAddress);
+
+  const functionParamsAsString = JSON.stringify({
+    method: "set_strategy",
+    duelId: duelId,
+    strategy: strategi,
+  });
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -51,6 +67,9 @@ const SelectStrategy = () => {
       const updatedStrategy = [...selectedStrategy];
       updatedStrategy.splice(index, 1);
       setSelectedStrategy(updatedStrategy);
+
+      // setSubmitClicked(true);
+      // Input(rollups, dappAddress, functionParamsAsString, false);
     }
   };
 
@@ -118,6 +137,9 @@ const SelectStrategy = () => {
       // submit transaction for signing.
       console.log(selectedStrategy);
       console.log("Registering Strategy......");
+      
+      setSubmitClicked(true);
+      Input(rollups, dappAddress, functionParamsAsString, false);
       navigate("/Arena");
     }
   };
