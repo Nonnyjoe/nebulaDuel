@@ -72,7 +72,7 @@ checkStatus = isWalletConnected;
 
   return (
     <>
-      <header ref={headerMain}>
+      <header ref={headerMain} className="header1">
         <div className="container flex alignCenter justifySpaceBet">
           <div className="logo">
             <Link to="/">

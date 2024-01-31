@@ -134,7 +134,7 @@ export const Network: FC<NetworkProps> = ({ onConnectWallet }) => {
                         </select>
                     )} */}
          
-          <button onClick={handleDisconnectWallet} className="glButtonBorder flex alignCenter">Disconnect Wallet</button>
+          <button onClick={handleDisconnectWallet} className="glButtonBorder flex alignCenter">Disconnect</button>
         </div>
       )}
     </div>

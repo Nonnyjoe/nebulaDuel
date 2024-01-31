@@ -4,36 +4,49 @@ import "./selectWarriors.css";
 import characters from "../../Components/characters/data";
 import { useNavigate } from "react-router-dom";
 import Header from "../header/Header";
+import { useRollups } from "../../useRollups";
+import getDappAddress from "../../utils/dappAddress";
+import { Input } from "../../utils/input";
 
 interface Character {
   id: number;
   name: string;
   img: string;
+  price: number;
+
 }
 
-// const characters: Character[] = [
-//   { id: 1, name: 'Character 1', image: '/frontend/Game_Characters/Dragon.png' },
-//   { id: 2, name: 'Character 2', image: 'character2.jpg' },
-//   { id: 3, name: 'Character 3', image: 'character3.jpg' },
-//   // Add more characters as needed
-// ];
 
 const SelectWarriors = () => {
 const navigate = useNavigate();
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
+  // const [totalCharacterPrice, setTotalCharacterPrice] = useState(Number);
+  const [submitClicked, setSubmitClicked] = useState(false);
+  const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>(
+    []
+  );
+
+  const rollups = useRollups(getDappAddress());
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
     if (index === -1) {
       if (selectedCharacters.length < 3) {
         setSelectedCharacters([...selectedCharacters, character]);
+        setSelectedCharactersId([...selectedCharactersId, character.id]);
+        // setTotalCharacterPrice(character.price + totalCharacterPrice);
       } else {
         alert("You can select only 3 characters.");
       }
     } else {
       const updatedCharacters = [...selectedCharacters];
+      const updatedCharactersId = [...selectedCharactersId];
+      updatedCharactersId.splice(index, 1);
       updatedCharacters.splice(index, 1);
+
       setSelectedCharacters(updatedCharacters);
+      setSelectedCharactersId(updatedCharactersId);
+      // setTotalCharacterPrice(totalCharacterPrice - character.price);
     }
   };
 
@@ -89,8 +102,30 @@ const navigate = useNavigate();
     else {
       // submit transaction for signing.
       console.log(selectedCharacters);
+      console.log(selectedCharactersId);
       console.log("Creating Duel......");
-      navigate("/SelectStrategy");
+      // navigate("/SelectStrategy");
+
+      //{"method": "create_duel", "selectedCharacters": [2, 1, 3]}
+      const functionParamsAsString = JSON.stringify({
+        method: "create_duel",
+        selectedCharacters: [selectedCharactersId[0], selectedCharactersId[1], selectedCharactersId[2]]
+      });
+
+      if (rollups === undefined) {
+        alert(
+          "Problem encountered creating profile, please reload your page and reconnect wallet"
+        );
+      }
+
+      setSubmitClicked(true);
+      Input(rollups, getDappAddress(), functionParamsAsString, false);
+      
+      setTimeout(() => {
+        setSelectedCharacters([ ]);
+        setSelectedCharactersId([ ]);
+        // setTotalCharacterPrice(0); 
+    }, 5000);
     }
   } 
 

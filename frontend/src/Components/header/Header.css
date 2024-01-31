@@ -14,6 +14,10 @@ header {
   .logo {
     width: 200px;
   }
+.header1{
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background-color: #101018;
+}
   
   header .menues .search:hover {
     color: var(--commonGreen);
@@ -313,6 +317,9 @@ header {
   
   header nav .glButtonBorder {
     display: none;
+    outline: none;
+    /* border: 2px solid red; */
+    
   }
   
   @media (max-width: 1024px) {
