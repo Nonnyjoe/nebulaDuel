@@ -1,10 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 // import { BsFillCaretRightFill, BsFillCaretLeftFill } from "react-icons/bs";
 import "./profile.css";
 import TeamCard from "../Cards/TeamCard";
+import { Input } from "../../Input";
 
 
 const ContactUsForm = () => {
+  const [dappAddress, setDappAddress] = useState("0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C");
+  const [userName, setUsername] = useState("")
+  const [avatarURI, setAvataruri] = useState("")
+  const [submitClicked, setSubmitClicked] = useState(false); 
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); 
+    setSubmitClicked(true); 
+  };
+  const functionParamsAsString = JSON.stringify({
+    method: "create_profile",
+    name: userName,
+    avatarURI: avatarURI,
+  })
+
   return (
     <>
       <div className="contactUs commonSection">
@@ -16,31 +32,21 @@ const ContactUsForm = () => {
              Create yoir profile and let's get started 
             </p>
             <TeamCard img={"assets/img/team01.png"} name={"KILLER MASTER"} title={"Blockchain Expert"} />
-            {/* <h4 className="flex alignCenter">
-              <span className="flex green">
-                <BsFillCaretLeftFill />
-              </span>
-              <BsFillCaretRightFill /> <span className="text">INFORMATION</span>
-            </h4>
-            <p>
-              <a href="tel: +971 333 222 557">+971 333 222 557</a>
-            </p>
-            <p>
-              <a href="mailto: info@exemple.com">info@exemple.com</a>
-            </p>
-            <p>New Central Park W7 Street, New York</p> */}
           </div>
 
           <div className="form">
-            <form action="/">
+            <form onSubmit={handleSubmit}>
                 <div className="two flex">
-                    <input type="text" placeholder="Enter Your Name*" />
-                    <input type="text" placeholder="Enter Your Email*" />
+                    <input type="text" placeholder="Enter Your Name*"  id="name"  value={userName}
+                        onChange={(e) => setUsername(e.target.value)}/>
+                    <input type="text" placeholder="Enter Your Avatar Uri*" id="avataruri"   value={avatarURI}
+                        onChange={(e) => setAvataruri(e.target.value)} />
                 </div>
-                <textarea name="message" id="" cols="30" rows="10" placeholder="Enter Your Message"></textarea>
-
                 <button className="submitButton" type="submit">SUBMIT NOW</button>
             </form>
+            {submitClicked && (
+              <Input dappAddress={dappAddress} input={functionParamsAsString} hexInput={false} />
+            )}
           </div>
         </div>
       </div>

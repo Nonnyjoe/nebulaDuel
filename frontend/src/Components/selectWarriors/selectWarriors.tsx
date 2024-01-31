@@ -3,6 +3,7 @@ import { useState } from "react";
 import "./selectWarriors.css";
 import characters from "../../Components/characters/data";
 import { useNavigate } from "react-router-dom";
+import Header from "../header/Header";
 
 interface Character {
   id: number;
@@ -94,6 +95,8 @@ const navigate = useNavigate();
   } 
 
   return (
+    <div>
+    <Header />
     <div className="select-character-page">
       <h2>Choose your heros !!</h2>
       <div className="select-hero">
@@ -107,6 +110,7 @@ const navigate = useNavigate();
           <button className="Create_Duel" onClick={handleCreateDuel}>Create Duel</button>
         </div>
       </div>
+    </div>
     </div>
   );
 };
