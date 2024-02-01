@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 // import { BsFillCaretRightFill, BsFillCaretLeftFill } from "react-icons/bs";
 import "./profile.css";
 import TeamCard from "../Cards/TeamCard";
 // import { Input } from "../../Input";
 import { Input } from "../../utils/input";
 import { useRollups } from "../../useRollups";
+import { Notices } from "../../Notices";
+import { useConnectedAddress } from "../../ConnectedAddressContext";
+
 
 
 const ContactUsForm = () => {
@@ -14,7 +17,9 @@ const ContactUsForm = () => {
   const [userName, setUsername] = useState("");
   const [avatar, setAvatar] = useState("MyAvatar");
   const [submitClicked, setSubmitClicked] = useState(false);
+  const { connectedAddress } = useConnectedAddress();
   const rollups = useRollups(dappAddress);
+
 
   const functionParamsAsString = JSON.stringify({
     method: "create_profile",
@@ -31,6 +36,23 @@ const ContactUsForm = () => {
     Input(rollups, dappAddress, functionParamsAsString, false);
     // alert("working....")
   };
+
+  function fetchprofile(){
+    console.log("connected adress in profike", connectedAddress)
+    console.log("profile")
+
+    // const functionParamsAsString = JSON.stringify({
+    //   method: "get_profile",
+    // });
+    // Input(rollups, dappAddress, functionParamsAsString, false);
+
+  }
+
+
+  useEffect(() => {
+    fetchprofile();
+  }
+  ,[]);
 
   return (
     <>

@@ -64,10 +64,11 @@
 //     );
 // };
 
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { useConnectWallet, useSetChain } from "@web3-onboard/react";
 import configFile from "./config.json";
 import "../src/Components/header/Header.css";
+import { useConnectedAddress } from "./ConnectedAddressContext";
 
 const config: any = configFile;
 
@@ -81,6 +82,7 @@ export const Network: FC<NetworkProps> = ({ onConnectWallet }) => {
   const [{ wallet, connecting }, connect, disconnect] = useConnectWallet();
   // const [{ chains, connectedChain, settingChain }, setChain] = useSetChain();
   const [isConnected, setIsConnected] = useState(false);
+  const { connectedAddress, setConnectedAddress } = useConnectedAddress();
 
   const handleConnectWallet = async () => {
     try {
@@ -98,6 +100,22 @@ export const Network: FC<NetworkProps> = ({ onConnectWallet }) => {
     setIsConnected(false);
     //onDisconnectWallet();
   };
+
+  //get connected address after handleDisconnectWallet is clicked
+
+  useEffect(() => {
+    if (wallet) {
+      setIsConnected(true);
+      setConnectedAddress(wallet?.accounts[0].address);
+      console.log("connected address", connectedAddress); 
+      console.log("wallet", wallet);
+      console.log("address", wallet?.accounts[0].address);
+    }
+  }
+  , [wallet]);
+
+
+
 
 
   return (
