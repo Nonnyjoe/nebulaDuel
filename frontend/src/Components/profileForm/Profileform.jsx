@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 // import { BsFillCaretRightFill, BsFillCaretLeftFill } from "react-icons/bs";
 import "./profile.css";
 import TeamCard from "../Cards/TeamCard";
@@ -7,6 +7,9 @@ import { Input } from "../../utils/input";
 import { useRollups } from "../../useRollups";
 import { ethers } from "ethers";
 // import RenderNotices from "../../utils/RenderNotices";
+import { Notices } from "../../Notices";
+import { useConnectedAddress } from "../../ConnectedAddressContext";
+
 
 
 const ContactUsForm = () => {
@@ -19,8 +22,10 @@ const ContactUsForm = () => {
   const [userName, setUsername] = useState("");
   const [avatar, setAvatar] = useState("MyAvatar");
   const [submitClicked, setSubmitClicked] = useState(false);
+  const { connectedAddress } = useConnectedAddress();
   const rollups = useRollups(dappAddress);
   const [noticeGenerated, setNoticeGenerated] = useState(false)
+
 
   const functionParamsAsString = JSON.stringify({
     method: "create_profile",
@@ -161,6 +166,23 @@ const ContactUsForm = () => {
 // walletAddress
 // :
 
+
+  function fetchprofile(){
+    console.log("connected adress in profike", connectedAddress)
+    console.log("profile")
+
+    // const functionParamsAsString = JSON.stringify({
+    //   method: "get_profile",
+    // });
+    // Input(rollups, dappAddress, functionParamsAsString, false);
+
+  }
+
+
+  useEffect(() => {
+    fetchprofile();
+  }
+  ,[]);
 
   return (
     <>

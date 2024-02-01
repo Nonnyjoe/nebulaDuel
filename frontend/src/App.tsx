@@ -27,6 +27,7 @@ import Profile from "./Profile";
 import CardDetails from "./Components/characters/CardDetails";
 import ActiveDuels from "./Duels/ActiveDuels";
 import { GraphQLProvider } from "./GraphQL";
+import {ConnectedAddressProvider} from "./ConnectedAddressContext";
 
 
 
@@ -89,9 +90,11 @@ const App: FC = () => {
       }, []);
 
     return (
+      <ConnectedAddressProvider>
       <div className="App">
         <RouterProvider router={router} />
      </div>
+      </ConnectedAddressProvider>
     );
 };
 
