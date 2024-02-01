@@ -2,10 +2,13 @@ import React from "react";
 import data from "./data";
 import "./activeDuels.css";
 import { Link } from "react-router-dom";
+import Header from "../Components/header/Header";
 
 const ActiveDuels = () => {
   return (
-    <section className="duel-box">
+    <div>
+        <Header />
+    <div className="duel-box">
       <div className="container-duel ">
         <h2>active duels</h2>
         <main className="card-container">
@@ -33,7 +36,8 @@ const ActiveDuels = () => {
         </main>
         
       </div>
-    </section>
+    </div>
+    </div>
   );
 };
 

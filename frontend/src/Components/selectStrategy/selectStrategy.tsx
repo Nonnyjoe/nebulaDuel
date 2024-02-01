@@ -14,13 +14,6 @@ interface Character {
   img: string;
 }
 
-// const characters: Character[] = [
-//   { id: 1, name: 'Character 1', image: '/frontend/Game_Characters/Dragon.png' },
-//   { id: 2, name: 'Character 2', image: 'character2.jpg' },
-//   { id: 3, name: 'Character 3', image: 'character3.jpg' },
-//   // Add more characters as needed
-// ];
-
 const SelectStrategy = () => {
   const [dappAddress, setDappAddress] = useState(
     "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
@@ -28,17 +21,13 @@ const SelectStrategy = () => {
   const navigate = useNavigate();
   const [duelId, setDuelId] = useState(1);
   // strategy is already used as variable name, throws error
-  const [strategi, setStrategi] = useState(1);
+//   const [strategi, setStrategi] = useState(1);
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
   const [selectedStrategy, setSelectedStrategy] = useState<Character[]>([]);
   const [submitClicked, setSubmitClicked] = useState(false);
   const rollups = useRollups(dappAddress);
 
-  const functionParamsAsString = JSON.stringify({
-    method: "set_strategy",
-    duelId: duelId,
-    strategy: strategi,
-  });
+
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -138,9 +127,20 @@ const SelectStrategy = () => {
       console.log(selectedStrategy);
       console.log("Registering Strategy......");
       
+      const functionParamsAsString = JSON.stringify({
+        method: "set_strategy",
+        duelId: duelId,
+        strategy: selectedStrategy[0].id,
+      });
+
       setSubmitClicked(true);
       Input(rollups, dappAddress, functionParamsAsString, false);
-      navigate("/Arena");
+    //   navigate("/Arena");
+      setTimeout(() => {
+        // setTotalCharacterPrice(0); 
+        // setIsModalOpen(true);
+        navigate("/Arena");
+    }, 5000);
     }
   };
 

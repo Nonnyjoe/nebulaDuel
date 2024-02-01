@@ -1,8 +1,12 @@
 import React from "react";
 import { useState } from "react";
 import "./selectWarriors.css";
-import characters from "../../characters/data";
-import { useNavigate } from "react-router-dom";
+import characters from "./data";
+import { useNavigate, useParams } from "react-router-dom";
+import Header from "../../header/Header";
+import { useRollups } from "../../../useRollups";
+import getDappAddress from "../../../utils/dappAddress";
+import { Input } from "../../../utils/input";
 
 interface Character {
   id: number;
@@ -17,22 +21,38 @@ interface Character {
 //   // Add more characters as needed
 // ];
 
+
 const SelectWarriorsDynamic = () => {
+const { duelId } = useParams();
 const navigate = useNavigate();
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
+  const [submitClicked, setSubmitClicked] = useState(false);
+  const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>(
+    []
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const rollups = useRollups(getDappAddress());
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
     if (index === -1) {
       if (selectedCharacters.length < 3) {
         setSelectedCharacters([...selectedCharacters, character]);
+        setSelectedCharactersId([...selectedCharactersId, character.id]);
+        // setTotalCharacterPrice(character.price + totalCharacterPrice);
       } else {
         alert("You can select only 3 characters.");
       }
     } else {
       const updatedCharacters = [...selectedCharacters];
+      const updatedCharactersId = [...selectedCharactersId];
+      updatedCharactersId.splice(index, 1);
       updatedCharacters.splice(index, 1);
+
       setSelectedCharacters(updatedCharacters);
+      setSelectedCharactersId(updatedCharactersId);
+      // setTotalCharacterPrice(totalCharacterPrice - character.price);
     }
   };
 
@@ -80,20 +100,48 @@ const navigate = useNavigate();
     );
   };
 
-  const handleCreateDuel = (e: any) => {
+  const handleJoinDuel = (e: any) => {
     e.preventDefault();
     if (selectedCharacters.length < 3) {
         alert("Please select minimum of 3 characters");
     }
     else {
       // submit transaction for signing.
+      console.log(`duelId is: ${duelId}`);
       console.log(selectedCharacters);
+      console.log(selectedCharactersId);
       console.log("Creating Duel......");
-      navigate("/SelectStrategy");
+      
+      //{"method": "create_duel", "selectedCharacters": [2, 1, 3]}
+      const functionParamsAsString = JSON.stringify({
+        method: "join_duel",
+        duelId: Number(parseInt(duelId as string)),
+        selectedCharacters: [selectedCharactersId[0], selectedCharactersId[1], selectedCharactersId[2]]
+      });
+
+      if (rollups === undefined) {
+        alert(
+          "Problem encountered creating profile, please reload your page and reconnect wallet"
+        );
+      }      
+
+      setSubmitClicked(true);
+      Input(rollups, getDappAddress(), functionParamsAsString, false);
+      
+      setTimeout(() => {
+        setSelectedCharacters([ ]);
+        setSelectedCharactersId([ ]);
+        // setTotalCharacterPrice(0); 
+        // setIsModalOpen(true);
+        navigate(`/setStrategy/${duelId}`)
+    }, 5000);
+
     }
   } 
 
   return (
+    <div>
+    <Header />
     <div className="select-character-page">
       <h2>Choose your heros !!</h2>
       <div className="select-hero">
@@ -104,10 +152,12 @@ const navigate = useNavigate();
         <div className="selected_characters">
           <h3> Selected Characters</h3>
           {selectedCharacters.length > 0 ? renderSelectedCharacters(): emptyDiv()}
-          <button className="Create_Duel" onClick={handleCreateDuel}>Create Duel</button>
+          <button className="Create_Duel" onClick={handleJoinDuel}>Join Duel</button>
         </div>
       </div>
     </div>
+    </div>
+
   );
 };
 

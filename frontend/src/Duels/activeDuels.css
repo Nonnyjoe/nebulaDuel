@@ -6,6 +6,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding-top: 10rem;
 }
 
 .container-duel {
@@ -14,6 +15,8 @@
   flex-direction: column;
   gap: 4rem;
   align-items: center;
+  margin-top: 0rem;
+  /* border: 2px solid red; */
 }
 .container-duel > h2 {
   text-transform: uppercase;
@@ -23,6 +26,8 @@
   width: 100%;
   display: grid;
   gap: 4rem;
+  /* border: 2px solid yellow; */
+  margin-top: -4rem;
 }
 .duelCard {
   width: 100%;

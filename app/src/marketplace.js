@@ -144,4 +144,4 @@ function BuyCharacter(characterId, buyerAddress) {
 
 
 
-module.exports = {BuyCharacter, modifyListPrice, listCharacter, transferToken, withdraw, erc20_deposit_process};
+module.exports = {BuyCharacter, modifyListPrice, listCharacter, transferToken, withdraw, erc20_deposit_process, listedCharacters};

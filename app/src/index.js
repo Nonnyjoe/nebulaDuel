@@ -18,6 +18,19 @@ const ERC_20_PORTAL = "0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB";
 const ERC_721_PORTAL = "0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87";
 const nebula_token_address = "";
 let DAPP_ADDRESS = "null";
+let totalTransactions = 0;
+
+emitNotice = async (data) => {
+  const hexresult = stringToHex(data);
+  advance_req = await fetch(rollup_server + "/notice", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ payload: hexresult }),
+  });
+  return advance_req;
+}
 
 
 async function handle_advance(data) {
@@ -84,17 +97,13 @@ async function handle_advance(data) {
         );
         console.log("created profile is:", createdProfile);
 
-        const result = JSON.stringify({ createdProfile: createdProfile });
-        // convert result to hex
-        const hexresult = stringToHex(result);
-        console.log("The result is :", hexresult);
-        advance_req = await fetch(rollup_server + "/notice", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ payload: hexresult }),
-        });
+        totalTransactions++
+
+      // return an updated array of all players
+      let allPlayers = playersProfile.allPlayers;
+      const result = JSON.stringify({"method": "all_Players", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allPlayers });
+      advance_req = await emitNotice(result);
+
 
     //{"method":"get_profile", "user": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"}
     // NOTE: replace the address in user above with your own address.
@@ -113,30 +122,21 @@ async function handle_advance(data) {
         gameCharacters.resolveCharacters(parseInt(JSONpayload.char2, 10)),
         gameCharacters.resolveCharacters(parseInt(JSONpayload.char3, 10))
       ); 
-      const result1 = JSON.stringify({ purchasedCharacters: characters });
-      console.log("Purchased Characters are:" + characters);
-      const hexresult1 = stringToHex(result1);
-      // console.log("result1 in hex is:", hexresult1);
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult1 }),
-      });
+      
+      totalTransactions++;
+      // return an updated array of all players
+      let allPlayers = playersProfile.allPlayers;
 
-      let player = playersProfile.findPlayer(playersProfile.allPlayers, data.metadata.msg_sender);
-      const result2 = JSON.stringify({ updatedProfile: player});
-      console.log("players profile after purchase is:" + JSON.stringify(player));
-      const hexresult2 = stringToHex(result2);
-      // console.log("result2 in hex is:", hexresult2);
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult2 }),
-      });
+      totalTransactions++
+      const result = JSON.stringify({"method": "all_Players", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allPlayers });
+      advance_req = await emitNotice(result);
+      
+      // return array of all characters
+      let allCharacters = gameCharacters.allCharacters;
+      const result2 = JSON.stringify({ "method":"all_character", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allCharacters });
+      
+      advance_req = await emitNotice(result2);
+      console.log("players profile after purchase is:" + JSON.stringify(allCharacters));
     }
 
     //{"method": "create_duel", "selectedCharacters": [2, 1, 3]}
@@ -144,41 +144,31 @@ async function handle_advance(data) {
       console.log("creating a duel.....");
       let newDuel = battleChallenge.createDuel(data.metadata.msg_sender, JSONpayload.selectedCharacters);
       console.log("New duel created, duel data is:" + JSON.stringify(newDuel));
-      const hexresult = stringToHex(newDuel);
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+
+      totalTransactions++
+
+      // Return all the available duels
+      let allDuel = battleChallenge.allDuels;
+      const result = JSON.stringify({"method": "all_duels", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allDuel });
+      advance_req = await emitNotice(result);
     }
 
-    //{"method": "join_duel", "dielId": 1 , "selectedCharacters": [4, 5, 6]}
+    //{"method": "join_duel", "duelId": 1 , "selectedCharacters": [4, 5, 6]}
     else if (JSONpayload.method === "join_duel") {
       console.log("Joining an existing duel....");
-      let bothWarriors = battleChallenge.joinDuel(JSONpayload.dielId, data.metadata.msg_sender, JSONpayload.selectedCharacters);
+      let bothWarriors = battleChallenge.joinDuel(JSONpayload.duelId, data.metadata.msg_sender, JSONpayload.selectedCharacters);
       console.log("Join successfully, competing characters are: " + JSON.stringify(bothWarriors));
-      const hexresult = stringToHex(JSON.stringify(bothWarriors));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
 
-      // emit a notice of the duel data
-      let duelData = battleChallenge.displayDuelInfo(JSONpayload.dielId);
-      console.log("Duel data is: " + JSON.stringify(duelData));
-      const hexresult2 = stringToHex(duelData);
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult2 }),
-      });
+      // // emit a notice of the duel data
+      // let duelData = battleChallenge.displayDuelInfo(JSONpayload.dielId);
+      // console.log("Duel data is: " + JSON.stringify(duelData));
+
+      totalTransactions++
+
+      // Return all the available duels
+      let allDuel = battleChallenge.allDuels;
+      const result = JSON.stringify({"method": "all_duels", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allDuel });
+      advance_req = await emitNotice(result);
     }
 
     //{"method":"set_strategy", "duelId": 1, "strategy": 1}
@@ -187,14 +177,13 @@ async function handle_advance(data) {
       console.log("setting strategy....");
       let duel = battleChallenge.setStrategy(JSONpayload.duelId, data.metadata.msg_sender, JSONpayload.strategy);
       console.log("New strategy set for duel: " + JSON.stringify(duel));
-      const hexresult = stringToHex(JSON.stringify(duel));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+      
+      totalTransactions++
+
+      // Return all the available duels
+      let allDuel = battleChallenge.allDuels;
+      const result = JSON.stringify({"method": "all_duels", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allDuel });
+      advance_req = await emitNotice(result);
     }
 
     //{"method":"fight", "duelId": 1}
@@ -202,14 +191,22 @@ async function handle_advance(data) {
       console.log("fighting....");
       let duel = battleChallenge.fight(JSONpayload.duelId);
       console.log("winner is: " + JSON.stringify(duel));
-      const hexresult = stringToHex(JSON.stringify(duel));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+
+      totalTransactions++
+      // Return all the available duels
+      let allDuel = battleChallenge.allDuels;
+      const result = JSON.stringify({"method": "all_duels", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allDuel });
+      advance_req = await emitNotice(result);
+
+      // return array of all characters
+      let allCharacters = gameCharacters.allCharacters;
+      const result2 = JSON.stringify({ "method":"all_character", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allCharacters });
+      advance_req = await emitNotice(result2);
+
+      // return an updated array of all players
+      let allPlayers = playersProfile.allPlayers;
+      const result3 = JSON.stringify({"method": "all_Players", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allPlayers });
+      advance_req = await emitNotice(result3);
     }
 
     //{"method": "getCharacterDetails", "characterId": 1}
@@ -217,14 +214,8 @@ async function handle_advance(data) {
       console.log("getting CharacterDetails....");
       let characterDetails = gameCharacters.getCharacterDetails(JSONpayload.characterId);
       console.log("character Details is: " + JSON.stringify(characterDetails));
-      const hexresult = stringToHex(JSON.stringify(characterDetails));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+      advance_req = await emitNotice(characterDetails);
+
     }
 
     //{"method": "allCharacters"}
@@ -246,14 +237,13 @@ async function handle_advance(data) {
     else if (JSONpayload.method === "transferTokens") {
       console.log("Transfering tokens.....");
       let transferTokens = marketplace.transferToken(data.metadata.msg_sender, JSONpayload.receiver , JSONpayload.amount);
-      const hexresult = stringToHex(JSON.stringify(transferTokens));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+      
+      // return an updated array of all players
+      let allPlayers = playersProfile.allPlayers;
+
+      totalTransactions++
+      const result = JSON.stringify({"method": "all_Players", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allPlayers });
+      advance_req = await emitNotice(result);
     }
 
   //{"method": "listCharacter", characterId: 2 , amount: 1000}
@@ -261,14 +251,12 @@ async function handle_advance(data) {
       console.log("getting listCharacter....");
       let listCharacter = marketplace.listCharacter(data.metadata.msg_sender, JSONpayload.characterId , JSONpayload.amount);
       console.log("listCharacter Details is: " + JSON.stringify(listCharacter));
-      const hexresult = stringToHex(JSON.stringify(listCharacter));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+
+      // Return a list of all Listed Characters.
+      totalTransactions++
+      let listedCharacters = marketplace.listedCharacters;
+      const result = JSON.stringify({"method": "listed_characters", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": listedCharacters });
+      advance_req = await emitNotice(result);
     }
 
     //{"method": "modifyListPrice", characterId: 2, amount: 1000}
@@ -276,14 +264,12 @@ async function handle_advance(data) {
       console.log("modifying listPrice....");
       let modifyListPrice = marketplace.modifyListPrice(data.metadata.msg_sender, JSONpayload.characterId, JSONpayload.amount);
       console.log("modifyListPrice Details is: " + JSON.stringify(modifyListPrice));
-      const hexresult = stringToHex(JSON.stringify(modifyListPrice));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+      
+      // Return a list of all Listed Characters.
+      totalTransactions++
+      let listedCharacters = marketplace.listedCharacters;
+      const result = JSON.stringify({"method": "listed_characters", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": listedCharacters });
+      advance_req = await emitNotice(result);
     }
 
     // {"method": "buyCharacters", "characterId": 2}
@@ -291,14 +277,23 @@ async function handle_advance(data) {
       console.log("buying characters....");
       let purchaseResult = marketplace.BuyCharacter(JSONpayload.characterId, data.metadata.msg_sender);
       console.log("buyCharacters Details is: " + JSON.stringify(purchaseResult));
-      const hexresult = stringToHex(JSON.stringify(purchaseResult));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+
+      // return an updated array of all players
+      let allPlayers = playersProfile.allPlayers;
+
+      totalTransactions++
+      const result = JSON.stringify({"method": "all_Players", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allPlayers });
+      advance_req = await emitNotice(result);
+
+      // return array of all characters
+      let allCharacters = gameCharacters.allCharacters;
+      const result2 = JSON.stringify({ "method":"all_character", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allCharacters });
+      advance_req = await emitNotice(result2);
+
+      // Return a list of all Listed Characters.
+      let listedCharacters = marketplace.listedCharacters;
+      const result3 = JSON.stringify({"method": "listed_characters", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": listedCharacters });
+      advance_req = await emitNotice(result3);
     }
 
     //{"method": "withdraw", amount: 1000}
@@ -310,14 +305,12 @@ async function handle_advance(data) {
       }
       let withdraw = marketplace.withdraw(data.metadata.msg_sender, parseInt(JSONpayload.amount));
       console.log("withdraw is: " + JSON.stringify(withdraw));
-      const hexresult = stringToHex(JSON.stringify(withdraw));
-      advance_req = await fetch(rollup_server + "/notice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ payload: hexresult }),
-      });
+      // return an updated array of all players
+      let allPlayers = playersProfile.allPlayers;
+
+      totalTransactions++
+      const result = JSON.stringify({"method": "all_Players", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allPlayers });
+      advance_req = await emitNotice(result);
 
       // EMIT A VOUCHER TO BE PROCESSED ON L1
       const call = viem.encodeFunctionData({
@@ -371,6 +364,7 @@ async function handle_advance(data) {
     });
     return "reject";
   }
+
   const json = await advance_req.json();
   console.log(
     "Received  status " +

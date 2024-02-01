@@ -7,6 +7,7 @@ import Header from "../header/Header";
 import { useRollups } from "../../useRollups";
 import getDappAddress from "../../utils/dappAddress";
 import { Input } from "../../utils/input";
+import DuelCreatedModal from "./duelCreatedModal";
 
 interface Character {
   id: number;
@@ -25,6 +26,8 @@ const navigate = useNavigate();
   const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>(
     []
   );
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
   const rollups = useRollups(getDappAddress());
 
@@ -56,6 +59,10 @@ const navigate = useNavigate();
         </div>
       )
   }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
 
   const renderCharacter = (character: any) => {
     const isSelected = selectedCharacters.some((c) => c.id === character.id);
@@ -125,6 +132,7 @@ const navigate = useNavigate();
         setSelectedCharacters([ ]);
         setSelectedCharactersId([ ]);
         // setTotalCharacterPrice(0); 
+        setIsModalOpen(true);
     }, 5000);
     }
   } 
@@ -132,6 +140,7 @@ const navigate = useNavigate();
   return (
     <div>
     <Header />
+    <DuelCreatedModal isOpen={isModalOpen} onClose={handleCloseModal} />
     <div className="select-character-page">
       <h2>Choose your heros !!</h2>
       <div className="select-hero">

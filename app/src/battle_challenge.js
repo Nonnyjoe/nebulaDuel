@@ -232,7 +232,7 @@ function fight(duelID) {
         throw new Error("Duel not active");
     }
     if (selectedDuel.isCompleted) {
-        throw new Error("Duel already completed");
+        return selectedDuel;
     }
     if (selectedDuel.creatorStrategy === "" || selectedDuel.participantStrategy === "") {
         throw new Error("Strategy not set");

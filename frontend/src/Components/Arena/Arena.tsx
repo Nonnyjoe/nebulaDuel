@@ -1,9 +1,12 @@
 import React from "react";
 import "./Arena.css";
 import characters from "./data"
+import Header from "../header/Header";
 
 const Arena: React.FC = () => {
   return (
+    <div>
+        <Header />
     <div className="arena-container">
       <div className="characters_container">
         <h3>Your Characters</h3>
@@ -47,6 +50,7 @@ const Arena: React.FC = () => {
             ))}
         </div>
       </div>
+    </div>
     </div>
   );
 };

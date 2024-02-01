@@ -35,6 +35,8 @@ import configFile from "./config.json";
 import SelectStrategy from "./Components/selectStrategy/selectStrategy";
 import SelectWarriors from "./Components/selectWarriors/selectWarriors";
 import Duels from "./Duels/duels";
+import SelectWarriorsDynamic from "./Components/DynamicRoutes/selectWarriors/selectWarriors";
+import SelectStrategyDynamic from "./Components/DynamicRoutes/selectStrategy/selectStrategy";
 
 const router = createBrowserRouter(createRoutesFromElements(
   <Route>
@@ -49,7 +51,9 @@ const router = createBrowserRouter(createRoutesFromElements(
     <Route path='/selectStrategy' element={<SelectStrategy />} /> 
     <Route path='/selectWarriors' element={<SelectWarriors />} /> 
     <Route path="/duels" element={<ActiveDuels />}/>
-    <Route path="/duels/:duelId" element={<SelectWarriors />}/>
+    <Route path="/duels/:duelId" element={<SelectWarriorsDynamic />}/>
+    <Route path="/setStrategy/:duelId" element={<SelectStrategyDynamic />}/>
+    
     {/* <Route path="/duels" element={<ActiveDuels />}/>
     <Route path="duels/:duelId" element={<Duels/>}/> */}
     

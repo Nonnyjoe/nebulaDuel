@@ -1,9 +1,12 @@
 import React from "react";
 import { useState } from "react";
-import "./selectStrategy.css";
+// import "./selectStrategyDynamic.css";
 import characters from "./data";
-import { useNavigate } from "react-router-dom";
-import strategy from "./strategyData.js"
+import { useNavigate, useParams } from "react-router-dom";
+import strategy from "./strategyData.js";
+import { useRollups } from "../../../useRollups";
+import Header from "../../header/Header";
+import { Input } from "../../../utils/input";
 
 interface Character {
   id: number;
@@ -19,9 +22,19 @@ interface Character {
 // ];
 
 const SelectStrategyDynamic = () => {
-const navigate = useNavigate();
+const { duelId } = useParams();
+  const [dappAddress, setDappAddress] = useState(
+    "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
+  );
+  const navigate = useNavigate();
+  // const [duelId, setDuelId] = useState(1);
+  // strategy is already used as variable name, throws error
+  // const [strategi, setStrategi] = useState(1);
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
   const [selectedStrategy, setSelectedStrategy] = useState<Character[]>([]);
+  const [submitClicked, setSubmitClicked] = useState(false);
+  const rollups = useRollups(dappAddress);
+
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -38,7 +51,6 @@ const navigate = useNavigate();
     }
   };
 
-
   const toggleStrategySelection = (strategy: any) => {
     const index = selectedStrategy.findIndex((c) => c.id === strategy.id);
     if (index === -1) {
@@ -51,17 +63,15 @@ const navigate = useNavigate();
       const updatedStrategy = [...selectedStrategy];
       updatedStrategy.splice(index, 1);
       setSelectedStrategy(updatedStrategy);
+
+      // setSubmitClicked(true);
+      // Input(rollups, dappAddress, functionParamsAsString, false);
     }
   };
 
-
-
   const emptyDiv = () => {
-      return (
-        <div className="emptyDiv">
-        </div>
-      )
-  }
+    return <div className="emptyDiv"></div>;
+  };
 
   const renderCharacter = (character: any) => {
     const isSelected = selectedCharacters.some((c) => c.id === character.id);
@@ -95,9 +105,9 @@ const navigate = useNavigate();
         onClick={() => toggleStrategySelection(strategy)}
       >
         <p className="strategyName">{strategy.name}</p>
-        {/* <div className="flex-row Strategy_data">
+        <div className="flex-row Strategy_data">
             <p className="strategy_code">Code: {strategy.code}</p>
-        </div> */}
+        </div>
       </div>
     );
   };
@@ -118,38 +128,58 @@ const navigate = useNavigate();
   const handleSelectStrategy = (e: any) => {
     e.preventDefault();
     if (selectedStrategy.length < 1) {
-        alert("Please select at least 1 strategy");
-    }
-    else {
+      alert("Please select at least 1 strategy");
+    } else {
       // submit transaction for signing.
       console.log(selectedStrategy);
       console.log("Registering Strategy......");
-      navigate("/Arena");
+      
+      const functionParamsAsString = JSON.stringify({
+        method: "set_strategy",
+        duelId: Number(parseInt(duelId as string)),
+        strategy: selectedStrategy[0].id,
+      });
+
+      setSubmitClicked(true);
+      Input(rollups, dappAddress, functionParamsAsString, false);
+
+      setTimeout(() => {
+        // setTotalCharacterPrice(0); 
+        // setIsModalOpen(true);
+        navigate("/Arena");
+    }, 5000);
     }
-  } 
+  };
 
   return (
-    <div className="select-character-page">
-      <h2>Select Your Strategy !!</h2>
-      <div className="select-hero">
-        <div className="allCharacters">
-          <h3> Oponents Warriors</h3>
-          <div className="character-list">{characters.map(renderCharacter)}</div>
-        </div>
-        <div className="selected_characters">
+    <div>
+        <Header />
+      <div className="select-character-page">
+        <h2>Select Your Strategy !!</h2>
+        <div className="select-hero">
+          <div className="allCharacters">
+            <h3> Oponents Warriors</h3>
+            <div className="character-list">
+              {characters.map(renderCharacter)}
+            </div>
+          </div>
+          <div className="selected_characters">
             <h3>Your Warriors</h3>
-          <div className="character-list">{characters.map(renderCharacter)}</div>
-          {/* <h3 Select Attack Strategy</h3>
+            <div className="character-list">
+              {characters.map(renderCharacter)}
+            </div>
+            {/* <h3 Select Attack Strategy</h3>
           {selectedCharacters.length > 0 ? renderSelectedCharacters(): emptyDiv()}
           <button className="Create_Duel" onClick={handleCreateDuel}>Create Duel</button> */}
-        </div>
-      </div>
-      <div className="centred">
-          <h3> Select Attack Strategy</h3>
-          <div className="strategy_list">
-            {strategy.map(renderStrategy)}
           </div>
-          <button className="Create_Duel" onClick={handleSelectStrategy}>Set Strategy</button>
+        </div>
+        <div className="centred">
+          <h3> Select Attack Strategy</h3>
+          <div className="strategy_list">{strategy.map(renderStrategy)}</div>
+          <button className="Create_Duel" onClick={handleSelectStrategy}>
+            Set Strategy
+          </button>
+        </div>
       </div>
     </div>
   );
