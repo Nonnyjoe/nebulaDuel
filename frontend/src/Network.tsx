@@ -108,8 +108,6 @@ export const Network: FC<NetworkProps> = ({ onConnectWallet }) => {
       setIsConnected(true);
       setConnectedAddress(wallet?.accounts[0].address);
       console.log("connected address", connectedAddress); 
-      console.log("wallet", wallet);
-      console.log("address", wallet?.accounts[0].address);
     }
   }
   , [wallet]);
