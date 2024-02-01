@@ -23,8 +23,9 @@ Every player needs at least three warriors for the duels. Warriors are player ch
 Every warrior has attributes: health, strength and attack in different degrees. The cost for each warrior is a reflection of the attributes it possesses. 
 
 To purchase a warrior, go to your profile page, select the preferred warriors and then buy. **NOTE** Every player gets free 1000 points after profile creation to purchase characters, and when the 1000 points are exhausted the player can buy more points using the $nebular token.
+<br/>
 
-
+<br/>
 ## Create duel
 
 Players can create new duel or join already created duels. To create a new duel:
@@ -32,6 +33,8 @@ Players can create new duel or join already created duels. To create a new duel:
 i. Go to the homepage, click on PLAY NOW <br/>
 ii. From the modal that'll pop up, select `create duel`
 iii. Select your warriors and continue.
+<br/>
+<br/>
 
 
 ## Join duel
