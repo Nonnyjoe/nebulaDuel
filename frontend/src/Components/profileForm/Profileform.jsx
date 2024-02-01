@@ -16,7 +16,7 @@ const ContactUsForm = () => {
   const [dappAddress, setDappAddress] = useState(
     "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
   );
-  const [userAddress, setUserAddress] = useState("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
+  // const [userAddress, setUserAddress] = useState("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266");
   const [allProfiles, setAllProfiles] = useState("");
   const [userData, setUserData] = useState();
   const [userName, setUsername] = useState("");
@@ -81,7 +81,7 @@ const ContactUsForm = () => {
       } catch (error) {
         console.error('Error fetching data:', error);
       }
-    }, 20000); // Trigger every 20 seconds
+    }, 2000); // Trigger every 20 seconds
   
     return () => clearInterval(intervalId); // Clean up interval when component unmounts
   }, []);
@@ -114,11 +114,12 @@ const ContactUsForm = () => {
   }
 
   function extractUserDetails(arrayOfData) {
+    let connectedAddress = returnConnectedAddress();
     console.log("AlluserDetails", arrayOfData);
-    console.log("test", String(arrayOfData[1].walletAddress) === String(userAddress));
-    console.log("test", arrayOfData[1].walletAddress);
-    console.log("userADD", String(userAddress));
-    let filteredData = arrayOfData.filter(data => (data.walletAddress).toLowerCase() === userAddress.toLowerCase());
+    console.log("test", String(arrayOfData[1].walletAddress) === String(connectedAddress));
+    // console.log("test", arrayOfData[1].walletAddress);
+    console.log("userADD", String(connectedAddress));
+    let filteredData = arrayOfData.filter(data => (data.walletAddress).toLowerCase() === connectedAddress.toLowerCase());
     console.log("userDetails", filteredData);
     if (filteredData.length === 0){
       setUserData(null);
@@ -134,6 +135,11 @@ const ContactUsForm = () => {
       setNoticeGenerated(true)
       return data;
     };
+
+    function returnConnectedAddress() {
+      console.log("new address request:", connectedAddress);
+      return connectedAddress;
+    }
 
   const handleSubmit = (e) => {
     if (rollups === undefined) {
@@ -168,7 +174,7 @@ const ContactUsForm = () => {
 
 
   function fetchprofile(){
-    console.log("connected adress in profike", connectedAddress)
+    console.log("connected adress in profike", returnConnectedAddress())
     console.log("profile")
 
     // const functionParamsAsString = JSON.stringify({
@@ -194,12 +200,13 @@ const ContactUsForm = () => {
               Are you ready to be a Gamer? Create your profile and let's get
               started
             </p>
-            {console.log(userData)}
-            {console.log(userData.Monika, userData.characters?.length, userData.point, userData.nebulaBalance)}
+            {/* {console.log(userData)} */}
+            {/* {console.log(userData.Monika, userData.characters?.length, userData.point, userData.nebulaBalance)} */}
+            {console.log("address is:", returnConnectedAddress())}
             <TeamCard
               img={"assets/img/team01.png"}
               name={userData ? userData.Monika : "UNREGISTERD USER"}
-              title={userData ? cutWalletAddress(userAddress) : " "}
+              title={userData ? cutWalletAddress(returnConnectedAddress()) : " "}
               noChar={userData ? userData.characters?.length : 0}
               gamePoints={userData ? userData.point : 0}
               nebBal={userData ? userData.nebulaBalance : 0}
