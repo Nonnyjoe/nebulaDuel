@@ -1,6 +1,7 @@
 import React from "react";
 
 const TeamCard = ({ title, name, img, noChar, nebBal, gamePoints }) => {
+  console.log(title, name, img, noChar, nebBal, gamePoints);
   return (
     <>
       <div className="outTeamCard flex alignCenter">

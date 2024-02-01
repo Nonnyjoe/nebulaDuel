@@ -136,7 +136,7 @@ async function handle_advance(data) {
       const result2 = JSON.stringify({ "method":"all_character", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allCharacters });
       
       advance_req = await emitNotice(result2);
-      console.log("players profile after purchase is:" + JSON.stringify(allCharacters));
+      console.log("Character Purchased are:" + JSON.stringify(allCharacters));
     }
 
     //{"method": "create_duel", "selectedCharacters": [2, 1, 3]}

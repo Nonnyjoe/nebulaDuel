@@ -269,10 +269,12 @@ function fight(duelID) {
             let opponent = strategySimulation.decideVictim(creatorStrategy, participantWarriors);
 
             let [attacker_, opponent_] = duel(attacker, opponent);
+            let attackerMin = extractImportantDetails(attacker_);
+            let opponentMin = extractImportantDetails(opponent_);
             creatorWarriors[AttackerTurnTracker.checkTurn()] = attacker_;
 
             // Populate the log of the entire battle.
-            let duelLog = [attacker_, opponent_];
+            let duelLog = [attackerMin, opponentMin];
             selectedDuel.battleLog.push(duelLog);
 
             // Check if the opponent is dead
@@ -307,10 +309,12 @@ function fight(duelID) {
             attacker = participantWarriors[OpponentTurnTracker.checkTurn()];
             opponent = strategySimulation.decideVictim(participantStrategy, creatorWarriors);
             [attacker_ , opponent_] = duel(attacker, opponent);
+            attackerMin = extractImportantDetails(attacker_);
+            opponentMin = extractImportantDetails(opponent_);
             participantWarriors[OpponentTurnTracker.checkTurn()] = attacker_;
 
             // Populate the log of the entire battle.
-            duelLog = [attacker_, opponent_];
+            duelLog = [attackerMin, opponentMin];
             selectedDuel.battleLog.push(duelLog);
 
             // Check if the opponent is dead
@@ -330,6 +334,17 @@ function fight(duelID) {
     }
     console.log(`Battle is over creators remaining warriors are: ${JSON.stringify(creatorWarriors)}, while opponent's remaining warriors are: ${JSON.stringify(participantWarriors)} `)
     return selectedDuel;
+}
+
+function extractImportantDetails(character) {
+    return {
+        id: character.id,
+        name: character.name,
+        health: character.health,
+        attack: character.attack,
+        strength: character.strength,
+        owner: character.owner
+    }
 }
 
 // Function to carrry out a duel, it takes 2 warriors object, simulates a duel then returns their updated self. 
