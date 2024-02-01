@@ -9,11 +9,11 @@ Nebula duel is built for persons that love the thrills and entertainment of the 
 
 ## Create profile
 
-Players can create profiles seamlessly on the platform simply by connecting a wallet and then navigating to the `profile` page and passing in:
+Players can create profiles seamlessly on the platform simply by connecting a wallet and then navigating to the `profile` page and passing in: <br/>
 i. Name ( can be nickname ) <br/>
 ii. Preferred avatar
 
-Note that this process requires the player to sign a transaction, so wait for the wallet to pop up, then sign and wait for the transaction to be completed on-chain. <br/>
+Note that this process requires the player to sign a transaction, so wait for wallet to pop up, then sign and wait for the transaction to be completed on-chain. <br/>
 Upon a successful registration, 1000 points are minted to each player for use to purchase his/her preferred warriors.
 <br/>
 <br/>
