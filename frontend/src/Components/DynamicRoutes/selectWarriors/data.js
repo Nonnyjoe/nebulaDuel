@@ -2,7 +2,7 @@ const data = [
     {
         id: 1,
         name: "Pikachu",
-        img: "./assets/img/Rhyno.png",
+        img: "../assets/img/Rhyno.png",
         health: 80,
         strength: 8,
         attack: 15,
@@ -10,14 +10,15 @@ const data = [
         superPower: "Thunderbolt",
         totalWins: 270,
         totalLoss: 0,
-        profileImg: "./assets/img/Rhyno.png",
+        profileImg: "../assets/img/Rhyno.png",
         price: 100,
-        owner: ""        
+        owner: "",        
+     
     },
     {
         id: 2,
         name: "Charizard",
-        img: "./assets/img/Dragon.png", 
+        img: "../assets/img/Dragon.png", 
         health: 95,
         strength: 10,
         attack: 13,
@@ -25,14 +26,14 @@ const data = [
         superPower: "Flamethrower",
         totalWins: 390,
         totalLoss: 0,
-        profileImg: "./assets/img/Dragon.png",
+        profileImg: "../assets/img/Dragon.png",
         price: 100,
         owner: "" 
     },
     {
         id: 3,
         name: "Bulbasaur", 
-        img: "./assets/img/Godzilla.png", 
+        img: "../assets/img/Godzilla.png", 
         health: 60,
         strength: 5,
         attack: 10,
@@ -40,14 +41,14 @@ const data = [
         superPower: "Vine Whip",
         totalWins: 250,
         totalLoss: 0,
-        profileImg: "./assets/img/Godzilla.png",
+        profileImg: "../assets/img/Godzilla.png",
         price: 100,
         owner: "" 
     },
     {
         id: 4,
         name: "Squirtle", 
-        img: "./assets/img/Hound.png", 
+        img: "../assets/img/Hound.png", 
         health: 90,
         strength: 10,
         attack: 16,
@@ -55,14 +56,14 @@ const data = [
         superPower: "Water Gun",
         totalWins: 380,
         totalLoss: 0,
-        profileImg: "./assets/img/Hound.png",
+        profileImg: "../assets/img/Hound.png",
         price: 100,
         owner: "" 
     },
     {
         id: 5,
         name: "Jigglypuff", 
-        img: "./assets/img/KomodoDragon.png",
+        img: "../assets/img/KomodoDragon.png",
         health: 75,
         strength: 7,
         attack: 13,
@@ -70,14 +71,14 @@ const data = [
         superPower: "Sleep Song",
         totalWins: 300,
         totalLoss: 0,
-        profileImg: "./assets/img/KomodoDragon.png",
+        profileImg: "../assets/img/KomodoDragon.png",
         price: 100,
         owner: "" 
     },
     {
         id: 6,
         name: "Mewtwo", 
-        img: "./assets/img/IceBeever.png",
+        img: "../assets/img/IceBeever.png",
         health: 90,
         strength: 12,
         attack: 16,
@@ -85,14 +86,14 @@ const data = [
         superPower: "Psychic",
         totalWins: 380,
         totalLoss: 0,
-        profileImg: "./assets/img/IceBeever.png",
+        profileImg: "../assets/img/IceBeever.png",
         price: 100,
         owner: "" 
     },
     {
         id: 7,
         name: "Eevee", 
-        img: "./assets/img/Fox.png",
+        img: "../assets/img/Fox.png",
         health: 100,
         strength: 11,
         attack: 15,
@@ -100,14 +101,14 @@ const data = [
         superPower: "Adaptability",
         totalWins: 410,
         totalLoss: 0,
-        profileImg: "./assets/img/Fox.png",
+        profileImg: "../assets/img/Fox.png",
         price: 100,
         owner: "" 
     },
     {
         id: 8,
         name: "Gengar", 
-        img: "./assets/img/komodo.png",
+        img: "../assets/img/komodo.png",
         health: 100,
         strength: 12,
         attack: 15,
@@ -115,7 +116,7 @@ const data = [
         superPower: "Shadow Ball",
         totalWins: 420,
         totalLoss: 0,
-        profileImg: "./assets/img/Komodo.png",
+        profileImg: "../assets/img/Komodo.png",
         price: 100,
         owner: ""
     }
