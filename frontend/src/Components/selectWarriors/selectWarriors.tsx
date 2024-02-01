@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./selectWarriors.css";
 import characters from "../../Components/characters/data";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +8,8 @@ import { useRollups } from "../../useRollups";
 import getDappAddress from "../../utils/dappAddress";
 import { Input } from "../../utils/input";
 import DuelCreatedModal from "./duelCreatedModal";
+import { useConnectedAddress } from "../../ConnectedAddressContext";
+import { ethers } from "ethers";
 
 interface Character {
   id: number;
@@ -21,15 +23,115 @@ interface Character {
 const SelectWarriors = () => {
 const navigate = useNavigate();
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
+  const { connectedAddress } = useConnectedAddress();
   // const [totalCharacterPrice, setTotalCharacterPrice] = useState(Number);
   const [submitClicked, setSubmitClicked] = useState(false);
-  const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>(
-    []
-  );
+  const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [allProfiles, setAllProfiles] = useState("");
+  const [userData, setUserData] =  useState< {} | null>();
+  const [noticeGenerated, setNoticeGenerated] = useState(false)
+  const [characterState, setCharacterSatate] = useState(null);
 
 
   const rollups = useRollups(getDappAddress());
+
+
+
+  useEffect(() => {
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch('http://localhost:8080/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: 'query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }',
+          }),
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+  
+        let data = await response.json();
+        data = data.data.notices.edges;
+        // console.log('Data from GraphQL:', data);
+        let JsonResponse = extractPayloadValues(data);
+        let latestProfiles = getObjectWithHighestId(JsonResponse, "all_character");
+        console.log("latestProfiles", latestProfiles);
+        
+        if (latestProfiles === null) {
+          setCharacterSatate(null);
+          return;
+        }
+
+        setCharacterSatate(latestProfiles);
+        setAllProfiles(latestProfiles.data);
+        let userData = extractUserDetails(latestProfiles.data);
+        console.log(`JsonResponse is:`, userData);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }, 2000); // Trigger every 20 seconds
+  
+    return () => clearInterval(intervalId); // Clean up interval when component unmounts
+  }, []);
+
+  // Function to extract the payload and convert it to a json object
+  function extractPayloadValues(arrayOfObjects : any[]) {
+    let payloadValues = [];
+    for (let obj of arrayOfObjects) {
+        if ('node' in obj) {
+            payloadValues.push(JSON.parse(handleNoticeGenerated(obj.node.payload)));
+        }
+    }
+    // Return the array of payload values
+    return payloadValues;
+  }
+
+
+  function getObjectWithHighestId(objects: any[] , methodName: string) {
+    let filteredObjects = objects.filter(obj => obj.method === String(methodName));
+    console.log("found", filteredObjects);
+    if (filteredObjects.length === 0) return null; 
+
+    let highestIdObject = filteredObjects[0]; 
+    for (let obj of filteredObjects) {
+        if (obj.txId > highestIdObject.txId) { 
+            highestIdObject = obj;
+        }
+    }
+    return highestIdObject; 
+  }
+
+  function extractUserDetails(arrayOfData : any[]) {
+    console.log("AlluserDetails", arrayOfData);
+    console.log("test", String(arrayOfData[1].owner) === String(connectedAddress));
+  
+    let filteredData = arrayOfData.filter(data => (data.owner).toLowerCase() === connectedAddress.toLowerCase());
+    console.log("userDetails", filteredData);
+    if (filteredData.length === 0){
+      setUserData(null);
+      return null; // If no objects match the method name, return null
+    } 
+    setUserData(filteredData);
+    return filteredData;
+  }
+
+  const handleNoticeGenerated = (noticePayload: any[] ) => {
+    let data = ethers.utils.toUtf8String(noticePayload)
+    setNoticeGenerated(true)
+    return data;
+  };
+
+
+
+
+
+
+
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -146,7 +248,8 @@ const navigate = useNavigate();
       <div className="select-hero">
         <div className="allCharacters">
           <h3> Your Characters</h3>
-          <div className="character-list">{characters.map(renderCharacter)}</div>
+  
+          <div className="character-list">{characterState === null ? "Go to profile page and buy characters" : userData.map(renderCharacter)}</div>
         </div>
         <div className="selected_characters">
           <h3> Selected Characters</h3>
