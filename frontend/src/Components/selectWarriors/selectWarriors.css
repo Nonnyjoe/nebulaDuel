@@ -1,5 +1,11 @@
 .select-character-page{
-    padding: 9rem 2.5rem;
+    padding: 0rem 2.5rem;
+    /* border: 2px solid red; */
+    padding-top: 20rem;
+}
+
+.select-character-page h2 {
+    margin-top: 7rem;
 }
 
 .select-hero {

@@ -1,19 +1,15 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
-import "./selectStrategyDynamic.css";
-import characters from "./data";
-import { useNavigate, useParams } from "react-router-dom";
-import strategy from "./strategyData.js";
-import { useRollups } from "../../../useRollups";
+import React, { useEffect, useState } from "react";
+import "./Arena.css";
+import characters from "./data"
 import Header from "../../header/Header";
-import { Input } from "../../../utils/input";
-import { ethers } from "ethers";
+import { useNavigate, useParams } from "react-router-dom";
 import { useConnectedAddress } from "../../../ConnectedAddressContext";
+import { useRollups } from "../../../useRollups";
 import getDappAddress from "../../../utils/dappAddress";
 import getCharacterDetails from "../../../utils/getCharacterDetails";
-import { MdHealthAndSafety } from "react-icons/md";
-import { GiSwitchWeapon } from "react-icons/gi";
+import { ethers } from "ethers";
 import getProfileDetails from "../../../utils/getProfileDetails";
+import { motion } from "framer-motion";
 
 interface Character {
   id: number;
@@ -21,22 +17,12 @@ interface Character {
   img: string;
 }
 
-// const characters: Character[] = [
-//   { id: 1, name: 'Character 1', image: '/frontend/Game_Characters/Dragon.png' },
-//   { id: 2, name: 'Character 2', image: 'character2.jpg' },
-//   { id: 3, name: 'Character 3', image: 'character3.jpg' },
-//   // Add more characters as needed
-// ];
-
-const SelectStrategyDynamic = () => {
-const { duelId } = useParams();
+const Arena: React.FC = () => {
+  const { duelId } = useParams();
   const [dappAddress, setDappAddress] = useState(
     "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
   );
   const navigate = useNavigate();
-  // const [duelId, setDuelId] = useState(1);
-  // strategy is already used as variable name, throws error
-  // const [strategi, setStrategi] = useState(1);
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
   const [selectedStrategy, setSelectedStrategy] = useState<Character[]>([]);
   const [submitClicked, setSubmitClicked] = useState(false);
@@ -47,7 +33,6 @@ const { duelId } = useParams();
   const [userData, setUserData] =  useState<any>();
   const [creatorWarriors, setCreatorWarriors] = useState<any[]>();
   const [participantWarriors, setParticipantWarriors] = useState<any[]>();
-
 
   useEffect(() => {
     const intervalId = setInterval(async () => {
@@ -155,6 +140,8 @@ const { duelId } = useParams();
 
 
 
+
+
 function resolveImage(characterName: string) {
   switch (characterName) {
     case `Dragon`: return '../assets/img/Dragon.png';
@@ -170,157 +157,69 @@ function resolveImage(characterName: string) {
 }
 
 
-  const toggleCharacterSelection = (character: Character) => {
-    const index = selectedCharacters.findIndex((c) => c.id === character.id);
-    if (index === -1) {
-      if (selectedCharacters.length < 3) {
-        setSelectedCharacters([...selectedCharacters, character]);
-      } else {
-        alert("You can select only 3 characters.");
-      }
-    } else {
-      const updatedCharacters = [...selectedCharacters];
-      updatedCharacters.splice(index, 1);
-      setSelectedCharacters(updatedCharacters);
-    }
-  };
-
-  const toggleStrategySelection = (strategy: any) => {
-    const index = selectedStrategy.findIndex((c) => c.id === strategy.id);
-    if (index === -1) {
-      if (selectedStrategy.length < 1) {
-        setSelectedStrategy([...selectedStrategy, strategy]);
-      } else {
-        alert("You can select only 1 Strategy.");
-      }
-    } else {
-      const updatedStrategy = [...selectedStrategy];
-      updatedStrategy.splice(index, 1);
-      setSelectedStrategy(updatedStrategy);
-
-      // setSubmitClicked(true);
-      // Input(rollups, dappAddress, functionParamsAsString, false);
-    }
-  };
-
-  const emptyDiv = () => {
-    return <div className="emptyDiv"></div>;
-  };
-
-  const renderCharacter = (character: any) => {
-    const isSelected = selectedCharacters.some((c) => c.id === character.id);
-    return (
-      <div
-        key={character.id}
-        className={`character ${isSelected ? "selected" : ""}`}
-      >
-        <img src={resolveImage(character.name)} alt={character.name} className="img" />
-        <p className="characterName">{character.name}</p>
-        <div className="flex-row character_data">
-          <div>
-            <p className="character_p">Health: {character.health}</p>
-            <p className="character_p">Strength: {character.strength}</p>
-          </div>
-          <div>
-            <p className="character_p">Attack: {character.attack}</p>
-            <p className="character_p">Speed: {character.speed}</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderStrategy = (strategy: any) => {
-    const isSelected = selectedStrategy.some((c) => c.id === strategy.id);
-    return (
-      <div
-        key={strategy.id}
-        className={`strategy ${isSelected ? "selected" : ""}`}
-        onClick={() => toggleStrategySelection(strategy)}
-      > 
-      <div>
-        {strategy.code === 'M2LH' || strategy.code === 'L2MH' ? <MdHealthAndSafety className='icon' /> : <GiSwitchWeapon className='icon' />}
-      </div>
-        <p className="strategyName">{strategy.name}</p>
-        {/* <div className="flex-row Strategy_data">
-            <p className="strategy_code">Code: {strategy.code}</p>
-        </div> */}
-      </div>
-    );
-  };
-
-  const renderSelectedCharacters = () => {
-    return (
-      <div className="selected-characters-data">
-        {selectedCharacters.map((character) => (
-          <div key={character.id} className="selected-character">
-            <img src={resolveImage(character.name)} alt={character.name} className="img" />
-            <p>{character.name}</p>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  const handleSelectStrategy = (e: any) => {
-    e.preventDefault();
-    if (selectedStrategy.length < 1) {
-      alert("Please select at least 1 strategy");
-    } else {
-      // submit transaction for signing.
-      console.log(selectedStrategy);
-      console.log("Registering Strategy......");
-      
-      const functionParamsAsString = JSON.stringify({
-        method: "set_strategy",
-        duelId: Number(parseInt(duelId as string)),
-        strategy: selectedStrategy[0].id,
-      });
-
-      setSubmitClicked(true);
-      Input(rollups, dappAddress, functionParamsAsString, false);
-
-      setTimeout(() => {
-        // setTotalCharacterPrice(0); 
-        // setIsModalOpen(true);
-        navigate(`/arena/${duelId}`);
-    }, 5000);
-    }
-  };
-
   return (
     <div>
         <Header />
-      <div className="select-character-page">
-        <h2>Select Your Strategy !!</h2>
-        <div className="select-hero">
-          <div className="allCharacters">
-            <h3> Player 1 Warriors</h3>
-            <InnerComponent userAddress={creatorWarriors&&creatorWarriors[0]?.owner} />
-            <div className="character-list">
-              {creatorWarriors?.map(renderCharacter)}
-            </div>
-          </div>
-          <div className="selected_characters">
-            <h3>Player 2 Warriors</h3>
-            <InnerComponent userAddress={participantWarriors&&participantWarriors[0]?.owner} />
-
-            <div className="character-list">
-              {participantWarriors?.map(renderCharacter)}
-            </div>
-            {/* <h3 Select Attack Strategy</h3>
-          {selectedCharacters.length > 0 ? renderSelectedCharacters(): emptyDiv()}
-          <button className="Create_Duel" onClick={handleCreateDuel}>Create Duel</button> */}
-          </div>
-        </div>
-        <div className="centred">
-          <h3> Select Attack Strategy</h3>
-          <div className="strategy_list">{strategy.map(renderStrategy)}</div>
-          <button className="Create_Duel" onClick={handleSelectStrategy}>
-            Set Strategy
-          </button>
+    <div className="arena-container">
+      <div className="characters_container">
+        <h3>Player 1 Characters</h3>
+        <div><InnerComponent userAddress={creatorWarriors&&creatorWarriors[0]?.owner} /></div>
+          <div className="character_list">
+            {creatorWarriors?.map((character) => (
+              <div key={character.id} className="c_character">
+                <div className="C_image_container">
+                  <img src={resolveImage(character.name)} alt={character.name} className="C_img" />
+                </div>
+                <div className="C_properties_container">
+                  <p className="character_p c_name"> {character.name}</p>
+                  <p className="character_p">HLT: {character.health}</p>
+                  <p className="character_p">STR: {character.strength}</p>
+                  <p className="character_p">ATK: {character.attack}</p>
+                </div>
+              </div>
+            ))}
         </div>
       </div>
+      <div className="field-container">
+        <h1>Arena</h1>
+        <div className="battlefield">
+          {/* Display battlefield content here */}
+          <div className="App">
+      <motion.h1
+        animate={{ x: [50, 150, 50], opacity: 1, scale: 1 }}
+        transition={{
+          duration: 5,
+          delay: 0.3,
+          ease: [0.5, 0.71, 1, 1.5],
+        }}
+        initial={{ opacity: 0, scale: 0.5 }}
+        whileHover={{ scale: 1.2 }}
+      >
+        Animation made easy with Framer Motion
+      </motion.h1>
+    </div>
+        </div>
+      </div>
+      <div className="characters_container">
+        <h3>Player 2 Characters</h3>
+        <div><InnerComponent userAddress={participantWarriors&&participantWarriors[0]?.owner} /></div>
+          <div className="character_list">
+            {participantWarriors?.map((character) => (
+              <div key={character.id} className="c_character">
+                <div className="C_image_container">
+                  <img src={resolveImage(character.name)} alt={character.name} className="C_img" />
+                </div>
+                <div className="C_properties_container">
+                  <p className="character_p c_name"> {character.name}</p>
+                  <p className="character_p">HLT: {character.health}</p>
+                  <p className="character_p">STR: {character.strength}</p>
+                  <p className="character_p">ATK: {character.attack}</p>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
     </div>
   );
 };
@@ -349,4 +248,4 @@ const InnerComponent = ({ userAddress }: any) => {
   );
 }
 
-export default SelectStrategyDynamic;
+export default Arena;

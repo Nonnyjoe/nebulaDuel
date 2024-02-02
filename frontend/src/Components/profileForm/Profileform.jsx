@@ -11,7 +11,6 @@ import { Notices } from "../../Notices";
 import { useConnectedAddress } from "../../ConnectedAddressContext";
 
 
-
 const ContactUsForm = () => {
   const [dappAddress, setDappAddress] = useState(
     "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
@@ -52,37 +51,41 @@ const ContactUsForm = () => {
     return cutAddress;
 }
 
+async function fetchProfileNotices() {
+  try {
+    const response = await fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: 'query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch data');
+    }
+
+    let data = await response.json();
+    data = data.data.notices.edges;
+    // console.log('Data from GraphQL:', data);
+    let JsonResponse = extractPayloadValues(data);
+    let latestProfiles = getObjectWithHighestId(JsonResponse, "all_Players");
+    setAllProfiles(latestProfiles.data);
+    let userData = extractUserDetails(latestProfiles.data);
+    console.log(`JsonResponse is:`, userData);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+}
+
 
   useEffect(() => {
     const intervalId = setInterval(async () => {
-      try {
-        const response = await fetch('http://localhost:8080/graphql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: 'query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }',
-          }),
-        });
-  
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-  
-        let data = await response.json();
-        data = data.data.notices.edges;
-        // console.log('Data from GraphQL:', data);
-        let JsonResponse = extractPayloadValues(data);
-        let latestProfiles = getObjectWithHighestId(JsonResponse, "all_Players");
-        setAllProfiles(latestProfiles.data);
-        let userData = extractUserDetails(latestProfiles.data);
-        console.log(`JsonResponse is:`, userData);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    }, 2000); // Trigger every 20 seconds
-  
+      fetchProfileNotices();
+    }, 20000); // Trigger every 20 seconds
+    
     return () => clearInterval(intervalId); // Clean up interval when component unmounts
   }, []);
 
@@ -114,7 +117,6 @@ const ContactUsForm = () => {
   }
 
   function extractUserDetails(arrayOfData) {
-    let connectedAddress = returnConnectedAddress();
     console.log("AlluserDetails", arrayOfData);
     console.log("test", String(arrayOfData[1].walletAddress) === String(connectedAddress));
     // console.log("test", arrayOfData[1].walletAddress);
@@ -128,6 +130,7 @@ const ContactUsForm = () => {
     setUserData(filteredData[0]);
     return filteredData;
   }
+
 
     // Callback function to update noticeGenerated
     const handleNoticeGenerated = (noticePayload) => {
@@ -148,7 +151,7 @@ const ContactUsForm = () => {
     e.preventDefault();
     setSubmitClicked(true);
     Input(rollups, dappAddress, functionParamsAsString, false);
-    // alert("working....")
+    fetchProfileNotices();
   };
 
 //   Monika
@@ -173,22 +176,6 @@ const ContactUsForm = () => {
 // :
 
 
-  function fetchprofile(){
-    console.log("connected adress in profike", returnConnectedAddress())
-    console.log("profile")
-
-    // const functionParamsAsString = JSON.stringify({
-    //   method: "get_profile",
-    // });
-    // Input(rollups, dappAddress, functionParamsAsString, false);
-
-  }
-
-
-  useEffect(() => {
-    fetchprofile();
-  }
-  ,[]);
 
   return (
     <>
