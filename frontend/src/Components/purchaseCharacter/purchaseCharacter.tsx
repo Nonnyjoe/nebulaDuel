@@ -131,7 +131,6 @@ const PurchaseCharacter = () => {
 
   return (
     <div>
-      <Header />
       <div className="purchase-character-page">
         <h2>Select characters to Purchase!!</h2>
         <div className="select-hero">
