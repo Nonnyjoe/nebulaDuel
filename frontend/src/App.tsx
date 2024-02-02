@@ -21,7 +21,7 @@ import WebFont from "webfontloader";
 import {  createBrowserRouter, Route, createRoutesFromElements, RouterProvider } from "react-router-dom";
 import Home  from "./Home";
 import Main from "./Main";
-import Arena from "./Components/Arena/Arena";
+import Arena from "./Components/DynamicRoutes/Arena/Arena";
 import {About} from "./About";
 import Profile from "./Profile";
 import CardDetails from "./Components/characters/CardDetails";
@@ -45,7 +45,7 @@ const router = createBrowserRouter(createRoutesFromElements(
     {/* <Route path="/home" element={<Home />} /> */}
     <Route path="/" element={<Main />} />
     <Route path="/main" element={<Main />} />
-    <Route path="/arena" element={<Arena />} />
+    <Route path="/arena/:duelId" element={<Arena />} />
     <Route path="/about" element={<About />} />
     <Route path="/profile" element={<Profile />} />
     <Route path='/:profileId' element={<CardDetails />} /> 

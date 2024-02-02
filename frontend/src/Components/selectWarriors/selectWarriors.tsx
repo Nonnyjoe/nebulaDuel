@@ -29,7 +29,7 @@ const navigate = useNavigate();
   const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [allProfiles, setAllProfiles] = useState("");
-  const [userData, setUserData] =  useState< {} | null>();
+  const [userData, setUserData] =  useState<any>();
   const [noticeGenerated, setNoticeGenerated] = useState(false)
   const [characterState, setCharacterSatate] = useState(null);
 
@@ -120,7 +120,7 @@ const navigate = useNavigate();
     return filteredData;
   }
 
-  const handleNoticeGenerated = (noticePayload: any[] ) => {
+  const handleNoticeGenerated = (noticePayload: any ) => {
     let data = ethers.utils.toUtf8String(noticePayload)
     setNoticeGenerated(true)
     return data;
@@ -128,7 +128,19 @@ const navigate = useNavigate();
 
 
 
-
+function resolveImage(characterName: string) {
+  switch (characterName) {
+    case `Dragon`: return './assets/img/Dragon.png';
+    case `Godzilla`: return './assets/img/Godzilla.png';
+    case `Komodo`: return './assets/img/komodo.png';
+    case `KomodoDragon`: return './assets/img/KomodoDragon.png';
+    case `IceBeever`: return './assets/img/IceBeever.png';
+    case `Fox`: return './assets/img/Fox.png';
+    case `Hound`: return './assets/img/Hound.png';
+    case `Rhyno`: return './assets/img/Rhyno.png';
+    default: return './assets/img/Dragon.png';
+  }
+}
 
 
 
@@ -174,7 +186,7 @@ const navigate = useNavigate();
         className={`character ${isSelected ? "selected" : ""}`}
         onClick={() => toggleCharacterSelection(character)}
       >
-        <img src={character.img} alt={character.name} className="img" />
+        <img src={resolveImage(character.name)} alt={character.name} className="img" />
         <p className="characterName">{character.name}</p>
         <div className="flex-row character_data">
           <div>
@@ -195,7 +207,7 @@ const navigate = useNavigate();
       <div className="selected-characters-data">
         {selectedCharacters.map((character) => (
           <div key={character.id} className="selected-character">
-            <img src={character.img} alt={character.name} className="img" />
+            <img src={resolveImage(character.name)} alt={character.name} className="img" />
             <p>{character.name}</p>
           </div>
         ))}
@@ -249,7 +261,7 @@ const navigate = useNavigate();
         <div className="allCharacters">
           <h3> Your Characters</h3>
   
-          <div className="character-list">{characterState === null ? "Go to profile page and buy characters" : userData.map(renderCharacter)}</div>
+          <div className="character-list">{characterState === null ? "Go to profile page and buy characters" : userData?.map(renderCharacter)}</div>
         </div>
         <div className="selected_characters">
           <h3> Selected Characters</h3>
