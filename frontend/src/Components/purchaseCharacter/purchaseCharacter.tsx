@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useState,  useEffect} from "react";
 import "./purchaseCharacters.css";
 import characters from "../../Components/characters/data";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,8 @@ import Header from "../header/Header";
 import { useRollups } from "../../useRollups";
 import getDappAddress from "../../utils/dappAddress";
 import { Input } from "../../utils/input";
+import getProfileDetails from "../../utils/getProfileDetails";
+import { useConnectedAddress } from "../../ConnectedAddressContext";
 
 interface Character {
   id: number;
@@ -24,6 +26,7 @@ const PurchaseCharacter = () => {
     []
   );
   const rollups = useRollups(getDappAddress());
+  const { connectedAddress } = useConnectedAddress();
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -150,6 +153,9 @@ const PurchaseCharacter = () => {
               <h4 className="total_pur_price">
                 Total Price: {totalCharacterPrice} Points
               </h4>
+              <h4 className="total_pur_price">
+              <InnerComponent userAddress={connectedAddress} />
+              </h4>
             </div>
             <button className="Create_Duel" onClick={handlePurchaseCharacter}>
               Purchase Characters
@@ -160,5 +166,29 @@ const PurchaseCharacter = () => {
     </div>
   );
 };
+
+const InnerComponent = ({ userAddress }: any) => {
+  const [userData, setUserData] = useState<any>();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        let UserName = await getProfileDetails(userAddress);
+        setUserData(UserName);
+        console.log('User Name: ' + UserName);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchData(); // Call the fetchData function when the component mounts
+  }, [userAddress]); // Include userAddress in the dependency array to trigger fetch when it changes
+  // console.log("tesingisdsda", userData);
+  return (
+    <p className="duel-creator c_name"> 
+      Your Point Bal: {userData?.point} Points
+    </p>
+  );
+}
 
 export default PurchaseCharacter;

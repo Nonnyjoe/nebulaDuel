@@ -39,8 +39,10 @@ const ActiveDuels = () => {
       // console.log('Data from GraphQL:', data);
       let JsonResponse = extractPayloadValues(data);
       let latesDuels = getObjectWithHighestId(JsonResponse, "all_duels");
-      setAllDuels(latesDuels.data);
       console.log("all Duels: ", latesDuels.data);
+      let ActiveFilters = (latesDuels.data).filter(obj => Boolean(obj.isCompleted) === Boolean(false));
+      
+      setAllDuels(ActiveFilters);
       // setAllProfiles(latestProfiles.data);
       // let userData = extractUserDetails(latestProfiles.data);
       // console.log(`JsonResponse is:`, userData);
@@ -74,7 +76,7 @@ const ActiveDuels = () => {
       let filteredObjects = objects.filter(obj => obj.method === String(methodName)); // Filter objects with the specified method name
       console.log("found", filteredObjects);
       if (filteredObjects.length === 0) return null; // If no objects match the method name, return null
-  
+      
       let highestIdObject = filteredObjects[0]; // Initialize with the first object
       for (let obj of filteredObjects) {
           if (obj.txId > highestIdObject.txId) { // Check if current object has a higher id
@@ -128,7 +130,7 @@ const ActiveDuels = () => {
             </div>
           </div>
         </Link>
-        )) : <div className=""> Fetching Active Duel...</div>}
+        )) : <div className="no_duel"> <p>Sorry, No Active Duel, at the moment...</p></div>}
         </main>
         
       </div>
@@ -154,7 +156,7 @@ const InnerComponent = ({ userAddress }) => {
 
     fetchData(); // Call the fetchData function when the component mounts
   }, [userAddress]); // Include userAddress in the dependency array to trigger fetch when it changes
-  console.log("tesingisdsda", userData);
+  // console.log("tesingisdsda", userData);
   return (
     <p className="duel-creator"> 
       {userData?.Monika}

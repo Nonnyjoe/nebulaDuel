@@ -341,7 +341,7 @@ const InnerComponent = ({ userAddress }: any) => {
 
     fetchData(); // Call the fetchData function when the component mounts
   }, [userAddress]); // Include userAddress in the dependency array to trigger fetch when it changes
-  console.log("tesingisdsda", userData);
+  // console.log("tesingisdsda", userData);
   return (
     <p className="duel-creator c_name"> 
       Player Name: {userData?.Monika}
