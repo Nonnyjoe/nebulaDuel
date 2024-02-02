@@ -39,6 +39,12 @@ import Duels from "./Duels/duels";
 import SelectWarriorsDynamic from "./Components/DynamicRoutes/selectWarriors/selectWarriors";
 import SelectStrategyDynamic from "./Components/DynamicRoutes/selectStrategy/selectStrategy";
 
+
+import ProfileForm from './Components/profileForm/Profileform';
+import Cards from "./Components/characters/Cards";
+import PurchaseCharacter from './Components/purchaseCharacter/purchaseCharacter';
+
+
 const router = createBrowserRouter(createRoutesFromElements(
   <Route>
     {/* <Route path="/" element={<Home />} /> */}
@@ -47,7 +53,11 @@ const router = createBrowserRouter(createRoutesFromElements(
     <Route path="/main" element={<Main />} />
     <Route path="/arena/:duelId" element={<Arena />} />
     <Route path="/about" element={<About />} />
-    <Route path="/profile" element={<Profile />} />
+    <Route element={<Profile />} >
+      <Route index path="/profile" element={<ProfileForm />} />
+      <Route index path="/purchasecharacter" element={<PurchaseCharacter />} />
+      <Route index path="/yourcharacters" element={<Cards />} />
+    </Route>
     <Route path='/:profileId' element={<CardDetails />} /> 
     <Route path='/selectStrategy' element={<SelectStrategy />} /> 
     <Route path='/selectWarriors' element={<SelectWarriors />} /> 
