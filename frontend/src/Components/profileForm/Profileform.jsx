@@ -74,6 +74,7 @@ async function fetchProfileNotices() {
     let latestProfiles = getObjectWithHighestId(JsonResponse, "all_Players");
     setAllProfiles(latestProfiles.data);
     let userData = extractUserDetails(latestProfiles.data);
+    console.log("user data", userData)
     console.log(`JsonResponse is:`, userData);
   } catch (error) {
     console.error('Error fetching data:', error);
@@ -118,7 +119,7 @@ async function fetchProfileNotices() {
 
   function extractUserDetails(arrayOfData) {
     console.log("AlluserDetails", arrayOfData);
-    console.log("test", String(arrayOfData[1].walletAddress) === String(connectedAddress));
+    console.log("test result is", String(arrayOfData[0].walletAddress) === String(connectedAddress));
     // console.log("test", arrayOfData[1].walletAddress);
     console.log("userADD", String(connectedAddress));
     let filteredData = arrayOfData.filter(data => (data.walletAddress).toLowerCase() === connectedAddress.toLowerCase());
