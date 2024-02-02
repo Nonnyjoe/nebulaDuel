@@ -9,6 +9,7 @@ import getDappAddress from "../../../utils/dappAddress";
 import getCharacterDetails from "../../../utils/getCharacterDetails";
 import { ethers } from "ethers";
 import getProfileDetails from "../../../utils/getProfileDetails";
+import { motion } from "framer-motion";
 
 interface Character {
   id: number;
@@ -183,6 +184,20 @@ function resolveImage(characterName: string) {
         <h1>Arena</h1>
         <div className="battlefield">
           {/* Display battlefield content here */}
+          <div className="App">
+      <motion.h1
+        animate={{ x: [50, 150, 50], opacity: 1, scale: 1 }}
+        transition={{
+          duration: 5,
+          delay: 0.3,
+          ease: [0.5, 0.71, 1, 1.5],
+        }}
+        initial={{ opacity: 0, scale: 0.5 }}
+        whileHover={{ scale: 1.2 }}
+      >
+        Animation made easy with Framer Motion
+      </motion.h1>
+    </div>
         </div>
       </div>
       <div className="characters_container">

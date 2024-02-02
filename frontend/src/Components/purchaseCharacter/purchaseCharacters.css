@@ -1,7 +1,7 @@
 .purchase-character-page{
     /* margin-top: 2rem; */
     padding: 0rem 2.5rem;
-    padding-top: 50rem;
+    padding-top: 10rem;
     /* border: 2px solid red; */
 }
 
@@ -71,7 +71,7 @@
 }
 .allCharacters{
     display: block;
-    width: 42%;
+    width: 50%;
 }
 
 .selected_characters{

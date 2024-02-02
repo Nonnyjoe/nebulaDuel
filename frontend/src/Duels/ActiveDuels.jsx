@@ -107,7 +107,7 @@ const ActiveDuels = () => {
     <div className="duel-box">
       <div className="container-duel ">
         <h2>active duels</h2>
-        <main className="card-container">
+        <main className="card-container1">
         {allDuels ? allDuels.map((data) => (
           <Link to={`/duels/${data.duelId}`} key={data.duelId}>
           <div className="duelCard">
@@ -120,7 +120,7 @@ const ActiveDuels = () => {
             </div>
             <div className="text-wrapper">
               <h4>Stake</h4>
-            <p className="duel-stake">${data.stake ? data.stake : 10}</p>
+            <p className="duel-stake">${data.stake ? data.stake : 0}</p>
             </div>
             <div className="text-wrapper">
               <h4>Creator</h4>
@@ -128,7 +128,7 @@ const ActiveDuels = () => {
             </div>
           </div>
         </Link>
-        )) : <div className=""> No Active Duel...</div>}
+        )) : <div className=""> Fetching Active Duel...</div>}
         </main>
         
       </div>
