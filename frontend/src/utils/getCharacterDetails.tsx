@@ -7,29 +7,21 @@ import { ethers } from "ethers";
 // import RenderNotices from "../../utils/RenderNotices";
 // import { Notices } from "../../Notices";
 // import { useConnectedAddress } from "../../ConnectedAddressContext";
+import { GET_NOTICES, TNotice, useNotices } from "../useNotices";
+import { useQuery } from "@apollo/client";
 
 async function fetchCharacterNotices(characterId: any) {
+  const [cursor, setCursor] = useState(null);
+  const { loading, error, data } = useQuery(GET_NOTICES, {
+    variables: { cursor },
+    pollInterval: 500,
+  });
   if (characterId) {
     try {
-      const response = await fetch("http://localhost:8080/graphql", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query:
-            "query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }",
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      let data = await response.json();
-      data = data.data.notices.edges;
+ 
+      let fetchData = data.data.notices.edges;
       // console.log('Data from GraphQL:', data);
-      let JsonResponse = extractPayloadValues(data);
+      let JsonResponse = extractPayloadValues(fetchData);
       let latestProfiles = getObjectWithHighestId(
         JsonResponse,
         "all_character"
@@ -105,9 +97,9 @@ const handleNoticeGenerated = (noticePayload: any) => {
 };
 
 export default async function getCharacterDetails(characterID: any) {
-//   console.log("attempting to fetch data.......", characterID);
+  //   console.log("attempting to fetch data.......", characterID);
   let userStruct: any = await fetchCharacterNotices(characterID);
-//   console.log("userProfileDetails", "userStruct");
+  //   console.log("userProfileDetails", "userStruct");
   return userStruct[0] ? userStruct[0] : userStruct;
   // return 2;
 }

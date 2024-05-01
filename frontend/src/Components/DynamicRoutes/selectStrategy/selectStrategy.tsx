@@ -14,7 +14,8 @@ import getCharacterDetails from "../../../utils/getCharacterDetails";
 import { MdHealthAndSafety } from "react-icons/md";
 import { GiSwitchWeapon } from "react-icons/gi";
 import getProfileDetails from "../../../utils/getProfileDetails";
-
+import { GET_NOTICES, TNotice, useNotices } from "../../../useNotices";
+import { useQuery } from "@apollo/client";
 interface Character {
   id: number;
   name: string;
@@ -51,25 +52,16 @@ const { duelId } = useParams();
 
   useEffect(() => {
     const intervalId = setInterval(async () => {
+      const [cursor, setCursor] = useState(null);
+    const { loading, error, data } = useQuery(GET_NOTICES, {
+      variables: { cursor },
+      pollInterval: 500,
+    });
       try {
-        const response = await fetch('http://localhost:8080/graphql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: 'query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }',
-          }),
-        });
-  
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-  
-        let data = await response.json();
-        data = data.data.notices.edges;
+        
+        let fetchData = data.data.notices.edges;
         // console.log('Data from GraphQL:', data);
-        let JsonResponse = extractPayloadValues(data);
+        let JsonResponse = extractPayloadValues(fetchData);
         let latestProfiles = getObjectWithHighestId(JsonResponse, "all_duels");
         console.log("latestProfiles", latestProfiles);
         

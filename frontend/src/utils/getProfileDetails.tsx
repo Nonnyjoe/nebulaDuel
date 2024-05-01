@@ -7,28 +7,20 @@ import { ethers } from "ethers";
 // import RenderNotices from "../../utils/RenderNotices";
 // import { Notices } from "../../Notices";
 // import { useConnectedAddress } from "../../ConnectedAddressContext";
+import { useNotices, TNotice, GET_NOTICES } from "../useNotices";
+import { useQuery } from "@apollo/client";
 
 async function fetchProfileNotices(userAddress: any) {
+  const [cursor, setCursor] = useState(null);
+    const { loading, error, data } = useQuery(GET_NOTICES, {
+      variables: { cursor },
+      pollInterval: 500,
+    });
    if (userAddress) {
     try {
-      const response = await fetch('http://localhost:8080/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: 'query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }',
-        }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
-  
-      let data = await response.json();
-      data = data.data.notices.edges;
+      let fetchData = data.data.notices.edges;
       // console.log('Data from GraphQL:', data);
-      let JsonResponse = extractPayloadValues(data);
+      let JsonResponse = extractPayloadValues(fetchData);
       let latestProfiles = getObjectWithHighestId(JsonResponse, "all_Players");
     //   setAllProfiles(latestProfiles.data);
       let userData = extractUserDetails(latestProfiles.data, userAddress);
