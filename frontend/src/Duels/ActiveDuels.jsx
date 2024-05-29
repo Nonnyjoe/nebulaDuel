@@ -7,6 +7,7 @@ import { useConnectedAddress } from "../ConnectedAddressContext";
 import { useRollups } from "../useRollups";
 import { ethers } from "ethers";
 import getProfileDetails from "../utils/getProfileDetails";
+import { GET_NOTICES, TNotice, useNotices } from "../useNotices";
 
 const ActiveDuels = () => {
   const { connectedAddress } = useConnectedAddress();
@@ -19,22 +20,28 @@ const ActiveDuels = () => {
 
 
   async function fetchProfileNotices() {
+    const [cursor, setCursor] = useState(null);
+    const { loading, error, data } = useQuery(GET_NOTICES, {
+      variables: { cursor },
+      pollInterval: 500,
+    });
+    
     try {
-      const response = await fetch('http://localhost:8080/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: 'query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }',
-        }),
-      });
+      // const response = await fetch('http://localhost:8080/graphql', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     query: GET_NOTICES,
+      //   }),
+      // });
   
-      if (!response.ok) {
-        throw new Error('Failed to fetch data');
-      }
+      // if (!response.ok) {
+      //   throw new Error('Failed to fetch data');
+      // }
   
-      let data = await response.json();
+      // let data = await response.json();
       data = data.data.notices.edges;
       // console.log('Data from GraphQL:', data);
       let JsonResponse = extractPayloadValues(data);

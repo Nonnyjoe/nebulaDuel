@@ -8,7 +8,8 @@ import getDappAddress from "../../../utils/dappAddress";
 import { Input } from "../../../utils/input";
 import { ethers } from "ethers";
 import { useConnectedAddress } from "../../../ConnectedAddressContext";
-
+import { GET_NOTICES, TNotice, useNotices } from "../../../useNotices";
+import { useQuery } from "@apollo/client";
 interface Character {
   id: number;
   name: string;
@@ -34,35 +35,29 @@ const SelectWarriorsDynamic = () => {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const rollups = useRollups(getDappAddress());
-  const [noticeGenerated, setNoticeGenerated] = useState(false)
+  const [noticeGenerated, setNoticeGenerated] = useState(false);
   const [characterState, setCharacterSatate] = useState(null);
   const [allProfiles, setAllProfiles] = useState("");
-  const [userData, setUserData] =  useState<any>();
+  const [userData, setUserData] = useState<any>();
 
   useEffect(() => {
     const intervalId = setInterval(async () => {
+      const [cursor, setCursor] = useState(null);
+      const { loading, error, data } = useQuery(GET_NOTICES, {
+        variables: { cursor },
+        pollInterval: 500,
+      });
       try {
-        const response = await fetch('http://localhost:8080/graphql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: 'query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }',
-          }),
-        });
-  
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-  
-        let data = await response.json();
-        data = data.data.notices.edges;
-        // console.log('Data from GraphQL:', data);
-        let JsonResponse = extractPayloadValues(data);
-        let latestProfiles = getObjectWithHighestId(JsonResponse, "all_character");
-        console.log("latestProfiles", latestProfiles);
         
+        let fetchData = data.data.notices.edges;
+        // console.log('Data from GraphQL:', data);
+        let JsonResponse = extractPayloadValues(fetchData);
+        let latestProfiles = getObjectWithHighestId(
+          JsonResponse,
+          "all_character"
+        );
+        console.log("latestProfiles", latestProfiles);
+
         if (latestProfiles === null) {
           setCharacterSatate(null);
           return;
@@ -73,77 +68,88 @@ const SelectWarriorsDynamic = () => {
         let userData = extractUserDetails(latestProfiles.data);
         console.log(`JsonResponse is:`, userData);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     }, 2000); // Trigger every 20 seconds
-  
+
     return () => clearInterval(intervalId); // Clean up interval when component unmounts
   }, []);
 
   // Function to extract the payload and convert it to a json object
-  function extractPayloadValues(arrayOfObjects : any[]) {
+  function extractPayloadValues(arrayOfObjects: any[]) {
     let payloadValues = [];
     for (let obj of arrayOfObjects) {
-        if ('node' in obj) {
-            payloadValues.push(JSON.parse(handleNoticeGenerated(obj.node.payload)));
-        }
+      if ("node" in obj) {
+        payloadValues.push(JSON.parse(handleNoticeGenerated(obj.node.payload)));
+      }
     }
     // Return the array of payload values
     return payloadValues;
   }
 
-
-  function getObjectWithHighestId(objects: any[] , methodName: string) {
-    let filteredObjects = objects.filter(obj => obj.method === String(methodName));
+  function getObjectWithHighestId(objects: any[], methodName: string) {
+    let filteredObjects = objects.filter(
+      (obj) => obj.method === String(methodName)
+    );
     console.log("found", filteredObjects);
-    if (filteredObjects.length === 0) return null; 
+    if (filteredObjects.length === 0) return null;
 
-    let highestIdObject = filteredObjects[0]; 
+    let highestIdObject = filteredObjects[0];
     for (let obj of filteredObjects) {
-        if (obj.txId > highestIdObject.txId) { 
-            highestIdObject = obj;
-        }
+      if (obj.txId > highestIdObject.txId) {
+        highestIdObject = obj;
+      }
     }
-    return highestIdObject; 
+    return highestIdObject;
   }
 
-  function extractUserDetails(arrayOfData : any[]) {
+  function extractUserDetails(arrayOfData: any[]) {
     console.log("AlluserDetails", arrayOfData);
-    console.log("test", String(arrayOfData[1].owner) === String(connectedAddress));
-  
-    let filteredData = arrayOfData.filter(data => (data.owner).toLowerCase() === connectedAddress.toLowerCase());
+    console.log(
+      "test",
+      String(arrayOfData[1].owner) === String(connectedAddress)
+    );
+
+    let filteredData = arrayOfData.filter(
+      (data) => data.owner.toLowerCase() === connectedAddress.toLowerCase()
+    );
     console.log("userDetails", filteredData);
-    if (filteredData.length === 0){
+    if (filteredData.length === 0) {
       setUserData(null);
       return null; // If no objects match the method name, return null
-    } 
+    }
     setUserData(filteredData);
     return filteredData;
   }
 
-  const handleNoticeGenerated = (noticePayload: any ) => {
-    let data = ethers.utils.toUtf8String(noticePayload)
-    setNoticeGenerated(true)
+  const handleNoticeGenerated = (noticePayload: any) => {
+    let data = ethers.utils.toUtf8String(noticePayload);
+    setNoticeGenerated(true);
     return data;
   };
 
-
-
-function resolveImage(characterName: string) {
-  switch (characterName) {
-    case `Dragon`: return '../assets/img/Dragon.png';
-    case `Godzilla`: return '../assets/img/Godzilla.png';
-    case `Komodo`: return '../assets/img/komodo.png';
-    case `KomodoDragon`: return '../assets/img/KomodoDragon.png';
-    case `IceBeever`: return '../assets/img/IceBeever.png';
-    case `Fox`: return '../assets/img/Fox.png';
-    case `Hound`: return '../assets/img/Hound.png';
-    case `Rhyno`: return '../assets/img/Rhyno.png';
-    default: return '../assets/img/Dragon.png';
+  function resolveImage(characterName: string) {
+    switch (characterName) {
+      case `Dragon`:
+        return "../assets/img/Dragon.png";
+      case `Godzilla`:
+        return "../assets/img/Godzilla.png";
+      case `Komodo`:
+        return "../assets/img/komodo.png";
+      case `KomodoDragon`:
+        return "../assets/img/KomodoDragon.png";
+      case `IceBeever`:
+        return "../assets/img/IceBeever.png";
+      case `Fox`:
+        return "../assets/img/Fox.png";
+      case `Hound`:
+        return "../assets/img/Hound.png";
+      case `Rhyno`:
+        return "../assets/img/Rhyno.png";
+      default:
+        return "../assets/img/Dragon.png";
+    }
   }
-}
-
-
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -179,7 +185,11 @@ function resolveImage(characterName: string) {
         className={`character ${isSelected ? "selected" : ""}`}
         onClick={() => toggleCharacterSelection(character)}
       >
-        <img src={resolveImage(character.name)} alt={character.name} className="img" />
+        <img
+          src={resolveImage(character.name)}
+          alt={character.name}
+          className="img"
+        />
         <p className="characterName">{character.name}</p>
         <div className="flex-row character_data">
           <div>
@@ -200,7 +210,11 @@ function resolveImage(characterName: string) {
       <div className="selected-characters-data">
         {selectedCharacters.map((character) => (
           <div key={character.id} className="selected-character">
-            <img src={resolveImage(character.name)} alt={character.name} className="img" />
+            <img
+              src={resolveImage(character.name)}
+              alt={character.name}
+              className="img"
+            />
             <p>{character.name}</p>
           </div>
         ))}
@@ -257,7 +271,11 @@ function resolveImage(characterName: string) {
         <div className="select-hero">
           <div className="allCharacters">
             <h3> Your Characters</h3>
-            <div className="character-list">{characterState === null ? "Go to profile page and buy characters" : userData?.map(renderCharacter)}</div>
+            <div className="character-list">
+              {characterState === null
+                ? "Go to profile page and buy characters"
+                : userData?.map(renderCharacter)}
+            </div>
           </div>
           <div className="selected_characters">
             <h3> Selected Characters</h3>

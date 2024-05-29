@@ -13,6 +13,8 @@ import getProfileDetails from "../../../utils/getProfileDetails";
 // import SampleBattleLog from "../../../utils/sampleBattleLog";
 import { motion } from "framer-motion";
 import Modal from "./Modal";
+import { GET_NOTICES, useNotices,  } from "../../../useNotices";
+import { useQuery } from "@apollo/client";
 
 interface Character {
   id: number;
@@ -44,26 +46,15 @@ const Arena: React.FC = () => {
 
   useEffect(() => {
     const intervalId = setInterval(async () => {
+      const [cursor, setCursor] = useState(null);
+    const { loading, error, data } = useQuery(GET_NOTICES, {
+      variables: { cursor },
+      pollInterval: 500,
+    });
       try {
-        const response = await fetch("http://localhost:8080/graphql", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query:
-              "query { notices(last: 30 ) { totalCount, edges{ node{ index, payload, } } } }",
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        let data = await response.json();
-        data = data.data.notices.edges;
+        let fetchData = data.data.notices.edges;
         // console.log('Data from GraphQL:', data);
-        let JsonResponse = extractPayloadValues(data);
+        let JsonResponse = extractPayloadValues(fetchData);
         let latestProfiles = getObjectWithHighestId(JsonResponse, "all_duels");
         console.log("latestProfiles", latestProfiles);
 
