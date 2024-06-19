@@ -17,7 +17,7 @@ pub fn set_up_ai(all_players: &mut Vec<Player>, total_players:&mut u128, all_cha
         Some(ai) => {
             let mut x = 0;
 
-            while x < 8 {
+            while x < 13 {
                 purchase_single_character(all_players, all_characters, total_characters, ai.wallet_address.clone(), x);
                 x += 1;
             }

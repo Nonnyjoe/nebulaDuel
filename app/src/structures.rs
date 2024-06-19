@@ -252,6 +252,11 @@ fn decode_super_power_json(super_power: SuperPower) -> String {
         SuperPower::VineWhip => {String::from("VineWhip")},
         SuperPower::Flamethrower => {String::from("Flamethrower")},
         SuperPower::Thunderbolt => {String::from("Thunderbolt")},
+        SuperPower::HeadCrush => {String::from("HeadCrush")},
+        SuperPower::SonicKick => {String::from("SonicKick")},
+        SuperPower::TelekineticHit => {String::from("TelekineticHit")},
+        SuperPower::InvisibleClaws => {String::from("InvisibleClaws")},
+        SuperPower::DodgeNdTailLash => {String::from("DodgeNdTailLash")}
     }
 }
 

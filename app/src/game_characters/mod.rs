@@ -9,7 +9,12 @@ pub enum SuperPower {
     SleepSong,
     Psychic,
     Adaptability,
-    ShadowBall
+    ShadowBall,
+    HeadCrush,
+    SonicKick,
+    TelekineticHit,
+    InvisibleClaws,
+    DodgeNdTailLash
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -65,7 +70,7 @@ impl Character {
 
 //Function to sort a players character choice from the inputed character ID
 fn sort_characters(character_id: u128) -> Option<Character> {
-    if character_id <= 7 {
+    if character_id <= 12 {
         match character_id {
             0 => {
                 model_character(String::from("Godzilla"), 80, 8, 15, 10, SuperPower::Thunderbolt, 270)
@@ -74,22 +79,37 @@ fn sort_characters(character_id: u128) -> Option<Character> {
                 model_character(String::from("Dragon"), 95, 10, 13, 7, SuperPower::Flamethrower, 390)
             },
             2 => {
-                model_character(String::from("Komodo"), 60, 5, 10, 8, SuperPower::VineWhip, 250)
+                model_character(String::from("Komodo"), 80, 7, 13, 8, SuperPower::VineWhip, 260)
             },
             3 => {
-                model_character(String::from("IceBeever"),  90, 10, 16, 9, SuperPower::WaterGun, 350)
+                model_character(String::from("IceBeever"),  88, 10, 16, 9, SuperPower::WaterGun, 340)
             },
             4 => {
                 model_character(String::from("KomodoDragon"), 75, 7, 13, 9, SuperPower::SleepSong, 300)
             },
             5 => {
-                model_character(String::from("Fox"), 90, 12, 16, 6, SuperPower::Psychic, 380)
+                model_character(String::from("Fox"), 90, 12, 16, 6, SuperPower::Psychic, 350)
             },
             6 => {
-                model_character(String::from("Hound"), 100, 11, 15, 7, SuperPower::Adaptability, 400)
+                model_character(String::from("Great Gorilla"), 100, 11, 15, 7, SuperPower::HeadCrush, 405)
             },
             7 => {
-                model_character(String::from("Rhyno"), 100, 12, 15, 6, SuperPower::ShadowBall, 410)
+                model_character(String::from("Rhyno"), 100, 12, 15, 6, SuperPower::ShadowBall, 405)
+            },
+            8 => {
+                model_character(String::from("Hound"), 95, 11, 14, 6, SuperPower::Adaptability, 360)
+            },
+            9 => {
+                model_character(String::from("Kang"), 90, 10, 12, 5, SuperPower::SonicKick, 340)
+            },
+            10 => {
+                model_character(String::from("Allienoid"), 93, 10, 13, 6, SuperPower::TelekineticHit, 350)
+            },
+            11 => {
+                model_character(String::from("Dessert Eagle"), 87, 9, 15, 10, SuperPower::InvisibleClaws, 300)
+            },
+            12 => {
+                model_character(String::from("T-Rex"), 95, 10, 13, 8, SuperPower::DodgeNdTailLash, 360)
             },
             _ => {
                 return None;
