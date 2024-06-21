@@ -17,7 +17,7 @@ pub fn set_up_ai(all_players: &mut Vec<Player>, total_players:&mut u128, all_cha
         Some(ai) => {
             let mut x = 0;
 
-            while x < 13 {
+            while x < 20 {
                 purchase_single_character(all_players, all_characters, total_characters, ai.wallet_address.clone(), x);
                 x += 1;
             }
@@ -55,17 +55,17 @@ pub fn create_ai_duel(all_ai_duels: &mut Vec<Duel>, all_duels: &mut Vec<Duel>, a
         creation_time: time_stamp,
     };
 
-    select_ai_battle_characters(creators_warriors, &mut new_duel, all_players.clone(), all_characters.clone());
+    select_ai_battle_characters(creators_warriors, &mut new_duel, all_players.clone(), all_characters.clone(), time_stamp);
     all_ai_duels.push(new_duel.clone());
     all_duels.push(new_duel);
 }
 
 
-fn  select_ai_battle_characters(players_characters: Vec<u128>, duel: &mut Duel, all_players: Vec<Player>, all_characters: Vec<Character>) {
+fn  select_ai_battle_characters(players_characters: Vec<u128>, duel: &mut Duel, all_players: Vec<Player>, all_characters: Vec<Character>, seed: u128) {
     println!("Players characters.......: {:?}", players_characters);
     let mut ai_warriors: Vec<u128> = Vec::new();
     for (_index, character_id) in players_characters.iter().enumerate() {
-        ai_warriors.push(find_opponent(*character_id, duel.clone(), ai_warriors.clone(), all_players.clone(), all_characters.clone()));
+        ai_warriors.push(find_opponent(*character_id, duel.clone(), ai_warriors.clone(), all_players.clone(), all_characters.clone(), seed));
     }
     duel.opponent_warriors = ai_warriors;
 }
@@ -151,15 +151,15 @@ fn calculate_total_strength(duel_warriors: Vec<u128>, all_characters: Vec<Charac
 }
 
 
-fn find_opponent(character_id: u128, duel: Duel, already_selected: Vec<u128>, all_players: Vec<Player>, all_characters: Vec<Character>) -> u128 {
+fn find_opponent(character_id: u128, duel: Duel, already_selected: Vec<u128>, all_players: Vec<Player>, all_characters: Vec<Character>, seed: u128) -> u128 {
     let difficulty = duel.difficulty;
     let possible_characters = get_ai_characters(all_players);
     match difficulty {
         Difficulty::Easy => {
-            return select_easy_opponent(all_characters, possible_characters, character_id, already_selected);
+            return select_easy_opponent(all_characters, possible_characters, character_id, already_selected, seed);
         },
         Difficulty::Hard => {
-            return select_hard_opponent(all_characters, possible_characters, character_id, already_selected);
+            return select_hard_opponent(all_characters, possible_characters, character_id, already_selected, seed);
         },
         Difficulty::P2P => {
             panic!("P2P battle difficulty not applicable for Ai Duel");
@@ -167,7 +167,7 @@ fn find_opponent(character_id: u128, duel: Duel, already_selected: Vec<u128>, al
     }
 }
 
-fn select_easy_opponent(all_characters: Vec<Character>, possible_characters: Vec<u128>, character_id: u128, already_selected: Vec<u128>) -> u128 {
+fn select_easy_opponent(all_characters: Vec<Character>, possible_characters: Vec<u128>, character_id: u128, already_selected: Vec<u128>,  seed: u128) -> u128 {
     let mut selected_character: Option<u128> = None;
     let mut opponent_details: Character;
     let mut opponent_metric: u128= 0;
@@ -176,21 +176,24 @@ fn select_easy_opponent(all_characters: Vec<Character>, possible_characters: Vec
     for character in all_characters.clone() {
         if character.id == character_id { 
             opponent_details = character;
-            opponent_metric = opponent_details.strength + opponent_details.health + (opponent_details.attack / 2);
+            opponent_metric = opponent_details.strength + opponent_details.health + (opponent_details.attack / 3);
+            println!("oponent id: {}..... oponnent metrix: {}", opponent_details.id.clone(), opponent_metric.clone());
         }
     };
 
-    for characters_id in possible_characters.clone() {
+    for characters_id in shuffle_vector(&possible_characters.clone(), seed.clone()) {
         let mut character_details;
         let mut character_metric: u128 = 0;
         
         for character in all_characters.clone() {
             if character.id == characters_id {
                 character_details = character;
-                character_metric = character_details.strength + character_details.health + (character_details.attack / 2);
-                if !is_already_selected(already_selected.clone(), characters_id) &&character_metric > previous_character_metric && character_metric <= opponent_metric {
-                    selected_character = Some(character_details.id);
-                    previous_character_metric = character_metric;
+                character_metric = character_details.strength + character_details.health + (character_details.attack / 3);
+                if !is_already_selected(already_selected.clone(), characters_id) &&character_metric > previous_character_metric && character_metric < opponent_metric {
+                    println!("character id: {}..... character metrix: {}", character_details.id.clone(), character_metric.clone());
+                    // selected_character = Some(character_details.id);
+                    // previous_character_metric = character_metric;
+                    return character_details.id;
                 }
             }
         };
@@ -198,9 +201,10 @@ fn select_easy_opponent(all_characters: Vec<Character>, possible_characters: Vec
 
     match selected_character {
         None => {
-            selected_character = Some(select_hard_opponent(all_characters, possible_characters, character_id, already_selected));
+            println!("Findind Difficult Characters......");
+            selected_character = Some(select_compromise(all_characters, possible_characters, character_id, already_selected, seed.clone()));
             if selected_character.is_none() {
-                panic!("No opponent found for selected character")
+                panic!("No opponent found for selected character");
             } else {
                 return selected_character.unwrap();
             }
@@ -212,7 +216,11 @@ fn select_easy_opponent(all_characters: Vec<Character>, possible_characters: Vec
     }
 }
 
-fn select_hard_opponent(all_characters: Vec<Character>, possible_characters: Vec<u128>, character_id: u128, already_selected: Vec<u128>) -> u128 {
+
+
+
+
+fn select_compromise(all_characters: Vec<Character>, possible_characters: Vec<u128>, character_id: u128, already_selected: Vec<u128>,  seed: u128) -> u128 {
     let mut selected_character: Option<u128> = None;
     let mut opponent_details: Character;
     let mut opponent_metric: u128= 0;
@@ -221,7 +229,7 @@ fn select_hard_opponent(all_characters: Vec<Character>, possible_characters: Vec
     for character in all_characters.clone() {
         if character.id == character_id { 
             opponent_details = character;
-            opponent_metric = opponent_details.strength + opponent_details.health + (opponent_details.attack / 2);
+            opponent_metric = opponent_details.strength + opponent_details.health + (opponent_details.attack / 3);
         }
     };
 
@@ -232,10 +240,9 @@ fn select_hard_opponent(all_characters: Vec<Character>, possible_characters: Vec
         for character in all_characters.clone() {
             if character.id == characters_id {
                 character_details = character;
-                character_metric = character_details.strength + character_details.health + (character_details.attack / 2);
+                character_metric = character_details.strength + character_details.health + (character_details.attack / 3);
                 if !is_already_selected(already_selected.clone(), characters_id) &&character_metric > previous_character_metric && character_metric >= opponent_metric {
-                    selected_character = Some(character_details.id);
-                    previous_character_metric = character_metric;
+                    return (character_details.id);
                 }
             }
         };
@@ -243,7 +250,58 @@ fn select_hard_opponent(all_characters: Vec<Character>, possible_characters: Vec
 
     match selected_character {
         None => {
-            selected_character = Some(select_easy_opponent(all_characters, possible_characters, character_id, already_selected));
+            selected_character = Some(select_easy_opponent(all_characters, possible_characters, character_id, already_selected, seed));
+            if selected_character.is_none() {
+                panic!("No opponent found for selected character");
+            } else {
+                return selected_character.unwrap();
+            }
+        },
+        Some(character_id) => {
+            println!("Character found: {}", character_id);
+            return character_id;
+        }
+    }
+}
+
+
+
+
+
+
+fn select_hard_opponent(all_characters: Vec<Character>, possible_characters: Vec<u128>, character_id: u128, already_selected: Vec<u128>, seed: u128) -> u128 {
+    let mut selected_character: Option<u128> = None;
+    let mut opponent_details: Character;
+    let mut opponent_metric: u128= 0;
+    let mut previous_character_metric: u128= 0;
+    
+    for character in all_characters.clone() {
+        if character.id == character_id { 
+            opponent_details = character;
+            opponent_metric = opponent_details.strength + opponent_details.health + (opponent_details.attack / 3);
+        }
+    };
+
+    for characters_id in shuffle_vector(&possible_characters.clone(), seed.clone()) {
+        let mut character_details;
+        let mut character_metric: u128 = 0;
+        
+        for character in all_characters.clone() {
+            if character.id == characters_id {
+                character_details = character;
+                character_metric = character_details.strength + character_details.health + (character_details.attack / 3);
+                if !is_already_selected(already_selected.clone(), characters_id) &&character_metric > previous_character_metric && character_metric >= opponent_metric {
+                    // selected_character = Some(character_details.id);
+                    // previous_character_metric = character_metric;
+                    return character_details.id;
+                }
+            }
+        };
+    }
+
+    match selected_character {
+        None => {
+            selected_character = Some(select_easy_opponent(all_characters, possible_characters, character_id, already_selected, seed.clone()));
             if selected_character.is_none() {
                 panic!("No opponent found for selected character");
             } else {
@@ -284,4 +342,21 @@ pub fn decode_difficulty(difficulty_id: u128) -> Option<Difficulty> {
         3 => return Some(Difficulty::P2P),
         _ => return None,
     }
+}
+
+
+// Function to shuffle the vector using a u128 seed and return a new shuffled vector
+fn shuffle_vector<T: Clone>(vec: &Vec<T>, seed: u128) -> Vec<T> {
+    let mut rng_seed = seed;
+    let mut new_vec = vec.clone();
+    let len = new_vec.len();
+
+    for i in (1..len).rev() {
+        // Simple linear congruential generator (LCG) for generating pseudo-random numbers
+        rng_seed = rng_seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+        let j = (rng_seed % (i as u128 + 1)) as usize;
+        new_vec.swap(i, j);
+    }
+
+    new_vec
 }

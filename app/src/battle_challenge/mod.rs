@@ -391,12 +391,15 @@ fn new_vec(attacker: &Character, opponent: &Character) -> Vec<MinimalCharacter> 
 
 fn single_duel(attacker: &mut Character, opponent: &mut Character) {
     println!("new battle round: {}, will attack: {}", attacker.id, opponent.id);
-    let damage: u128 = attacker.strength + (attacker.attack / 2);
+    let damage: u128 = (attacker.strength + (attacker.attack / 2)) - (opponent.speed / 4);
     if opponent.health <= damage {
         opponent.health = 0;
     } else {
         opponent.health -= damage;
     };
+    if opponent.speed >= 1 {
+        opponent.speed -= 1;
+    }
     attacker.attack = if (attacker.attack - (damage / 5)) >= 5 {
         attacker.attack - (damage / 5)
     } else {

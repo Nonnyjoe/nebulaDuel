@@ -38,7 +38,7 @@ impl Storage {
     pub fn new(server_addr: String) -> Self { 
         Self {
             total_players: 0,
-            admin_address: String::from("0xAdmin"),
+            admin_address: String::from("0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8").to_lowercase(),
             all_players: Vec::new(),
             all_characters: Vec::new(),
             listed_characters: Vec::new(),
@@ -91,10 +91,10 @@ pub struct BaseContracts {
 impl BaseContracts {
     pub fn new() -> Self {
         Self {
-            erc20_portal: String::from("0xAdmin"),
-            erc721_portal: String::from("0xAdmin"),
-            dapp_relayer: String::from("0xAdmin"),
-            input_box: String::from("0xAdmin"),
+            erc20_portal: String::from("0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB").to_lowercase(),
+            erc721_portal: String::from("0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87").to_lowercase(),
+            dapp_relayer: String::from("0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE").to_lowercase(),
+            input_box: String::from("0x59b22D57D4f067708AB0c00552767405926dc768").to_lowercase(),
             
         }
     }

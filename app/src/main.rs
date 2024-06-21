@@ -68,7 +68,7 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stam
         handle_deposit(bc_payload, msg_sender.to_string(), storage);
 
     } else if msg_sender == base_contracts.dapp_relayer {
-        storage.dapp_contract_address = bc_payload.to_string();
+        storage.dapp_contract_address = bc_payload.to_string().to_lowercase();
 
     } else if msg_sender == base_contracts.erc721_portal {
         handle_deposit_character_as_nft(bc_payload, msg_sender.to_string(), storage);
