@@ -5,6 +5,7 @@ pub mod game_characters;
 pub mod market_place;
 pub mod players_profile;
 pub mod strategy_simulation;
-pub mod router;
+pub mod advance_router;
 pub mod storage;
 pub mod structures;
+pub mod inspect_router;
