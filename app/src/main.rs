@@ -1,13 +1,17 @@
 extern crate dapp;
 use json::{object, JsonValue, parse};
 // use serde::{Serialize, Deserialize};
-use dapp::router::{router, handle_deposit, handle_deposit_character_as_nft};
+use dapp::advance_router::{router, handle_deposit, handle_deposit_character_as_nft};
+use dapp::inspect_router::inspect_router;
 use dapp::storage::*;
+use std::collections::btree_set::SymmetricDifference;
 use std::str;
 use std::env;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::error::Error;
+use dapp::structures::{TransactionStatus, emit_notice, emit_report};
+
 
 pub async fn handle_advance(
     _client: &hyper::Client<hyper::client::HttpConnector>,
@@ -27,11 +31,12 @@ println!("Received advance request data {}", &request);
     .ok_or("Missing caller")?;
 
     println!("caller is {}", msg_sender);
+    let time_stamp: u128 = (request["data"]["metadata"]["timestamp"]).to_string().parse::<u128>().unwrap();
 
     let modified_string = remove_first_two_chars(&_payload);
     println!("payload without unnecesary content is: {}", modified_string);
     // let request_payload = hex::decode(modified_string).expect("Every payload has to be hex encoded");
-    hex_to_json(&modified_string, &msg_sender, storage);
+    hex_to_json(&modified_string, &msg_sender.to_lowercase(), storage, time_stamp);
 
     // let data = "new notice emitted";
     // emit_notice(data, _server_addr);
@@ -46,7 +51,7 @@ fn remove_first_two_chars(s: &str) -> String {
     }
 }
 
-fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage) {
+fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
     // Decode the hex string to a byte array
     let bytes = hex::decode(hex_str).expect("Failed to decode hex string");
 
@@ -63,7 +68,7 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage) {
         handle_deposit(bc_payload, msg_sender.to_string(), storage);
 
     } else if msg_sender == base_contracts.dapp_relayer {
-        storage.dapp_contract_address = bc_payload.to_string();
+        storage.dapp_contract_address = bc_payload.to_string().to_lowercase();
 
     } else if msg_sender == base_contracts.erc721_portal {
         handle_deposit_character_as_nft(bc_payload, msg_sender.to_string(), storage);
@@ -73,7 +78,7 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage) {
         if let JsonValue::Object(obj) = parsed_json.clone() {
             if let Some(func) = obj.get("func") {
                 println!("Destructured func: {}", func);
-                router(func, &parsed_json, msg_sender, storage);
+                router(func, &parsed_json, msg_sender, storage, time_stamp);
             } else {
                 println!("Field 'func' not found in JSON object");
             }
@@ -84,16 +89,36 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage) {
     println!("JSON: {:?}", json_string);
 }
 
+
+fn hex_to_string(hex_input: &str) -> Result<String, hex::FromHexError> {
+    let bytes = hex::decode(hex_input)?;
+    let result = String::from_utf8(bytes).expect("Invalid UTF-8 sequence");
+    Ok(result)
+}
+
+
+
+//HANDLE INSPECT PART;
 pub async fn handle_inspect(
     _client: &hyper::Client<hyper::client::HttpConnector>,
     _server_addr: &str,
     request: JsonValue,
+    storage: &mut Storage,
 ) -> Result<&'static str, Box<dyn std::error::Error>> {
     println!("Received inspect request data {}", &request);
     let _payload = request["data"]["payload"]
         .as_str()
         .ok_or("Missing payload")?;
     // TODO: add application logic here
+    println!("data is: {}", request["data"]);
+    println!("payload is: {}", _payload);
+
+    let payload = remove_first_two_chars(_payload);
+    
+    match hex_to_string(&payload) {
+        Ok(payload) => inspect_router(&payload, storage),
+        Err(_) => panic!("Failed to decode hex payload"),
+    };
     Ok("accept")
 }
 
@@ -129,7 +154,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .ok_or("request_type is not a string")?;
             status = match request_type {
                 "advance_state" => handle_advance(&client, &server_addr[..], req, &mut storage).await?,
-                "inspect_state" => handle_inspect(&client, &server_addr[..], req).await?,
+                "inspect_state" => handle_inspect(&client, &server_addr[..], req, &mut storage).await?,
                 &_ => {
                     eprintln!("Unknown request type");
                     "reject"

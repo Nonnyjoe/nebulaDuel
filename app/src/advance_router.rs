@@ -9,7 +9,7 @@ use crate::players_profile::get_profile;
 use crate::storage;
 use crate::strategy_simulation;
 use crate::strategy_simulation::AllStrategies;
-// use crate::structures::{TransactionStatus, emit_notice};
+use crate::structures::{TransactionStatus, emit_notice};
 use crate::structures::*;
 // use crate::structures::*;
 use std::error::Error;
@@ -55,7 +55,7 @@ pub fn structure_notice(method: String, tx_id: &mut u128, target: String, data: 
 }
 
 // pub fn router(route: Route, data: &StandardInput) {
-pub fn router(route: &JsonValue, payload: &JsonValue, msg_sender: &str, storage: &mut Storage) {
+pub fn router(route: &JsonValue, payload: &JsonValue, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
     storage.total_transactions += 1;
 
     match route.as_str() {
@@ -99,7 +99,7 @@ pub fn router(route: &JsonValue, payload: &JsonValue, msg_sender: &str, storage:
                 },
                 "create_ai_duel" => {
                     println!("Creating AI Duel!!!");
-                    handle_create_ai_duel(payload, msg_sender.to_string(), storage);
+                    handle_create_ai_duel(payload, msg_sender.to_string(), storage, time_stamp);
                 },
                 "select_ai_battle_strategy" => {
                     println!("Creating AI Duel!!!");
@@ -107,7 +107,7 @@ pub fn router(route: &JsonValue, payload: &JsonValue, msg_sender: &str, storage:
                 },
                 "create_duel" => {
                     println!("Creating Duel!!!");
-                    handle_create_duel(payload, msg_sender.to_string(), storage);
+                    handle_create_duel(payload, msg_sender.to_string(), storage, time_stamp);
                 },
                 "join_duel" => {
                     println!("Joining Duel!!!");
@@ -253,7 +253,7 @@ pub fn handle_purchase_team(payload: &JsonValue, msg_sender: String, storage: &m
 }
 
 // {"func": "create_duel", "char_id1": 9, "char_id2": 10, "char_id3": 11, "has_staked": false, "stake_amount": 0.0}
-pub fn handle_create_duel(payload: &JsonValue, msg_sender: String, storage: &mut Storage ) {
+pub fn handle_create_duel(payload: &JsonValue, msg_sender: String, storage: &mut Storage, time_stamp: u128 ) {
     if let JsonValue::Object(obj) = payload.clone() { 
         let mut has_staked: bool = false;
         let mut stake_amount: f64 = 0.0;
@@ -289,7 +289,7 @@ pub fn handle_create_duel(payload: &JsonValue, msg_sender: String, storage: &mut
             panic!("invalid stake amount");
         }
 
-        battle_challenge::create_duel(&mut storage.all_duels, &mut storage.all_characters, &mut storage.all_players, &mut storage.total_duels, msg_sender.clone(), char_ids, &mut storage.available_duels, has_staked, stake_amount);
+        battle_challenge::create_duel(&mut storage.all_duels, &mut storage.all_characters, &mut storage.all_players, &mut storage.total_duels, msg_sender.clone(), char_ids, &mut storage.available_duels, has_staked, stake_amount, time_stamp);
         storage.record_tx(String::from("create_duel"), msg_sender.clone(), TransactionStatus::Success);
         
         let data = &mut storage.all_duels;
@@ -405,8 +405,8 @@ pub fn handle_fight(payload: &JsonValue, msg_sender: String, storage: &mut Stora
     }
 }
 
-// {"func": "create_ai_duel", "char_id1": 9, "char_id2": 10, "char_id3": 11, "difficulty_id": 1}
-pub fn handle_create_ai_duel(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+// {"func": "create_ai_duel", "char_id1": 14, "char_id2": 15, "char_id3": 16, "difficulty_id": 1}
+pub fn handle_create_ai_duel(payload: &JsonValue, msg_sender: String, storage: &mut Storage, time_stamp: u128) {
     if let JsonValue::Object(obj) = payload.clone() { 
         let mut char_ids: Vec<u128> = Vec::new();
         let mut difficulty_id: u128 = 0;
@@ -442,7 +442,7 @@ pub fn handle_create_ai_duel(payload: &JsonValue, msg_sender: String, storage: &
             panic!("invalid strategy Id");
         }
 
-        ai_battle::create_ai_duel(&mut storage.all_ai_duels, &mut storage.all_duels, &mut storage.all_characters, &mut storage.all_players, &mut storage.total_duels, msg_sender.clone(), char_ids, difficulty);
+        ai_battle::create_ai_duel(&mut storage.all_ai_duels, &mut storage.all_duels, &mut storage.all_characters, &mut storage.all_players, &mut storage.total_duels, msg_sender.clone(), char_ids, difficulty, time_stamp);
         storage.record_tx(String::from("create_ai_duel"), msg_sender.clone(), TransactionStatus::Success);
 
         let data = &mut storage.all_ai_duels;

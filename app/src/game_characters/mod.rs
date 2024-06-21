@@ -70,46 +70,67 @@ impl Character {
 
 //Function to sort a players character choice from the inputed character ID
 fn sort_characters(character_id: u128) -> Option<Character> {
-    if character_id <= 12 {
+    if character_id <= 19 {
         match character_id {
             0 => {
-                model_character(String::from("Godzilla"), 80, 8, 15, 10, SuperPower::Thunderbolt, 270)
+                model_character(String::from("Mystic Seer"), 80, 10, 10, 10, SuperPower::Thunderbolt, 317)
             },
             1 => {
-                model_character(String::from("Dragon"), 95, 10, 13, 7, SuperPower::Flamethrower, 390)
+                model_character(String::from("Zylar the Conqueror"), 90, 10, 13, 9, SuperPower::Flamethrower, 385)
             },
             2 => {
-                model_character(String::from("Komodo"), 80, 7, 13, 8, SuperPower::VineWhip, 260)
+                model_character(String::from("Shadow Strike"), 75, 10, 13, 10, SuperPower::VineWhip, 307)
             },
             3 => {
-                model_character(String::from("IceBeever"),  88, 10, 16, 9, SuperPower::WaterGun, 340)
+                model_character(String::from("Captain Valor"),  85, 8, 10, 8, SuperPower::WaterGun, 350)
             },
             4 => {
-                model_character(String::from("KomodoDragon"), 75, 7, 13, 9, SuperPower::SleepSong, 300)
+                model_character(String::from("Sir Elara the Great"), 88, 9, 13, 7, SuperPower::SleepSong, 362)
             },
             5 => {
-                model_character(String::from("Fox"), 90, 12, 16, 6, SuperPower::Psychic, 350)
+                model_character(String::from("Goul King"), 92, 11, 14, 9, SuperPower::Psychic, 415)
             },
             6 => {
-                model_character(String::from("Great Gorilla"), 100, 11, 15, 7, SuperPower::HeadCrush, 405)
+                model_character(String::from("Elinor Swiftstrike"), 80, 10, 13, 7, SuperPower::HeadCrush, 320)
             },
             7 => {
-                model_character(String::from("Rhyno"), 100, 12, 15, 6, SuperPower::ShadowBall, 405)
+                model_character(String::from("Ravager"), 75, 8, 16, 6, SuperPower::ShadowBall, 300)
             },
             8 => {
-                model_character(String::from("Hound"), 95, 11, 14, 6, SuperPower::Adaptability, 360)
+                model_character(String::from("Bone Collector"), 93, 12, 15, 8, SuperPower::Adaptability, 440)
             },
             9 => {
-                model_character(String::from("Kang"), 90, 10, 12, 5, SuperPower::SonicKick, 340)
+                model_character(String::from("Vortex"), 88, 10, 13, 8, SuperPower::SonicKick, 370)
             },
             10 => {
-                model_character(String::from("Allienoid"), 93, 10, 13, 6, SuperPower::TelekineticHit, 350)
+                model_character(String::from("Dire Wolf"), 90, 11, 14, 6, SuperPower::TelekineticHit, 397)
             },
             11 => {
-                model_character(String::from("Dessert Eagle"), 87, 9, 15, 10, SuperPower::InvisibleClaws, 300)
+                model_character(String::from("Luna Empress"), 87, 8, 15, 10, SuperPower::InvisibleClaws, 357)
             },
             12 => {
-                model_character(String::from("T-Rex"), 95, 10, 13, 8, SuperPower::DodgeNdTailLash, 360)
+                model_character(String::from("Blaze"), 83, 8, 13, 8, SuperPower::DodgeNdTailLash, 338)
+            },
+            13 => {
+                model_character(String::from("Techno Mage"), 93, 10, 12, 8, SuperPower::DodgeNdTailLash, 430)
+            },
+            14 => {
+                model_character(String::from("Berzerker"), 96, 13, 14, 8, SuperPower::DodgeNdTailLash, 480)
+            },
+            15 => {
+                model_character(String::from("Gorgon"), 92, 11, 13, 8, SuperPower::DodgeNdTailLash, 405)
+            },
+            16 => {
+                model_character(String::from("Troll"), 93, 11, 15, 7, SuperPower::DodgeNdTailLash, 440)
+            },
+            17 => {
+                model_character(String::from("Drake Fire"), 90, 10, 10, 8, SuperPower::DodgeNdTailLash, 380)
+            },
+            18 => {
+                model_character(String::from("Stone Golem"), 91, 10, 13, 7, SuperPower::DodgeNdTailLash, 400)
+            },
+            19 => {
+                model_character(String::from("Serena Hawk"), 88, 10, 11, 9, SuperPower::DodgeNdTailLash, 365)
             },
             _ => {
                 return None;

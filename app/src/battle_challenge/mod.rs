@@ -30,6 +30,7 @@ pub struct Duel {
     pub battle_log: Vec<Vec<MinimalCharacter>>,
     pub duel_winner: String,
     pub duel_loser: String,
+    pub creation_time: u128,
 }
 
 struct TurnsTracker {
@@ -94,7 +95,7 @@ impl TurnsTracker {
 }
 
 
-pub fn create_duel(all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>, all_players:&mut Vec<Player>,total_duels: &mut u128, creators_address: String, creators_warriors: Vec<u128>, available_duels:&mut Vec<Duel>, has_stake: bool, stake_amount: f64) {
+pub fn create_duel(all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>, all_players:&mut Vec<Player>,total_duels: &mut u128, creators_address: String, creators_warriors: Vec<u128>, available_duels:&mut Vec<Duel>, has_stake: bool, stake_amount: f64, time_stamp: u128) {
     if creators_warriors.len() < 3 {
         panic!("Player must present at least 3 characters for each battle!!");
     }; 
@@ -120,6 +121,7 @@ pub fn create_duel(all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>
         battle_log: Vec::new(),
         duel_winner: String::new(),
         duel_loser: String::new(),
+        creation_time: time_stamp,
     };
 
     if has_stake {
@@ -389,12 +391,15 @@ fn new_vec(attacker: &Character, opponent: &Character) -> Vec<MinimalCharacter> 
 
 fn single_duel(attacker: &mut Character, opponent: &mut Character) {
     println!("new battle round: {}, will attack: {}", attacker.id, opponent.id);
-    let damage: u128 = attacker.strength + (attacker.attack / 2);
+    let damage: u128 = (attacker.strength + (attacker.attack / 2)) - (opponent.speed / 4);
     if opponent.health <= damage {
         opponent.health = 0;
     } else {
         opponent.health -= damage;
     };
+    if opponent.speed >= 1 {
+        opponent.speed -= 1;
+    }
     attacker.attack = if (attacker.attack - (damage / 5)) >= 5 {
         attacker.attack - (damage / 5)
     } else {

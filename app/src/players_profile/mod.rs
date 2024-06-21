@@ -92,7 +92,7 @@ impl Player {
 
 pub fn find_player (all_players: &mut Vec<Player>, wallet_address: String) -> Option<&mut Player> {
    for player in all_players {
-        if player.wallet_address == wallet_address {
+        if (player.wallet_address).to_lowercase() == wallet_address.to_lowercase() {
             return Some(player);
         }
    }
@@ -113,7 +113,7 @@ pub fn create_player(monika: String, wallet_address: String, avatar_url: String,
                 avatar_url: avatar_url,
                 characters: Vec::new(),
                 id: *total_players,
-                points: 1000,
+                points: 1050,
                 nebula_token_balance: 0,
                 cartesi_token_balance: 0.0,
                 total_battles: 0,
