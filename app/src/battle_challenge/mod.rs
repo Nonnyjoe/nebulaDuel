@@ -30,6 +30,7 @@ pub struct Duel {
     pub battle_log: Vec<Vec<MinimalCharacter>>,
     pub duel_winner: String,
     pub duel_loser: String,
+    pub creation_time: u128,
 }
 
 struct TurnsTracker {
@@ -94,7 +95,7 @@ impl TurnsTracker {
 }
 
 
-pub fn create_duel(all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>, all_players:&mut Vec<Player>,total_duels: &mut u128, creators_address: String, creators_warriors: Vec<u128>, available_duels:&mut Vec<Duel>, has_stake: bool, stake_amount: f64) {
+pub fn create_duel(all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>, all_players:&mut Vec<Player>,total_duels: &mut u128, creators_address: String, creators_warriors: Vec<u128>, available_duels:&mut Vec<Duel>, has_stake: bool, stake_amount: f64, time_stamp: u128) {
     if creators_warriors.len() < 3 {
         panic!("Player must present at least 3 characters for each battle!!");
     }; 
@@ -120,6 +121,7 @@ pub fn create_duel(all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>
         battle_log: Vec::new(),
         duel_winner: String::new(),
         duel_loser: String::new(),
+        creation_time: time_stamp,
     };
 
     if has_stake {

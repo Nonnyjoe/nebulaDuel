@@ -208,6 +208,8 @@ pub fn duels_to_json(all_duels: Vec<Duel>) -> String {
         tx_json["battle_log"] = (decode_battle_log_json(duel.battle_log)).into();
         tx_json["duel_winner"] = duel.duel_winner.into();
         tx_json["duel_loser"] = duel.duel_loser.into();
+        tx_json["creation_time"] = (duel.creation_time as u64).into();
+
         json_array.push(tx_json).unwrap();
     }
 
@@ -237,6 +239,7 @@ pub fn single_duel_to_json(duel: Duel) -> String {
     tx_json["battle_log"] = (decode_battle_log_json(duel.battle_log)).into();
     tx_json["duel_winner"] = duel.duel_winner.into();
     tx_json["duel_loser"] = duel.duel_loser.into();
+    tx_json["creation_time"] = (duel.creation_time as u64).into();
     
     return tx_json.to_string();
 }

@@ -40,9 +40,7 @@ fn split_string(input: &str) -> Vec<&str> {
 
 fn handle_fetch_profile(new_payload: Vec<&str>, storage: &mut Storage) {
     if new_payload.len() > 1 {
-
         println!("Fetching Profile for {}", new_payload[1]);
-
         match find_player(&mut storage.all_players, (*new_payload[1]).to_string()) {
             Some(player) => {
 
@@ -54,7 +52,6 @@ fn handle_fetch_profile(new_payload: Vec<&str>, storage: &mut Storage) {
                 println!("Player not found");
             }
         }
-
     } else {
         println!("Fetching all Profiles");
         let all_players_string = players_profile_to_json(storage.all_players.clone());
@@ -67,7 +64,6 @@ fn handle_fetch_profile(new_payload: Vec<&str>, storage: &mut Storage) {
 
 fn handle_fetch_characters(new_payload: Vec<&str>, storage: &mut Storage) {
     if new_payload.len() > 1 {
-
         println!("Fetching characters with id:{}", new_payload[1]);
         let characters_string = single_character_to_json(get_character_details(&mut storage.all_characters, new_payload[1].parse::<u128>().unwrap()).clone());
         emit_report(&characters_string, &storage.server_addr);

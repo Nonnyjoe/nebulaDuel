@@ -7,7 +7,7 @@ use crate::strategy_simulation::{AllStrategies, decicde_victim};
 
 pub fn set_up_ai(all_players: &mut Vec<Player>, total_players:&mut u128, all_characters:&mut Vec<Character>, total_characters: &mut u128, ) {
     let monika: String = String::from("Nebula Ai");
-    let wallet_address = String::from("0xnebula");
+    let wallet_address = String::from("0xnebula").to_lowercase();
     let avatar_url = String::new();
 
     let ai = create_player(monika, wallet_address, avatar_url, all_players, total_players);
@@ -29,7 +29,7 @@ pub fn set_up_ai(all_players: &mut Vec<Player>, total_players:&mut u128, all_cha
     }
 }
 
-pub fn create_ai_duel(all_ai_duels: &mut Vec<Duel>, all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>, all_players:&mut Vec<Player>, total_duels: &mut u128, creators_address: String, creators_warriors: Vec<u128>, difficulty: Difficulty) {
+pub fn create_ai_duel(all_ai_duels: &mut Vec<Duel>, all_duels: &mut Vec<Duel>, all_characters:&mut Vec<Character>, all_players:&mut Vec<Player>, total_duels: &mut u128, creators_address: String, creators_warriors: Vec<u128>, difficulty: Difficulty, time_stamp: u128) {
     if creators_warriors.len() < 3 {
         panic!("Player must present at least 3 characters for each battle!!");
     } 
@@ -52,6 +52,7 @@ pub fn create_ai_duel(all_ai_duels: &mut Vec<Duel>, all_duels: &mut Vec<Duel>, a
         battle_log: Vec::new(),
         duel_winner: String::new(),
         duel_loser: String::new(),
+        creation_time: time_stamp,
     };
 
     select_ai_battle_characters(creators_warriors, &mut new_duel, all_players.clone(), all_characters.clone());

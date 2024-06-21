@@ -31,11 +31,12 @@ println!("Received advance request data {}", &request);
     .ok_or("Missing caller")?;
 
     println!("caller is {}", msg_sender);
+    let time_stamp: u128 = (request["data"]["metadata"]["timestamp"]).to_string().parse::<u128>().unwrap();
 
     let modified_string = remove_first_two_chars(&_payload);
     println!("payload without unnecesary content is: {}", modified_string);
     // let request_payload = hex::decode(modified_string).expect("Every payload has to be hex encoded");
-    hex_to_json(&modified_string, &msg_sender, storage);
+    hex_to_json(&modified_string, &msg_sender.to_lowercase(), storage, time_stamp);
 
     // let data = "new notice emitted";
     // emit_notice(data, _server_addr);
@@ -50,7 +51,7 @@ fn remove_first_two_chars(s: &str) -> String {
     }
 }
 
-fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage) {
+fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
     // Decode the hex string to a byte array
     let bytes = hex::decode(hex_str).expect("Failed to decode hex string");
 
@@ -77,7 +78,7 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage) {
         if let JsonValue::Object(obj) = parsed_json.clone() {
             if let Some(func) = obj.get("func") {
                 println!("Destructured func: {}", func);
-                router(func, &parsed_json, msg_sender, storage);
+                router(func, &parsed_json, msg_sender, storage, time_stamp);
             } else {
                 println!("Field 'func' not found in JSON object");
             }

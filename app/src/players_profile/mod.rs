@@ -92,7 +92,7 @@ impl Player {
 
 pub fn find_player (all_players: &mut Vec<Player>, wallet_address: String) -> Option<&mut Player> {
    for player in all_players {
-        if player.wallet_address == wallet_address {
+        if (player.wallet_address).to_lowercase() == wallet_address.to_lowercase() {
             return Some(player);
         }
    }
