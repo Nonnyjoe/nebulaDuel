@@ -29,7 +29,7 @@ const ConnectButton2 = () => {
 
   return(
     <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-barlow px-4 py-2 flex justify-center items-center">
-      <ConnectButton client={client} theme={customTheme} />
+      <ConnectButton client={client} theme={customTheme} chain={{id: 84532, rpc: "https://sepolia.base.org"}} />
     </Button>
   ) 
 };
