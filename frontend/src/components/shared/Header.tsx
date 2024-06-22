@@ -8,6 +8,7 @@ import { GiCrossedSwords } from "react-icons/gi";
 import { useEffect, useRef, useState } from "react";
 import { Text } from "../atom/Text";
 import { IoMdMenu } from "react-icons/io";
+import ConnectButton2 from "./ConnectButton";
 
 
 const Header = () => {
@@ -90,9 +91,9 @@ const Header = () => {
                     <Button className="text-gray-100 lg:flex hidden text-xl font-bold hover:text-myGreen" type="button" >
                         <FiSearch onClick={handleSearchClick} />
                     </Button>
-                    <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-barlow px-4 py-2 flex justify-center items-center">
-                        Connect Wallet
-                    </Button>
+                    
+                    <ConnectButton2 />
+
                     <Button className="lg:hidden flex text-3xl border-2 p-1 border-myGreen font-bold text-myGreen" type="button">
                         <IoMdMenu onClick={handleToggle} />
                     </Button>

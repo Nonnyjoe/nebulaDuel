@@ -9,6 +9,7 @@ import 'react-multi-carousel/lib/styles.css';
 import { Toaster } from 'sonner';
 import PageNotFound from "./utils/PageNotFound"
 import ScrollToTop from "./utils/ScrollToTop"
+
 function App() {
 
   return (
