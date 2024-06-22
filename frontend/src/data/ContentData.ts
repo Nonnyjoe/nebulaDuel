@@ -32,6 +32,10 @@ export const NavLinks: NavArray = [
     path: "/marketplace",
   },
   {
+    name: "Arena",
+    path: "/arena",
+  },
+  {
     name: "Contact Us",
     path: "/contact",
   },

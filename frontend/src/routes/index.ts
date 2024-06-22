@@ -56,6 +56,16 @@ const coreRoutes: coreRoutes = [
     component: Arena,
   },
   {
+    path: "/duels",
+    title: "Duels",
+    component: Arena,
+  },
+  {
+    path: "/duels/duelId",
+    title: "Duel",
+    component: Arena,
+  },
+  {
     path: "/strategy",
     title: "Strategy",
     component: Strategy,
