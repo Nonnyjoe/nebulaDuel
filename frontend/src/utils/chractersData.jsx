@@ -8,7 +8,7 @@ const characters = [
     speed: 10,
     super_power: "Thunderbolt",
     price: 317,
-    img: "",
+    img: "mystic.png",
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ const characters = [
     speed: 9,
     super_power: "Flamethrower",
     price: 385,
-    img: "",
+    img: "zylar.png",
   },
   {
     id: 3,
@@ -30,7 +30,7 @@ const characters = [
     speed: 10,
     super_power: "VineWhip",
     price: 307,
-    img: "",
+    img: "s-strike.png",
   },
   {
     id: 4,
@@ -41,7 +41,7 @@ const characters = [
     speed: 8,
     super_power: "WaterGun",
     price: 350,
-    img: "",
+    img: "c-valor.png",
   },
   {
     id: 5,
@@ -52,18 +52,18 @@ const characters = [
     speed: 7,
     super_power: "SleepSong",
     price: 362,
-    img: "",
+    img: "s-elara.png",
   },
   {
     id: 6,
-    name: "Goul King",
+    name: "Ghoul King",
     health: 92,
     strength: 11,
     attack: 14,
     speed: 9,
     super_power: "Psychic",
     price: 415,
-    img: "",
+    img: "ghoul.png",
   },
   {
     id: 7,
@@ -74,7 +74,7 @@ const characters = [
     speed: 7,
     super_power: "HeadCrush",
     price: 320,
-    img: "",
+    img: "e-swiftstrike.png",
   },
   {
     id: 8,
@@ -85,7 +85,7 @@ const characters = [
     speed: 8,
     super_power: "Adaptability",
     price: 440,
-    img: "",
+    img: "b-collector.png",
   },
   {
     id: 9,
@@ -96,7 +96,7 @@ const characters = [
     speed: 8,
     super_power: "SonicKick",
     price: 370,
-    img: "",
+    img: "vortex.png",
   },
   {
     id: 10,
@@ -107,7 +107,7 @@ const characters = [
     speed: 6,
     super_power: "TelekineticHit",
     price: 397,
-    img: "",
+    img: "d-wolf.png",
   },
   {
     id: 11,
@@ -118,7 +118,7 @@ const characters = [
     speed: 10,
     super_power: "InvisibleClaws",
     price: 357,
-    img: "",
+    img: "luna.png",
   },
   {
     id: 12,
@@ -129,7 +129,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 338,
-    img: "",
+    img: "blaze.png",
   },
   {
     id: 13,
@@ -140,7 +140,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 430,
-    img: "",
+    img: "techno.png",
   },
   {
     id: 14,
@@ -151,7 +151,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 480,
-    img: "",
+    img: "berzerker.png",
   },
   {
     id: 15,
@@ -162,7 +162,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 405,
-    img: "",
+    img: "gorgon.png",
   },
   {
     id: 16,
@@ -173,7 +173,7 @@ const characters = [
     speed: 7,
     super_power: "DodgeNdTailLash",
     price: 440,
-    img: "",
+    img: "troll.png",
   },
   {
     id: 17,
@@ -184,7 +184,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 380,
-    img: "",
+    img: "drake.png",
   },
   {
     id: 19,
@@ -195,7 +195,7 @@ const characters = [
     speed: 7,
     super_power: "DodgeNdTailLash",
     price: 400,
-    img: "",
+    img: "s-golem.png",
   },
   {
     id: 19,
@@ -206,7 +206,7 @@ const characters = [
     speed: 9,
     super_power: "DodgeNdTailLash",
     price: 365,
-    img: "",
+    img: "s-hawk.png",
   },
   {
     id: 20,
@@ -217,7 +217,7 @@ const characters = [
     speed: 6,
     super_power: "ShadowBall",
     price: 300,
-    img: "",
+    img: "ravager.png",
   },
 ];
 
