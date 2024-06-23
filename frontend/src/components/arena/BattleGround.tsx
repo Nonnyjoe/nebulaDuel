@@ -6,7 +6,7 @@ import { useGLTF, } from '@react-three/drei';
 
 function Model() {
     const gltf = useGLTF('/models/char1.glb')
-    return <primitive object={gltf.scene} scale={0.22} position={[0.4, -0.6, -0.8]}/>
+    return <primitive object={gltf.scene} scale={0.17} position={[0.4, -0.6, -0.8]}/>
 }
 
 

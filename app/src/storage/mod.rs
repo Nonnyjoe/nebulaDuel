@@ -32,6 +32,7 @@ pub struct Storage {
     pub total_transactions: u128,
     pub all_transactions: Vec<TransactionData>,
     pub server_addr: String,
+    pub relayer_addr: String,
 }
 
 impl Storage {
@@ -57,6 +58,7 @@ impl Storage {
             nebula_token_address: String::from("0xNebulaTokenAddress"),
             nebula_nft_address: String::from("0xNebulaNftAddress"),
             dapp_contract_address: String::from("0xNebulaNftAddress"),
+            relayer_addr: String::from("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720").to_lowercase(),
             total_transactions: 0,
             all_transactions: Vec::new(),
             server_addr,
@@ -95,7 +97,6 @@ impl BaseContracts {
             erc721_portal: String::from("0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87").to_lowercase(),
             dapp_relayer: String::from("0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE").to_lowercase(),
             input_box: String::from("0x59b22D57D4f067708AB0c00552767405926dc768").to_lowercase(),
-            
         }
     }
 }

@@ -65,6 +65,10 @@ pub fn router(route: &JsonValue, payload: &JsonValue, msg_sender: &str, storage:
                     println!("Changing admin address!!");
                     handle_change_admin_address(payload, msg_sender.to_string(), storage);
                 },
+                "change_relayer_address" => {
+                    println!("Changing relayer address!!");
+                    handle_change_relayer_address(payload, msg_sender.to_string(), storage);
+                },
                 "change_points_rate" => {
                     println!("Changing points range!!");
                     handle_change_points_rate(payload, msg_sender.to_string(), storage);
@@ -552,6 +556,32 @@ pub fn handle_change_admin_address(payload: &JsonValue, msg_sender: String, stor
             structure_notice(String::from("change_admin_address"), &mut storage.total_transactions, msg_sender.clone(), data.clone(), &mut storage.server_addr);
         }
 
+
+    } else {
+        panic!("Parsed JSON is not an object");
+    }  
+}
+
+
+// {"func": "change_relayer_address", "new_relayer_address": "0xab7528bb862fb57e8a2bcd567a2e929a0be56a5e"}
+pub fn handle_change_relayer_address(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+    if let JsonValue::Object(obj) = payload.clone() { 
+        let mut new_relayer_address: String = String::from(" ");
+
+        if let Some(relayer_address) = obj.get("new_relayer_address") {
+            new_relayer_address = relayer_address.as_str().unwrap().to_string().to_lowercase();
+        } else {
+            panic!("Please pass in a valid relayer address");
+        }
+
+        if new_relayer_address != String::from(" ") {
+            admin_functions::set_relayer_address(&mut storage.admin_address, msg_sender.clone(), &mut storage.relayer_addr, new_relayer_address);
+            storage.record_tx(String::from("change_admin_address"), msg_sender.clone(), TransactionStatus::Success);
+
+            let data = &mut storage.relayer_addr;
+            structure_notice(String::from("change_admin_address"), &mut storage.total_transactions, msg_sender.clone(), data.clone(), &mut storage.server_addr);
+        }
+        println!("New relayer is: {}", storage.relayer_addr.clone());
 
     } else {
         panic!("Parsed JSON is not an object");

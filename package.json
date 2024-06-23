@@ -1,0 +1,14 @@
+{
+  "name": "nebuladuel",
+  "version": "1.0.0",
+  "description": "... zero player game built on Cartesi.",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "cd app && cartesi build && cartesi run"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
