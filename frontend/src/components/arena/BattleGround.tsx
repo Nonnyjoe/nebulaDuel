@@ -1,12 +1,12 @@
 import { Suspense } from 'react'
 import { Canvas } from "@react-three/fiber";
 // import modelPath from "/models/char1.glb"
-import { useGLTF, OrbitControls } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
 
 
 function Model() {
     const gltf = useGLTF('/models/char1.glb')
-    return <primitive object={gltf.scene} scale={0.2} position={[0.4, -0.6, -0.8]}/>
+    return <primitive object={gltf.scene} scale={0.1} position={[0.4, -0.6, -0.8]}/>
 }
 
 
@@ -21,7 +21,7 @@ export const BattleGround = () => {
                 <Suspense>
                     <Model />
                 </Suspense>
-                <OrbitControls target={[1, 0, 0]} />
+                {/* <OrbitControls target={[1, 0, 0]} /> */}
             </Canvas>
         </>
     )
