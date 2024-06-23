@@ -13,12 +13,20 @@ import Img8 from "../../assets/img/komodo.png";
 import { Button } from "../atom/Button";
 import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
+//import characters from "../../assets/data/characters.json";
+
+
 interface Character {
   id: number;
   name: string;
   img: string;
   price: number;
+  health: number;
+  strength: number;
+  attack: number;
+  speed: number;
 }
+
 
 const PurchaseCharacter = () => {
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
