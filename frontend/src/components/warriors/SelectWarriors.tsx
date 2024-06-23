@@ -72,7 +72,7 @@ const SelectWarriors = () => {
                         <div className="w-full grid md:grid-cols-3 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
                             {
                                 data.map((item, index) => (
-                                    <div className="w-full border border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4" key={index} onClick={() => toggleCharacterSelection(item)}>
+                                    <div key={index} className={`w-full border ${selectedCharactersId.includes(item.id) ? 'border-myGreen' : 'border-gray-800'} border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`} onClick={() => toggleCharacterSelection(item)}>
                                         <ImageWrap image={item.img} className="w-full" alt={item.name} objectStatus="object-contain" />
                                         <Text as="h5" className="font-belanosima">{item.name}</Text>
                                         <div className="w-full grid grid-cols-2 gap-1">
@@ -92,7 +92,7 @@ const SelectWarriors = () => {
                     <main className="w-full flex flex-col items-center gap-4">
                         <Text as="h3" className="font-semibold font-belanosima text-2xl tracking-wide text-center">Selected Characters</Text>
 
-                        <div className="w-full relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 lg:h-[260px] md:h-[200px] h-[180px] rounded-md">
+                        <div className="w-full relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 lg:h-[360px] md:h-[240px] h-[260px] rounded-md">
                             {selectedCharacters?.map((character) => (
                                 <div key={character.id} className="w-full bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md md:p-4 p-2">
                                     <ImageWrap image={character.img} className="w-full" alt={character.name} objectStatus="object-contain" />
