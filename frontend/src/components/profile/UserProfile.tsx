@@ -11,13 +11,13 @@ import axios from "axios";
 
 
 const UserProfile = () => {
+    // const modifyAvatar = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
 
-
-  async function createProfile() {
-    // signMessages()
-    const { Status, request_payload } = await readGameState("profile/0xnebula");
-    console.log(Status, request_payload)
-  }
+    async function createProfile() {
+        // await signMessages({"func": "create_player", "monika": "Nonso1", "avatar_url": "nonso_image1"});
+        const {Status, request_payload} = await readGameState("profile");
+        console.log(Status, request_payload)
+    }
 
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);

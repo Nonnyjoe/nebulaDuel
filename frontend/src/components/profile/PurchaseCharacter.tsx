@@ -13,19 +13,21 @@ import Img8 from "../../assets/img/komodo.png";
 import { Button } from "../atom/Button";
 import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
-//import characters from "../../assets/data/characters.json";
+import charactersdata from "../../utils/Charactersdata";
 
 
 interface Character {
   id: number;
   name: string;
-  img: string;
-  price: number;
   health: number;
   strength: number;
   attack: number;
   speed: number;
+  super_power: string;
+  price: number;
+  img: string;
 }
+
 
 
 const PurchaseCharacter = () => {
@@ -40,9 +42,17 @@ const PurchaseCharacter = () => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
     if (index < 0) {
       if (selectedCharacters.length < 3) {
+        //check that total price is not greater than 1050
+        if (totalCharacterPrice + character.price > 1050) {
+          toast.error("You've exceeded max points: 1050 points", {
+            position: "top-right",
+          });
+          return;
+        }
         setSelectedCharacters([...selectedCharacters, character]);
         setSelectedCharactersId([...selectedCharactersId, character.id]);
         setTotalCharacterPrice(character.price + totalCharacterPrice);
+
       } else {
         toast.error("You can select only 3 characters.", {
           position: "top-right",
@@ -89,9 +99,9 @@ const PurchaseCharacter = () => {
               All Characters
             </Text>
             <div className="w-full grid md:grid-cols-3 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
-              {data.map((item, index) => (
+              {charactersdata.map((item, index) => (
                 <div
-                  className="w-full border border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4"
+                  className={`w-full border ${selectedCharactersId.includes(item.id) ? 'border-myGreen' : 'border-gray-800'} border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`}
                   key={index}
                   onClick={() => toggleCharacterSelection(item)}
                 >
@@ -130,6 +140,14 @@ const PurchaseCharacter = () => {
                       Speed: {item.speed}
                     </Text>
                   </div>
+                  <div>
+                    <Text
+                      as="span"
+                      className="text-red-500 text-xs text-bold font-poppins"
+                    >
+                      Price: {item.price}
+                    </Text>
+                  </div>
                 </div>
               ))}
             </div>
@@ -143,7 +161,7 @@ const PurchaseCharacter = () => {
               Selected Characters
             </Text>
 
-            <div className="w-full relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 lg:h-[260px] md:h-[200px] h-[180px] rounded-md">
+            <div className="w-full relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 lg:h-[300px] md:h-[240px] h-[220px] rounded-md">
               {selectedCharacters?.map((character) => (
                 <div
                   key={character.id}
@@ -151,7 +169,7 @@ const PurchaseCharacter = () => {
                 >
                   <ImageWrap
                     image={character.img}
-                    className="w-full"
+                    className="w-full h-full"
                     alt={character.name}
                     objectStatus="object-contain"
                   />
