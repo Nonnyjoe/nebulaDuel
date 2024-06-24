@@ -4,44 +4,73 @@ import userImg from "../../assets/img/team01.png";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Button } from "../atom/Button";
 import { toast } from "sonner";
-
 import signMessages from "../../utils/relayTransaction.js"
-import readGameState from "../../utils/readState.js"
+import readGameState from "../../utils/readState.js";
+import main from '../upload/upload.mjs';
+import axios from "axios";
 
 
 const UserProfile = () => {
 
 
-    async function createProfile() {
-        // signMessages()
-        const {Status, request_payload} = await readGameState("profile/0xnebula");
-        console.log(Status, request_payload)
-    }
-
+  async function createProfile() {
+    // signMessages()
+    const { Status, request_payload } = await readGameState("profile/0xnebula");
+    console.log(Status, request_payload)
+  }
 
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const [detail, setDetail] = useState({});
 
   const handleNameChange = (event: any) => {
     setName(event.target.value);
   }
 
   const handleAvatarChange = (event: any) => {
-    setAvatar(event.target.files[0]);
-  }
-
-  const handleSetCreatedProfile = () => {
-    createProfile();
-    // update database with user profile
-    if (name.trim() === "") {
-      alert("please fill all fields");
-      return;
-    } else {
-      setCreatedProfile(true);
-      toast.success('Profile updated successfully');
+    if (event.target.files && event.target.files[0]) {
+      setAvatar(event.target.files[0]);
     }
   };
+
+  const handleSetCreatedProfile = async () => {
+    createProfile();
+    if (name.trim() === "" || !avatar) {
+      toast.error("please enter all fields");
+      return;
+    }
+    try {
+      const metadata = await main(avatar, 'avatar', 'player avatar');
+      const ipfsUrl = metadata.ipnft;
+      console.log(ipfsUrl);
+
+      fetchDetail(`https://ipfs.io/ipfs/${ipfsUrl}/metadata.json`);
+
+      setCreatedProfile(true);
+      if (metadata) {
+        toast.success('Profile updated successfully');
+      }
+    } catch (err) {
+      console.log('upload error', err);
+    }
+  };
+
+  async function fetchDetail(url: string) {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    try {
+      await axios.get(url, config).then((res) => setDetail(res.data));
+      setImgUrl(`https://ipfs.io/ipfs/${detail.image?.slice(7)}`);
+    } catch (err) {
+      console.log('Fetch detail error', err);
+      toast.error('Failed to fetch image details');
+    }
+  }
 
   return (
     <section className="w-full h-auto bg-bodyBg">
@@ -63,19 +92,28 @@ const UserProfile = () => {
         <section className="lg:w-[70%] w-full md:mt-20 mt-12 grid md:grid-cols-2 gap-4">
           <div className="w-full h-auto relative lg:px-12 px-3">
             <div className="text-center border shadow-[0px_3px_13px_0px_rgba(0,0,0,0.17)] relative transition-[0.3s] duration-500 overflow-hidden z-[1] mt-0 mb-[30px] mx-0 pt-[30px] pb-[35px] px-[25px] rounded-xl border-solid border-[#27313f] bg-[#1c242f] before:content-[''] before:absolute before:top-[-60px] before:w-[70px] before:h-80 before:rotate-[-55deg] before:transition-all before:duration-[0.3s] before:ease-[ease-out] before:delay-[0s] before:opacity-[0.55] before:z-[-1] before:left-0 before:bg-[#45f882] after:content-[''] after:absolute after:top-[-60px] after:w-[70px] after:h-80 after:rotate-[55deg] after:transition-all after:duration-[0.3s] after:ease-[ease-out] after:delay-[0s] after:opacity-[0.55] after:z-[-1] after:left-auto after:right-0 after:bg-[#45f882] hover:translate-y-[-7px] hover:before:opacity-[1] hover:after:opacity-[1] group sm:before:!h-[295px] sm:before:!-top-12 sm:after:!h-[295px] sm:after:!-top-12 xsm:before:!h-[295px] xsm:before:!-top-12 xsm:after:!h-[295px] xsm:after:!-top-12 xsm:m-[0_auto_30px] xsm:max-w-[320px]">
-              <div className=" mt-0 mb-[33px] mx-0 after:right-[75px] group-hover:before:opacity-40 group-hover:after:opacity-40 before:content-[''] before:absolute before:top-[-50px] before:w-px before:h-[260px] before:rotate-[-55deg] before:transition-all before:duration-[0.3s] before:ease-[ease-out] before:delay-[0s] before:z-[-1] before:opacity-20 before:left-[75px] before:bg-[#45f882] after:content-[''] after:absolute after:top-[-50px] after:w-px after:h-[260px] after:rotate-[55deg] after:transition-all after:duration-[0.3s] after:ease-[ease-out] after:delay-[0s] after:z-[-1] after:opacity-20 after:left-auto after:bg-[#45f882]">
-                <ImageWrap
-                  className="inline-block"
-                  image={avatar ? URL.createObjectURL(avatar) : userImg}
-                  alt=""
-                  objectStatus="sm:max-w-full xsm:max-w-full border-[#fff]  max-w-[224px] rounded-[50%] border-[3px] border-solid shadow-[0px_3px_7px_0px_rgba(0,0,0,0.21),inset_0px_3px_9px_0px_rgba(0,0,0,0.92)]"
-                />
+              <div className="mt-0 mb-[33px] mx-0 after:right-[75px] group-hover:before:opacity-40 group-hover:after:opacity-40 before:content-[''] before:absolute before:top-[-50px] before:w-px before:h-[260px] before:rotate-[-55deg] before:transition-all before:duration-[0.3s] before:ease-[ease-out] before:delay-[0s] before:z-[-1] before:opacity-20 before:left-[75px] before:bg-[#45f882] after:content-[''] after:absolute after:top-[-50px] after:w-px after:h-[260px] after:rotate-[55deg] after:transition-all after:duration-[0.3s] after:ease-[ease-out] after:delay-[0s] after:z-[-1] after:opacity-20 after:left-auto after:bg-[#45f882]">
+                {imgUrl ? (
+                  <img
+                    src={imgUrl}
+                    onError={(e) => console.log('Image load error:', e)}
+                    className="inline-block sm:max-w-full xsm:max-w-full border-[#fff] max-w-[224px] rounded-[50%] border-[3px] border-solid shadow-[0px_3px_7px_0px_rgba(0,0,0,0.21),inset_0px_3px_9px_0px_rgba(0,0,0,0.92)]"
+                    alt="Avatar"
+                  />
+                ) : (
+                  <ImageWrap
+                    className="inline-block"
+                    image={avatar ? URL.createObjectURL(avatar) : userImg}
+                    alt=""
+                    objectStatus="sm:max-w-full xsm:max-w-full border-[#fff] max-w-[224px] rounded-[50%] border-[3px] border-solid shadow-[0px_3px_7px_0px_rgba(0,0,0,0.21),inset_0px_3px_9px_0px_rgba(0,0,0,0.92)]"
+                  />
+                )}
               </div>
               <div className="team__content">
                 <h4 className="text-[20px] font-extrabold tracking-[1px] mt-0 mb-px mx-0 text-gray-200">
                   {
                     name ? name : "KILLER MASTER"
-                }
+                  }
                 </h4>
                 <span className="block font-semibold text-[16px] text-[#45f882] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] font-Barlow">
                   Player
