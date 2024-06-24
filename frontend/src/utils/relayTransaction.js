@@ -5,10 +5,11 @@ import axios from 'axios';
 
     async function signMessages(message) {
           try {
-            let {address, signature} = await signMessage((message));
+            let {address, signature} = await signMessage({data: message});
             let finalPayload = await createMessage(message, "dappAddress", address, signature);
             let realSigner = await ethers.utils.verifyMessage(finalPayload.message, finalPayload.signature);
             console.log(`Realsigner is: ${realSigner}`);
+            console.log(finalPayload);
             await sendTransaction(finalPayload);
 
           } catch (err) {
@@ -35,9 +36,9 @@ import axios from 'axios';
             }
     }
 
-    async function createMessage(data, target, signer, signature) {
+    async function createMessage(new_data, target, signer, signature) {
         // Stringify the message object
-        const messageString = JSON.stringify(data);
+        const messageString = JSON.stringify({data: new_data});
         // Construct the final JSON object
         const finalObject = {
             message: messageString,
