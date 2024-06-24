@@ -10,11 +10,11 @@ import readGameState from "../../utils/readState.js"
 
 
 const UserProfile = () => {
-
+    // const modifyAvatar = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
 
     async function createProfile() {
-        // signMessages()
-        const {Status, request_payload} = await readGameState("profile/0xnebula");
+        // await signMessages({"func": "create_player", "monika": "Nonso1", "avatar_url": "nonso_image1"});
+        const {Status, request_payload} = await readGameState("profile");
         console.log(Status, request_payload)
     }
 
