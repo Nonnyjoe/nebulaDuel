@@ -1,4 +1,18 @@
-const characters = [
+import charactersImg from "../../public/characters/charactersImg.js"; 
+
+type DataType = {
+  id: number;
+  name: string;
+  health: number;
+  strength: number;
+  attack: number;
+  speed: number;
+  super_power: string;
+  price: number;
+  img: string;
+};
+
+const charactersdata: DataType[] = [
   {
     id: 1,
     name: "Mystic Seer",
@@ -8,7 +22,7 @@ const characters = [
     speed: 10,
     super_power: "Thunderbolt",
     price: 317,
-    img: "mystic.png",
+    img: charactersImg.mystic,
   },
   {
     id: 2,
@@ -19,7 +33,7 @@ const characters = [
     speed: 9,
     super_power: "Flamethrower",
     price: 385,
-    img: "zylar.png",
+    img: charactersImg.zylar,
   },
   {
     id: 3,
@@ -30,7 +44,7 @@ const characters = [
     speed: 10,
     super_power: "VineWhip",
     price: 307,
-    img: "s-strike.png",
+    img: charactersImg.sStrike,
   },
   {
     id: 4,
@@ -41,7 +55,7 @@ const characters = [
     speed: 8,
     super_power: "WaterGun",
     price: 350,
-    img: "c-valor.png",
+    img: charactersImg.cValor,
   },
   {
     id: 5,
@@ -52,7 +66,7 @@ const characters = [
     speed: 7,
     super_power: "SleepSong",
     price: 362,
-    img: "s-elara.png",
+    img: charactersImg.sElara,
   },
   {
     id: 6,
@@ -63,7 +77,7 @@ const characters = [
     speed: 9,
     super_power: "Psychic",
     price: 415,
-    img: "ghoul.png",
+    img: charactersImg.ghoul,
   },
   {
     id: 7,
@@ -74,7 +88,7 @@ const characters = [
     speed: 7,
     super_power: "HeadCrush",
     price: 320,
-    img: "e-swiftstrike.png",
+    img: charactersImg.eSwiftstrike,
   },
   {
     id: 8,
@@ -85,7 +99,7 @@ const characters = [
     speed: 8,
     super_power: "Adaptability",
     price: 440,
-    img: "b-collector.png",
+    img: charactersImg.bCollector,
   },
   {
     id: 9,
@@ -96,7 +110,7 @@ const characters = [
     speed: 8,
     super_power: "SonicKick",
     price: 370,
-    img: "vortex.png",
+    img: charactersImg.vortex,
   },
   {
     id: 10,
@@ -107,7 +121,7 @@ const characters = [
     speed: 6,
     super_power: "TelekineticHit",
     price: 397,
-    img: "d-wolf.png",
+    img: charactersImg.dWolf,
   },
   {
     id: 11,
@@ -118,7 +132,7 @@ const characters = [
     speed: 10,
     super_power: "InvisibleClaws",
     price: 357,
-    img: "luna.png",
+    img: charactersImg.luna,
   },
   {
     id: 12,
@@ -129,7 +143,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 338,
-    img: "blaze.png",
+    img: charactersImg.blaze,
   },
   {
     id: 13,
@@ -140,7 +154,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 430,
-    img: "techno.png",
+    img: charactersImg.techno,
   },
   {
     id: 14,
@@ -151,7 +165,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 480,
-    img: "berzerker.png",
+    img: charactersImg.berzerker,
   },
   {
     id: 15,
@@ -162,7 +176,7 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 405,
-    img: "gorgon.png",
+    img: charactersImg.gorgon,
   },
   {
     id: 16,
@@ -173,7 +187,7 @@ const characters = [
     speed: 7,
     super_power: "DodgeNdTailLash",
     price: 440,
-    img: "troll.png",
+    img: charactersImg.troll,
   },
   {
     id: 17,
@@ -184,10 +198,10 @@ const characters = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 380,
-    img: "drake.png",
+    img: charactersImg.drake,
   },
   {
-    id: 19,
+    id: 18,
     name: "Stone Golem",
     health: 91,
     strength: 10,
@@ -195,7 +209,7 @@ const characters = [
     speed: 7,
     super_power: "DodgeNdTailLash",
     price: 400,
-    img: "s-golem.png",
+    img: charactersImg.sGolem,
   },
   {
     id: 19,
@@ -206,7 +220,7 @@ const characters = [
     speed: 9,
     super_power: "DodgeNdTailLash",
     price: 365,
-    img: "s-hawk.png",
+    img: charactersImg.sHawk,
   },
   {
     id: 20,
@@ -217,8 +231,8 @@ const characters = [
     speed: 6,
     super_power: "ShadowBall",
     price: 300,
-    img: "ravager.png",
+    img: charactersImg.ravager,
   },
 ];
 
-export default characters;
+export default charactersdata;
