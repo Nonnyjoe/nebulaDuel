@@ -3,7 +3,20 @@ import userImg from "../../assets/img/team01.png"
 import { ImageWrap } from "../atom/ImageWrap"
 import { Button } from "../atom/Button"
 
+import signMessages from "../../utils/relayTransaction.js"
+import readGameState from "../../utils/readState.js"
+
+
 const UserProfile = () => {
+
+
+    async function createProfile() {
+        // signMessages()
+        const {Status, request_payload} = await readGameState("profile/0xnebula");
+        console.log(Status, request_payload)
+    }
+
+
     return (
         <section className="w-full h-auto bg-bodyBg">
             <main className="w-full lg:py-32 md:py-24 py-20 px-6 flex flex-col items-center gap-4">
@@ -50,7 +63,7 @@ const UserProfile = () => {
                                 <label htmlFor="profile" className="text-gray-400 font-belanosima">Upload Avatar</label>
                                 <input type="file" name="profile" placeholder="Upload avatar *" className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-[25px] py-3.5 border-2 border-solid border-[#19222b] bg-transparent placeholder:opacity-80 focus:!border-[#19222b] focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0" required />
                             </div>
-                            <Button type="button" className=" text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]">Submit Now</Button>
+                            <Button type="button" onClick={createProfile} className=" text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]">Submit Now</Button>
                         </form>
                     </aside>
                 </section>
