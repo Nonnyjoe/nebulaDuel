@@ -1,4 +1,5 @@
-import charactersImg from "../../public/characters/charactersImg.js"; 
+//import nebulaCharactersImg from "../../public/characters/nebulaCharactersImg.js"; 
+import nebulaCharactersImg from "../../public/nebula-characters/nebulaCharactersImg.js";
 
 type DataType = {
   id: number;
@@ -22,7 +23,7 @@ const charactersdata: DataType[] = [
     speed: 10,
     super_power: "Thunderbolt",
     price: 317,
-    img: charactersImg.mystic,
+    img: nebulaCharactersImg.mystic,
   },
   {
     id: 2,
@@ -33,7 +34,7 @@ const charactersdata: DataType[] = [
     speed: 9,
     super_power: "Flamethrower",
     price: 385,
-    img: charactersImg.zylar,
+    img: nebulaCharactersImg.zylar,
   },
   {
     id: 3,
@@ -44,7 +45,7 @@ const charactersdata: DataType[] = [
     speed: 10,
     super_power: "VineWhip",
     price: 307,
-    img: charactersImg.sStrike,
+    img: nebulaCharactersImg.sStrike,
   },
   {
     id: 4,
@@ -55,7 +56,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "WaterGun",
     price: 350,
-    img: charactersImg.cValor,
+    img: nebulaCharactersImg.cValor,
   },
   {
     id: 5,
@@ -66,7 +67,7 @@ const charactersdata: DataType[] = [
     speed: 7,
     super_power: "SleepSong",
     price: 362,
-    img: charactersImg.sElara,
+    img: nebulaCharactersImg.sElara,
   },
   {
     id: 6,
@@ -77,7 +78,7 @@ const charactersdata: DataType[] = [
     speed: 9,
     super_power: "Psychic",
     price: 415,
-    img: charactersImg.ghoul,
+    img: nebulaCharactersImg.ghoul,
   },
   {
     id: 7,
@@ -88,7 +89,7 @@ const charactersdata: DataType[] = [
     speed: 7,
     super_power: "HeadCrush",
     price: 320,
-    img: charactersImg.eSwiftstrike,
+    img: nebulaCharactersImg.eSwiftstrike,
   },
   {
     id: 8,
@@ -99,7 +100,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "Adaptability",
     price: 440,
-    img: charactersImg.bCollector,
+    img: nebulaCharactersImg.bCollector,
   },
   {
     id: 9,
@@ -110,7 +111,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "SonicKick",
     price: 370,
-    img: charactersImg.vortex,
+    img: nebulaCharactersImg.vortex,
   },
   {
     id: 10,
@@ -121,7 +122,7 @@ const charactersdata: DataType[] = [
     speed: 6,
     super_power: "TelekineticHit",
     price: 397,
-    img: charactersImg.dWolf,
+    img: nebulaCharactersImg.dWolf,
   },
   {
     id: 11,
@@ -132,7 +133,7 @@ const charactersdata: DataType[] = [
     speed: 10,
     super_power: "InvisibleClaws",
     price: 357,
-    img: charactersImg.luna,
+    img: nebulaCharactersImg.luna,
   },
   {
     id: 12,
@@ -143,7 +144,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 338,
-    img: charactersImg.blaze,
+    img: nebulaCharactersImg.blaze,
   },
   {
     id: 13,
@@ -154,7 +155,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 430,
-    img: charactersImg.techno,
+    img: nebulaCharactersImg.techno,
   },
   {
     id: 14,
@@ -165,7 +166,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 480,
-    img: charactersImg.berzerker,
+    img: nebulaCharactersImg.berzerker,
   },
   {
     id: 15,
@@ -176,7 +177,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 405,
-    img: charactersImg.gorgon,
+    img: nebulaCharactersImg.gorgon,
   },
   {
     id: 16,
@@ -187,7 +188,7 @@ const charactersdata: DataType[] = [
     speed: 7,
     super_power: "DodgeNdTailLash",
     price: 440,
-    img: charactersImg.troll,
+    img: nebulaCharactersImg.troll,
   },
   {
     id: 17,
@@ -198,7 +199,7 @@ const charactersdata: DataType[] = [
     speed: 8,
     super_power: "DodgeNdTailLash",
     price: 380,
-    img: charactersImg.drake,
+    img: nebulaCharactersImg.drake,
   },
   {
     id: 18,
@@ -209,7 +210,7 @@ const charactersdata: DataType[] = [
     speed: 7,
     super_power: "DodgeNdTailLash",
     price: 400,
-    img: charactersImg.sGolem,
+    img: nebulaCharactersImg.sGolem,
   },
   {
     id: 19,
@@ -220,7 +221,7 @@ const charactersdata: DataType[] = [
     speed: 9,
     super_power: "DodgeNdTailLash",
     price: 365,
-    img: charactersImg.sHawk,
+    img: nebulaCharactersImg.sHawk,
   },
   {
     id: 20,
@@ -231,7 +232,7 @@ const charactersdata: DataType[] = [
     speed: 6,
     super_power: "ShadowBall",
     price: 300,
-    img: charactersImg.ravager,
+    img: nebulaCharactersImg.ravager,
   },
 ];
 
