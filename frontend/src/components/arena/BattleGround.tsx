@@ -6,7 +6,7 @@ import { radToDeg } from 'three/src/math/MathUtils.js';
 
 
 function Createmodel() {
-    const models = ['/models/char1.glb', '/models/char2.glb', '/models/char3.glb', '/models/char4.glb', '/models/char5.glb'];
+    const models = ['/models/char1.glb', '/models/char2.glb', '/models/char3.glb', '/models/char4.glb', '/models/char5.glb', '/models/char6.glb'];
     let element
     let array1 = []
     for (let index = 0; index < models.length; index++) {
