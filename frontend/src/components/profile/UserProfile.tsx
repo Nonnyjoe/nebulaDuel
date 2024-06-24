@@ -32,6 +32,7 @@ const UserProfile = () => {
   }
 
   const handleSetCreatedProfile = () => {
+    createProfile();
     // update database with user profile
     if (name.trim() === "") {
       alert("please fill all fields");
