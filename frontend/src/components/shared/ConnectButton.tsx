@@ -4,6 +4,7 @@ import { createThirdwebClient } from "thirdweb";
 import { darkTheme } from "thirdweb/react";
 import { ConnectButton } from "thirdweb/react";
 import { useActiveAccount } from "thirdweb/react";
+// import { ethers } from "ethers";
 
 const clientId = "5555e76cfe72676f69d044a91ce98d30";
 const client = createThirdwebClient({ clientId });
@@ -25,6 +26,7 @@ const customTheme = darkTheme({
 
 const ConnectButton2 = () => {
   const activeAccount = useActiveAccount();
+
   console.log("Connected account is " + activeAccount?.address);
 
   return(

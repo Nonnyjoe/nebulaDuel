@@ -5,7 +5,20 @@ import { ImageWrap } from "../atom/ImageWrap";
 import { Button } from "../atom/Button";
 import { toast } from "sonner";
 
+import signMessages from "../../utils/relayTransaction.js"
+import readGameState from "../../utils/readState.js"
+
+
 const UserProfile = () => {
+
+
+    async function createProfile() {
+        // signMessages()
+        const {Status, request_payload} = await readGameState("profile/0xnebula");
+        console.log(Status, request_payload)
+    }
+
+
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
@@ -19,6 +32,7 @@ const UserProfile = () => {
   }
 
   const handleSetCreatedProfile = () => {
+    createProfile();
     // update database with user profile
     if (name.trim() === "") {
       alert("please fill all fields");
