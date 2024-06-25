@@ -1,6 +1,5 @@
 import breadcrumb from "../../assets/img/breadcrumb_img03.png";
 import { ImageWrap } from "../atom/ImageWrap";
-import { FaTrophy, FaPlayCircle, FaClock } from "react-icons/fa";
 import "animate.css/animate.min.css";
 
 const JoinDuels = () => {

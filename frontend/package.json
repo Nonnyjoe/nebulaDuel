@@ -28,9 +28,9 @@
     "react-scroll": "^1.9.0",
     "sonner": "^1.4.41",
     "tailwind-clip-path": "^1.0.0",
-    "wow.js": "^1.2.2",
     "thirdweb": "^5.29.6",
-    "three": "^0.165.0"
+    "three": "^0.165.0",
+    "wow.js": "^1.2.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",
