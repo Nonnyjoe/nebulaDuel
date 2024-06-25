@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Text } from "../atom/Text";
 import userImg from "../../assets/img/team01.png";
 import { ImageWrap } from "../atom/ImageWrap";
@@ -6,71 +6,106 @@ import { Button } from "../atom/Button";
 import { toast } from "sonner";
 import signMessages from "../../utils/relayTransaction.js"
 import readGameState from "../../utils/readState.js";
-import main from '../upload/upload.mjs';
 import axios from "axios";
+import { useActiveAccount } from "thirdweb/react";
 
 
 const UserProfile = () => {
-    // const modifyAvatar = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
-
-    async function createProfile() {
-        // await signMessages({"func": "create_player", "monika": "Nonso1", "avatar_url": "nonso_image1"});
-        const {Status, request_payload} = await readGameState("profile");
-        console.log(Status, request_payload)
-    }
-
-  const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
   const [imgUrl, setImgUrl] = useState<string | null>(null);
-  const [detail, setDetail] = useState({});
+  const [characters, setCharacters] = useState(0);
+  const [gamePoints, setGamePoints] = useState(0);
+  const [nebulaBalance, setNebulaBalance] = useState(0);
+  const [userAddress, setUserAddress] = useState('');
+  const [txhash, setTxhash] = useState('');
+
+
+  const userAccount = useActiveAccount();
+
+  useEffect(() => {
+    let address = userAccount?.address;
+    if (userAccount && address) {
+      setUserAddress(address);
+    }
+  }, [userAccount]);
+
+
+  const readProfile = useCallback(async (address: string) => {
+    if (address) {
+      try {
+        const { Status, request_payload } = await readGameState(`profile/0xnebula`);
+        if (Status) {
+          setCharacters(request_payload.characters.length);
+          setGamePoints(request_payload.points);
+          setNebulaBalance(request_payload.nebula_token_balance);
+        }
+        console.log(Status, request_payload);
+      } catch (err) {
+        console.log('Error fetching user profile', err);
+      }
+    }
+  }, []);
+
+  readProfile(userAddress);
+  
 
   const handleNameChange = (event: any) => {
     setName(event.target.value);
   }
 
-  const handleAvatarChange = (event: any) => {
+  const handleSetCreatedProfile = async () => {
+    if (imgUrl) {
+      createProfile();
+    }
+  }
+
+  const handleAvatarChange = async (event: any) => {
     if (event.target.files && event.target.files[0]) {
       setAvatar(event.target.files[0]);
     }
   };
 
-  const handleSetCreatedProfile = async () => {
-    createProfile();
-    if (name.trim() === "" || !avatar) {
-      toast.error("please enter all fields");
-      return;
-    }
-    try {
-      const metadata = await main(avatar, 'avatar', 'player avatar');
-      const ipfsUrl = metadata.ipnft;
-      console.log(ipfsUrl);
+  const getAvatar = useCallback(async () => {
+    if(avatar) {
+      try {
+        const formData = new FormData();
+        formData.append("file", avatar!);
 
-      fetchDetail(`https://ipfs.io/ipfs/${ipfsUrl}/metadata.json`);
+        const response = await axios.post(
+          "https://api.pinata.cloud/pinning/pinFileToIPFS",
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              pinata_api_key: import.meta.env.VITE_PINATA_API_KEY,
+              pinata_secret_api_key: import.meta.env.VITE_PINATA_SECRET_API_KEY,
+            },
+          }
+        );
 
-      setCreatedProfile(true);
-      if (metadata) {
-        toast.success('Profile updated successfully');
+        const avatarUrl = response.data.IpfsHash;
+        if (avatarUrl) {
+          setImgUrl(`https://orange-personal-vulture-360.mypinata.cloud/ipfs/${avatarUrl}`);
+        }
+        console.log(imgUrl);
+      } catch(err) {
+        console.log('Pinata API error', err);
+        toast.error('upload error');
       }
-    } catch (err) {
-      console.log('upload error', err);
     }
-  };
+  }, [avatar]);
 
-  async function fetchDetail(url: string) {
-    const config = {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-    try {
-      await axios.get(url, config).then((res) => setDetail(res.data));
-      setImgUrl(`https://ipfs.io/ipfs/${detail.image?.slice(7)}`);
-    } catch (err) {
-      console.log('Fetch detail error', err);
-      toast.error('Failed to fetch image details');
-    }
+  getAvatar();
+
+
+  async function createProfile() {
+    const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
+    let txhash = await signMessages(togglePlayer);
+    setTxhash(txhash);
+    toast.success('profile updated');
   }
+
 
   return (
     <section className="w-full h-auto bg-bodyBg">
@@ -129,7 +164,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    3
+                    {characters}
                   </Text>
                 </Text>
                 <Text
@@ -141,7 +176,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    250 pts
+                    {gamePoints} pts
                   </Text>
                 </Text>
                 <Text
@@ -153,7 +188,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    0 $Neb
+                    {nebulaBalance} $Neb
                   </Text>
                 </Text>
               </div>
@@ -161,7 +196,7 @@ const UserProfile = () => {
           </div>
 
           <aside>
-            {!createdProfile ? (
+            {!txhash ? (
               <form className="w-full">
                 <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-[#262f39] after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                   <label
@@ -192,6 +227,7 @@ const UserProfile = () => {
                     type="file"
                     name="profile"
                     placeholder="Upload avatar *"
+                    accept="image/*"
                     className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-[25px] py-3.5 border-2 border-solid border-[#19222b] bg-transparent placeholder:opacity-80 focus:!border-[#19222b] focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
                     required
                     onChange={handleAvatarChange}
@@ -199,7 +235,7 @@ const UserProfile = () => {
                 </div>
                 <Button
                   type="button"
-                  className=" text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}                  disabled={!imgUrl}
                   onClick={handleSetCreatedProfile}
                 >
                   Submit Now
@@ -236,6 +272,7 @@ const UserProfile = () => {
                     type="file"
                     name="profile"
                     placeholder="Upload avatar *"
+                    accept="image/*"
                     className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-[25px] py-3.5 border-2 border-solid border-[#19222b] bg-transparent placeholder:opacity-80 focus:!border-[#19222b] focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
                     required
                     onChange={handleAvatarChange}
@@ -243,7 +280,8 @@ const UserProfile = () => {
                 </div>
                 <Button
                   type="button"
-                  className=" text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}
+                  disabled={!imgUrl}
                   onClick={handleSetCreatedProfile}
                 >
                   Update profile
