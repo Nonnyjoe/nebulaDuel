@@ -9,6 +9,9 @@ import { useActiveAccount } from "thirdweb/react";
 import { Link } from "react-router-dom"
 import { createThirdwebClient } from "thirdweb";
 import { useConnectModal } from "thirdweb/react";
+import readGameState from "../../utils/readState.js"
+import { useNavigate } from 'react-router-dom';
+
 
 const clientId = "5555e76cfe72676f69d044a91ce98d30";
 const client = createThirdwebClient({ clientId });
@@ -21,24 +24,37 @@ const HeroSection = () => {
     const [isProfileFound, setIsProfileFound] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { connect, isConnecting } = useConnectModal();
+    const navigate = useNavigate();
 
 
-
+      async function fetchprofile() {
+        const {Status, request_payload} = await readGameState(`profile/0xnebula`);
+        return {Status, request_payload};
+      }
 
     const handleModal = () => {
-        setIsWalletConnected(false);
+      setIsModalOpen(true);
     };
 
 
     const playgameButton = async() => {
         if (activeAccount?.address) {
-            setIsWalletConnected(true);
-            
-            if(isProfileFound === false){
+            const {Status, request_payload} = await fetchprofile();
+            console.log(Status, request_payload);
+
+            if(Status === false){
+              setIsWalletConnected(true);
                 setIsModalOpen(false);
+                setIsProfileFound(false);
+
             }else{
-                console.log("User profile is found");
-                setIsModalOpen(true);
+                if(request_payload.characters.length >= 3){
+                  navigate('/selectWarriors');
+                }else{
+                    console.log("You have less than 3 characters");
+                    navigate('/profile/purchasecharacter');
+                }
+
             }
 
         } else {
@@ -75,7 +91,7 @@ const HeroSection = () => {
                         Play Now
                     </Button>
 
-                    {isWalletConnected && !isModalOpen && (
+                    {isWalletConnected && !isProfileFound && !isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="fixed inset-0 bg-[#e0ffe0] bg-opacity-60"></div>
           <div className="relative bg-black border-2 border-[#45f882] rounded-lg shadow-2xl p-6 max-w-sm w-full h-auto min-h-[300px] z-10 flex flex-col justify-between">

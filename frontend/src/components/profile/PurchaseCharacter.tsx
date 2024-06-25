@@ -16,6 +16,7 @@ import { HiOutlineArrowPath } from "react-icons/hi2";
 import charactersdata from "../../utils/Charactersdata";
 
 
+
 interface Character {
   id: number;
   name: string;

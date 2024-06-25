@@ -11,12 +11,11 @@ import { IoMdMenu } from "react-icons/io";
 import ConnectButton2 from "./ConnectButton";
 
 
+
+
 const Header = () => {
-
     const { pathname } = useLocation();
-
     const [openSearch, setOpenSearch] = useState(false);
-
     const [openMenu, setOpenMenu] = useState(false);
 
 
@@ -53,6 +52,7 @@ const Header = () => {
             window.removeEventListener('scroll', toggleNavVisibility);
         };
     }, []);
+
 
     return (
         <header className={`w-full h-auto  ${isNavVisible ? "sticky top-0 left-0 z-[80] bg-navBg" : "static"}`}>
