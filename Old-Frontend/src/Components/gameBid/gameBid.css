@@ -1,8 +1,0 @@
-.gameBid{
-    width: 100%;
-    float: left;
-    background: var(--darkBlack);
-}
-.gameBid >div{
-    gap: 20px;
-}

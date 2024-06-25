@@ -12,7 +12,7 @@ async function readGameState(data) {
         });
         console.log('Transaction successful:', response.data);
         const {Status, request_payload} = destructureResponse(response.data.reports, data);
-        // console.log(Status, request_payload);
+        console.log(Status, request_payload);
         return {Status, request_payload};
     } catch (error) {
         console.error('Error sending transaction:', error.response ? error.response.data : error.message);

@@ -210,6 +210,7 @@ pub fn handle_create_player(payload: &JsonValue, msg_sender: String, storage: &m
         storage.record_tx(String::from("create_player"), msg_sender.clone(), TransactionStatus::Success);
 
         let data = &mut storage.all_players;
+        println!("All players now are: {:?}", data.clone());
 
         let json_data = players_profile_to_json(data.to_vec());
         structure_notice(String::from("create_player"), &mut storage.total_transactions, msg_sender.clone(), json_data, &mut storage.server_addr);

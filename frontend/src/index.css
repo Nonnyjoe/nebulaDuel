@@ -425,6 +425,21 @@ img[alt="Game-Avatar"] {
   background-size: cover;
 }
 
+.breadcrumb-area {
+  background-image: url("./assets/img/breadcrumb_bg01.jpg");
+  background-position: center;
+  background-size: cover;
+  min-height: 380px;
+}
+
+.breadcrumb-area-02 {
+  background-image: url("./assets/img/team_bg.jpg");
+  background-position: center;
+  background-size: cover;
+  min-height: 380px;
+  min-width: 600px;
+}
+
 .tinyLine {
   height: 1px;
   background: linear-gradient(
