@@ -19,6 +19,8 @@ import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import charactersdata from '../../../public/nebula-characters/nebulaCharactersImg.js';
+import { clipping } from 'three/examples/jsm/nodes/accessors/ClippingNode.js';
+import { ImFileWord } from 'react-icons/im';
 
 
 
@@ -87,12 +89,16 @@ const SelectWarriors = () => {
 
     useEffect(() => {
         if (profileData && profileData.characters) {
-            const characters: Character[] = JSON.parse(profileData.characters.replace(/\\/g, ''));
+            const characters = JSON.parse(profileData.characters.replace(/\\/g, ''));
 
-            const charIds = characters.map((character: Character) => character.id);
+            console.log(characters, "characters")
+
+            const charIds = characters.map((character: any) => character.char_id);
+            console.log(charIds, "charIds")
+
+            
 
             const fetchCharacterDetails = async () => {
-                console.log(profileData, "profileData")
                 try {
                     const characterDetailsPromises = charIds.map(async (id) => {
                         console.log(id, "id")
@@ -106,6 +112,10 @@ const SelectWarriors = () => {
 
                     const details = await Promise.all(characterDetailsPromises);
                     const validDetails = details.filter(detail => detail !== null); // Filter out any null values
+
+                    if(validDetails.length === 0) {
+                        return; // No valid details found
+                    }
 
                          // Merge image data from charactersdata
                          const mergedDetails = validDetails.map(detail => {
