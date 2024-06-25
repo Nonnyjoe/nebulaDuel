@@ -10,8 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/drei": "^9.107.0",
+    "@react-three/fiber": "^8.16.8",
     "@types/react-scroll": "^1.8.10",
     "animate.css": "^4.1.1",
+    "axios": "^1.7.2",
+    "buffer": "^6.0.3",
+    "ethers": "5.4.5",
+    "nft.storage": "^7.0.3",
     "react": "^18.2.0",
     "react-countdown-circle-timer": "^3.2.1",
     "react-dom": "^18.2.0",
@@ -22,7 +28,9 @@
     "react-scroll": "^1.9.0",
     "sonner": "^1.4.41",
     "tailwind-clip-path": "^1.0.0",
-    "wow.js": "^1.2.2"
+    "wow.js": "^1.2.2",
+    "thirdweb": "^5.29.6",
+    "three": "^0.165.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

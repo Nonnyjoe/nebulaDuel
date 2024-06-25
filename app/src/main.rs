@@ -72,7 +72,32 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stam
 
     } else if msg_sender == base_contracts.erc721_portal {
         handle_deposit_character_as_nft(bc_payload, msg_sender.to_string(), storage);
+        
+    // {"data": "{\"func\":\"create_player\",\"monika\":\"NonnyJoe\",\"avatar_url\":\"nonnyjoe_image1\"}", "signer": "0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8", "target": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"}
+    } else if msg_sender == storage.relayer_addr {
+        println!("{}", storage.relayer_addr);
+        println!("RECEIVED RELAYER SPONSORED TX");
+        // Destructure the JsonValue to access the fields
+        if let JsonValue::Object(obj) = parsed_json.clone() {
+            println!("parsed json: {:?}", obj);
 
+            let new_data = obj.get("data").unwrap().as_str().unwrap();
+            println!("New data is {:?}", new_data);
+            let signer = obj.get("signer").unwrap().to_string().to_lowercase();
+            
+            println!("Signer is {}", signer);
+
+            let parsed_json: JsonValue = parse(new_data).expect("Failed to parse JSON");
+            if let JsonValue::Object(obj) = parsed_json.clone() { 
+                let func = obj.get("func").unwrap();
+                println!("Destructured func: {}", func);
+                    router(func, &parsed_json, signer.to_lowercase().as_str(), storage, time_stamp);
+            } else {
+                println!("Parsed newdata JSON is not an object");
+            }
+        } else {
+            println!("Parsed JSON is not an object");
+        }        
     } else {
           // Destructure the JsonValue to access the fields
         if let JsonValue::Object(obj) = parsed_json.clone() {

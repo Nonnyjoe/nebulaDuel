@@ -14,6 +14,14 @@ pub fn set_cartesi_token_address(admin_address: &mut String, caller_address: Str
     }
 }
 
+pub fn set_relayer_address(admin_address: &mut String, caller_address: String, relayer_address: &mut String, new_relayer_address: String) {
+    if caller_address == *admin_address {
+        *relayer_address = new_relayer_address;
+    } else {
+        panic!("Only the admin can change the admin address");
+    }
+}
+
 pub fn set_nebula_token_address(admin_address: &mut String, caller_address: String, nebula_token_address: &mut String, new_nebula_token_address: String) {
     if caller_address == *admin_address {
         *nebula_token_address = new_nebula_token_address;

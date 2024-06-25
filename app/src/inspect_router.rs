@@ -28,6 +28,18 @@ pub fn inspect_router( payload: &str, storage: &mut Storage) {
             println!("Fetching listed_characters!!");
             handle_fetch_listed_characters(new_payload, storage);
         },
+        "has_profile" => {
+            println!("Checking if user has profile!!");
+            handle_check_has_profile(new_payload, storage);
+        },
+        "admin" => {
+            println!("Checking admin address!!");
+            handle_check_admin_addr(new_payload, storage);
+        },
+        "relayer" => {
+            println!("Checking relayer address!!");
+            handle_check_relayer_addr(new_payload, storage);
+        },
         _ => todo!(),
     }
 }
@@ -35,8 +47,6 @@ pub fn inspect_router( payload: &str, storage: &mut Storage) {
 fn split_string(input: &str) -> Vec<&str> {
     input.split('/').collect()
 }
-
-
 
 fn handle_fetch_profile(new_payload: Vec<&str>, storage: &mut Storage) {
     if new_payload.len() > 1 {
@@ -58,9 +68,6 @@ fn handle_fetch_profile(new_payload: Vec<&str>, storage: &mut Storage) {
         emit_report(&all_players_string, &storage.server_addr);
     }
 }
-
-
-
 
 fn handle_fetch_characters(new_payload: Vec<&str>, storage: &mut Storage) {
     if new_payload.len() > 1 {
@@ -98,4 +105,29 @@ fn handle_fetch_listed_characters(new_payload: Vec<&str>, storage: &mut Storage)
     println!("Fetching listed characters");
     let listed_characters_string = listed_character_json(storage.listed_characters.clone());
     emit_report(&listed_characters_string, &storage.server_addr);
+}
+
+fn handle_check_has_profile(new_payload: Vec<&str>, storage: &mut Storage) {
+    match find_player(&mut storage.all_players, (*new_payload[1]).to_string()) {
+        Some(player) => {
+            println!("Found Player {:?}", player);
+            let status = (true).to_string();
+            emit_report(&status, &storage.server_addr);
+        },
+        None => {
+            println!("Player not found");
+            let status = (false).to_string();
+            emit_report(&status, &storage.server_addr);
+        }
+    }
+}
+
+fn handle_check_admin_addr(new_payload: Vec<&str>, storage: &mut Storage) {
+    let admin = storage.admin_address.clone();
+    emit_report(&admin, &storage.server_addr);
+}
+
+fn handle_check_relayer_addr(new_payload: Vec<&str>, storage: &mut Storage) {
+    let relayer = storage.relayer_addr.clone();
+    emit_report(&relayer, &storage.server_addr);
 }
