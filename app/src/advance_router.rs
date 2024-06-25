@@ -563,7 +563,7 @@ pub fn handle_change_admin_address(payload: &JsonValue, msg_sender: String, stor
 }
 
 
-// {"func": "change_relayer_address", "new_relayer_address": "0xab7528bb862fb57e8a2bcd567a2e929a0be56a5e"}
+// {"func": "change_relayer_address", "new_relayer_address": "0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749"}
 pub fn handle_change_relayer_address(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() { 
         let mut new_relayer_address: String = String::from(" ");

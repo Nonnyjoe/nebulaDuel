@@ -9,14 +9,16 @@ force_https = true
 
 [http_service.concurrency]
 type = "requests"
-soft_limit = 200
-hard_limit = 250
+soft_limit = 200000
+hard_limit = 250000
+timeout = "500s"
+
 
 [[http_service.checks]]
 grace_period = "10s"
 interval = "30s"
 method = "GET"
-timeout = "5s"
+timeout = "500s"
 path = "/healthz"
 
 [[vm]]
