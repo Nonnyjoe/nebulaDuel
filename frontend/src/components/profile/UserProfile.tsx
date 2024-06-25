@@ -14,8 +14,9 @@ const UserProfile = () => {
     // const modifyAvatar = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
 
     async function createProfile() {
-        // await signMessages({"func": "create_player", "monika": "Nonso1", "avatar_url": "nonso_image1"});
-        const {Status, request_payload} = await readGameState("profile");
+        // await signMessages({"func": "create_player22", "monika": "Nonso1", "avatar_url": "nonso_image1"});
+        // const character = 17;
+        const {Status, request_payload} = await readGameState(`profile/0x2a69959426f8730bb53a1Af9b69f14B8b41CF4cd`);
         console.log(Status, request_payload)
     }
 

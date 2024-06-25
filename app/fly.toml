@@ -9,8 +9,6 @@ force_https = true
 
 [http_service.concurrency]
 type = "requests"
-soft_limit = 200000
-hard_limit = 250000
 timeout = "500s"
 
 
@@ -24,6 +22,7 @@ path = "/healthz"
 [[vm]]
 size = "shared-cpu-1x"
 memory = "2gb"
+cpus = 4
 
 [env]
 CARTESI_BLOCKCHAIN_FINALITY_OFFSET = "1"

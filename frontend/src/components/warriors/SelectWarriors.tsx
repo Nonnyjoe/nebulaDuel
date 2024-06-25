@@ -102,6 +102,7 @@ const SelectWarriors = () => {
                 try {
                     const characterDetailsPromises = charIds.map(async (id) => {
                         console.log(id, "id")
+                        
                         const { Status, request_payload } = await readGameState(`characters/${id}`);
                         if (Status) {
                             return request_payload;
