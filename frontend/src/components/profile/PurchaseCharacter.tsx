@@ -16,7 +16,6 @@ import { HiOutlineArrowPath } from "react-icons/hi2";
 import charactersdata from "../../utils/Charactersdata";
 
 
-
 interface Character {
   id: number;
   name: string;
@@ -35,9 +34,7 @@ const PurchaseCharacter = () => {
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
   const [totalCharacterPrice, setTotalCharacterPrice] = useState<number>(0);
   // const [submitClicked, setSubmitClicked] = useState(false);
-  const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>(
-    []
-  );
+  const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>([]);
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -99,7 +96,7 @@ const PurchaseCharacter = () => {
             >
               All Characters
             </Text>
-            <div className="w-full grid md:grid-cols-3 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
+            <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
               {charactersdata.map((item, index) => (
                 <div
                   className={`w-full border ${selectedCharactersId.includes(item.id) ? 'border-myGreen' : 'border-gray-800'} border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`}
@@ -144,7 +141,7 @@ const PurchaseCharacter = () => {
                   <div>
                     <Text
                       as="span"
-                      className="text-red-500 text-xs text-bold font-poppins"
+                      className="text-[#ffbe18] text-xs text-bold font-poppins"
                     >
                       Price: {item.price}
                     </Text>

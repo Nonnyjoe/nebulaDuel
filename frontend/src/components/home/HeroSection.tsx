@@ -28,7 +28,7 @@ const HeroSection = () => {
 
 
       async function fetchprofile() {
-        const {Status, request_payload} = await readGameState(`profile/0xnebula`);
+        const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`);
         return {Status, request_payload};
       }
 
