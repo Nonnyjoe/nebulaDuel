@@ -2,14 +2,6 @@
 import { toast } from 'sonner';
 import { ImageWrap } from "../atom/ImageWrap"
 import { Text } from "../atom/Text"
-import Img1 from "../../assets/img/Rhyno.png";
-import Img2 from "../../assets/img/Dragon.png";
-import Img3 from "../../assets/img/Godzilla.png";
-import Img4 from '../../assets/img/Hound.png';
-import Img5 from '../../assets/img/KomodoDragon.png';
-import Img6 from '../../assets/img/IceBeever.png';
-import Img7 from '../../assets/img/Fox.png';
-import Img8 from "../../assets/img/komodo.png"
 import { Button } from "../atom/Button"
 import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
@@ -18,9 +10,8 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import charactersdata from '../../../public/nebula-characters/nebulaCharactersImg.js';
-import { clipping } from 'three/examples/jsm/nodes/accessors/ClippingNode.js';
-import { ImFileWord } from 'react-icons/im';
+import charactersdata from '../../utils/Charactersdata';
+import { useActiveAccount } from "thirdweb/react";
 
 
 
@@ -66,12 +57,14 @@ const SelectWarriors = () => {
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>([]);
     const navigate = useNavigate();
+    const activeAccount = useActiveAccount();
+
 
 
 
     useEffect(() => {
         const fetchData = async () => {
-            const {Status, request_payload} = await readGameState(`profile/0xnebula`); // Call your function
+            const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
 
             if(Status === false){
                 navigate('/profile');
@@ -87,62 +80,75 @@ const SelectWarriors = () => {
         fetchData(); // Call the function on component mount
     }, [location]);
 
+
     useEffect(() => {
         if (profileData && profileData.characters) {
             const characters = JSON.parse(profileData.characters.replace(/\\/g, ''));
-
-            console.log(characters, "characters")
-
-            const charIds = characters.map((character: any) => character.char_id);
-            console.log(charIds, "charIds")
-
-            
-
-            const fetchCharacterDetails = async () => {
-                try {
-                    const characterDetailsPromises = charIds.map(async (id) => {
-                        console.log(id, "id")
-                        
-                        const { Status, request_payload } = await readGameState(`characters/${id}`);
-                        if (Status) {
-                            return request_payload;
-                        } else {
-                            return null;
-                        }
-                    });
-
-                    const details = await Promise.all(characterDetailsPromises);
-                    const validDetails = details.filter(detail => detail !== null); // Filter out any null values
-
-                    if(validDetails.length === 0) {
-                        return; // No valid details found
-                    }
-
-                         // Merge image data from charactersdata
-                         const mergedDetails = validDetails.map(detail => {
-                            const characterData = charactersdata.find((character:CharacterDetails)  => character.name === detail.name);
-                            return {
-                                ...detail,
-                                img: characterData ? characterData.img : undefined
-                            };
-                        });
     
-                        setCharacterDetails(mergedDetails);
+            console.log(characters, "characters");
+    
+            const charIds = characters.map((character: any) => character.char_id);
+            console.log(charIds, "charIds");
+    
+            const fetchedIds = new Set(); // Store fetched IDs to avoid duplicates
 
+            const fetchCharacterDetails = async (remainingIds: any[]) => {
+                if (remainingIds === undefined) {
+                    return;
+                }
+    
+                try {
+                    if (remainingIds.length === 0) {
+                        return; // No more characters to fetch
+                    }
+    
+                    const id = remainingIds.shift();
+                    console.log(id, "this is the id");
+    
+                    if (fetchedIds.has(id)) {
+                        console.log(`Skipping duplicate fetch for character ${id}`);
+                        return fetchCharacterDetails(remainingIds); // Skip if already fetched and continue
+                    }
+                    fetchedIds.add(id); // Add ID to the set
+    
+                    const timeout = setTimeout(() => {
+                        console.error(`Timeout fetching character ${id}`);
+                    }, 1000); // Set timeout to 1 seconds (adjust as needed)
+    
+                    const { Status, request_payload } = await readGameState(`characters/${id}`);
+                    clearTimeout(timeout); // Clear timeout if successful
+    
+                    if (Status) {
+                        const characterData = charactersdata.find(
+                            (character) => character.name === request_payload.name
+                        );
+                        const details = {
+                            ...request_payload,
+                            img: characterData ? characterData.img : undefined,
+                        };
+                        setCharacterDetails((prevDetails) => {
+                            if (prevDetails.some(detail => detail.id === details.id)) {
+                                return prevDetails; // Avoid adding duplicates
+                            }
+                            return [...prevDetails, details];
+                        });
+                    }
+        
+                    fetchCharacterDetails(remainingIds); // Recursive call after delay
                 } catch (error) {
                     console.error('Error fetching character details:', error);
                 }
-            };
-
-            fetchCharacterDetails();
+            };  
+            
+            console.log(charIds, "id passed to recursive function");
+            fetchCharacterDetails([...charIds]); // Start with a copy of charIds
         }
     }, [profileData]);
 
+    
 
 
-
-
-
+ 
     if (!profileData) {
         navigate('/profile');
     }
@@ -217,7 +223,7 @@ const SelectWarriors = () => {
                 <section className=" w-full mt-12 grid lg:grid-cols-2 lg:gap-10 md:gap-20 gap-14">
                     <main className="w-full flex flex-col gap-4">
                         <Text as="h3" className="font-semibold font-belanosima text-2xl tracking-wide text-center">Your Characters</Text>
-                        <div className="w-full grid md:grid-cols-3 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
+                        <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
                             {
                                 characterDetails.map((item, index) => (
                                     <div key={index} className={`w-full border ${selectedCharactersId.includes(item.id) ? 'border-myGreen' : 'border-gray-800'} border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`} onClick={() => toggleCharacterSelection(item)}>
@@ -265,144 +271,3 @@ const SelectWarriors = () => {
 
 export default SelectWarriors
 
-type DataType = {
-    id: number,
-    name: string,
-    img: string,
-    health: number,
-    strength: number,
-    attack: number,
-    speed: number,
-    superPower: string,
-    totalWins: number,
-    totalLoss: number,
-    profileImg: string,
-    price: number,
-    owner: string
-}
-
-
-
-
-const data: DataType[] = [
-    {
-        id: 1,
-        name: "Pikachu",
-        img: Img1,
-        health: 80,
-        strength: 8,
-        attack: 15,
-        speed: 10,
-        superPower: "Thunderbolt",
-        totalWins: 270,
-        totalLoss: 0,
-        profileImg: Img1,
-        price: 100,
-        owner: ""
-    },
-    {
-        id: 2,
-        name: "Charizard",
-        img: Img2,
-        health: 95,
-        strength: 10,
-        attack: 13,
-        speed: 7,
-        superPower: "Flamethrower",
-        totalWins: 390,
-        totalLoss: 0,
-        profileImg: Img2,
-        price: 100,
-        owner: ""
-    },
-    {
-        id: 3,
-        name: "Bulbasaur",
-        img: Img3,
-        health: 60,
-        strength: 5,
-        attack: 10,
-        speed: 8,
-        superPower: "Vine Whip",
-        totalWins: 250,
-        totalLoss: 0,
-        profileImg: Img3,
-        price: 100,
-        owner: ""
-    },
-    {
-        id: 4,
-        name: "Squirtle",
-        img: Img4,
-        health: 90,
-        strength: 10,
-        attack: 16,
-        speed: 9,
-        superPower: "Water Gun",
-        totalWins: 380,
-        totalLoss: 0,
-        profileImg: Img4,
-        price: 100,
-        owner: ""
-    },
-    {
-        id: 5,
-        name: "Jigglypuff",
-        img: Img5,
-        health: 75,
-        strength: 7,
-        attack: 13,
-        speed: 9,
-        superPower: "Sleep Song",
-        totalWins: 300,
-        totalLoss: 0,
-        profileImg: Img5,
-        price: 100,
-        owner: ""
-    },
-    {
-        id: 6,
-        name: "Mewtwo",
-        img: Img6,
-        health: 90,
-        strength: 12,
-        attack: 16,
-        speed: 6,
-        superPower: "Psychic",
-        totalWins: 380,
-        totalLoss: 0,
-        profileImg: Img6,
-        price: 100,
-        owner: ""
-    },
-    {
-        id: 7,
-        name: "Eevee",
-        img: Img7,
-        health: 100,
-        strength: 11,
-        attack: 15,
-        speed: 7,
-        superPower: "Adaptability",
-        totalWins: 410,
-        totalLoss: 0,
-        profileImg: Img7,
-        price: 100,
-        owner: ""
-    },
-    {
-        id: 8,
-        name: "Gengar",
-        img: Img8,
-        health: 100,
-        strength: 12,
-        attack: 15,
-        speed: 6,
-        superPower: "Shadow Ball",
-        totalWins: 420,
-        totalLoss: 0,
-        profileImg: Img8,
-        price: 100,
-        owner: ""
-    }
-]
