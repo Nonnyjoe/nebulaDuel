@@ -1,7 +1,7 @@
-//import nebulaCharactersImg from "../../public/characters/nebulaCharactersImg.js"; 
+//import nebulaCharactersImg from "../../public/characters/nebulaCharactersImg.js";
 import nebulaCharactersImg from "../../public/nebula-characters/nebulaCharactersImg.js";
 
-type DataType = {
+export type DataType = {
   id: number;
   name: string;
   health: number;
@@ -13,7 +13,7 @@ type DataType = {
   img: string;
 };
 
-const charactersdata: DataType[] = [
+export const charactersdata: DataType[] = [
   {
     id: 1,
     name: "Mystic Seer",
@@ -235,5 +235,3 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.ravager,
   },
 ];
-
-export default charactersdata;
