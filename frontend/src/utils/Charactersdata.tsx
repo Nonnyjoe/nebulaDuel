@@ -71,7 +71,7 @@ const charactersdata: DataType[] = [
   },
   {
     id: 6,
-    name: "Ghoul King",
+    name: "Goul King",
     health: 92,
     strength: 11,
     attack: 14,

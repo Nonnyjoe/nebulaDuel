@@ -10,8 +10,8 @@ import axios from 'axios';
             let realSigner = await ethers.utils.verifyMessage(finalPayload.message, finalPayload.signature);
             console.log(`Realsigner is: ${realSigner}`);
             console.log(finalPayload);
-            await sendTransaction(finalPayload);
-
+            let txhash = await sendTransaction(finalPayload);
+            return txhash;
           } catch (err) {
             console.log(err.message);
           }
@@ -57,6 +57,7 @@ import axios from 'axios';
                 }
             });
             console.log('Transaction successful:', response.data);
+            return response.data;
         } catch (error) {
             console.error('Error sending transaction:', error.response ? error.response.data : error.message);
         }
