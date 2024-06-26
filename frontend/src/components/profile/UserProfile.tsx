@@ -86,6 +86,7 @@ const UserProfile = () => {
           setImgUrl(`https://orange-personal-vulture-360.mypinata.cloud/ipfs/${avatarUrl}`);
         }
       } catch(err) {
+      
         console.log('Pinata API error', err);
         toast.error('upload error');
       }
@@ -169,7 +170,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    {profileData.characters.length || 0}
+                    {profileData.characters || 0}
                   </Text>
                 </Text>
                 <Text
@@ -201,7 +202,7 @@ const UserProfile = () => {
           </div>
 
           <aside>
-            {!userStatus ? (
+            {!profileData ? (
               <form className="w-full">
                 <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-[#262f39] after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                   <label
