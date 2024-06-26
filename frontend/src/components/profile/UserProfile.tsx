@@ -44,13 +44,13 @@ const UserProfile = () => {
   const readProfile = useCallback(async (address: string) => {
     if (address) {
       try {
-        const { Status, request_payload } = await readGameState(`profile/0xnebula`);
+        const { Status, request_payload } = await readGameState(`profile/${address}`);
         if (Status) {
           setCharacters(request_payload.characters.length);
           setGamePoints(request_payload.points);
           setNebulaBalance(request_payload.nebula_token_balance);
         }
-        console.log(Status, request_payload);
+        console.log(Status, "user profile reading");
       } catch (err) {
         console.log('Error fetching user profile', err);
       }
