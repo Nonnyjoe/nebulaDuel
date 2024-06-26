@@ -113,7 +113,7 @@ const SelectWarriors = () => {
     
                     const timeout = setTimeout(() => {
                         console.error(`Timeout fetching character ${id}`);
-                    }, 5000); // Set timeout to 5 seconds (adjust as needed)
+                    }, 1000); // Set timeout to 1 seconds (adjust as needed)
     
                     const { Status, request_payload } = await readGameState(`characters/${id}`);
                     clearTimeout(timeout); // Clear timeout if successful
@@ -133,9 +133,7 @@ const SelectWarriors = () => {
                             return [...prevDetails, details];
                         });
                     }
-    
-                    await new Promise(resolve => setTimeout(resolve, 5000)); // Delay between fetches
-    
+        
                     fetchCharacterDetails(remainingIds); // Recursive call after delay
                 } catch (error) {
                     console.error('Error fetching character details:', error);
