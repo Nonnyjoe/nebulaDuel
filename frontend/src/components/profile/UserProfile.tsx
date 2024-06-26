@@ -22,7 +22,6 @@ const UserProfile = () => {
         console.log(Status, request_payload)
     }
 
-  const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
   const [imgUrl, setImgUrl] = useState<string | null>(null);
@@ -30,7 +29,8 @@ const UserProfile = () => {
   const [gamePoints, setGamePoints] = useState(0);
   const [nebulaBalance, setNebulaBalance] = useState(0);
   const [userAddress, setUserAddress] = useState('');
-  const [txhash, setTxhash] = useState('');
+  // const [txhash, setTxhash] = useState('');
+  const [userStatus, setUserStatus] = useState(false);
 
 
   const userAccount = useActiveAccount();
@@ -51,8 +51,9 @@ const UserProfile = () => {
           setCharacters(request_payload.characters.length);
           setGamePoints(request_payload.points);
           setNebulaBalance(request_payload.nebula_token_balance);
+          setUserStatus(true);
         }
-        console.log(Status, "user profile reading");
+        console.log(Status, "reading user profile... ");
       } catch (err) {
         console.log('Error fetching user profile', err);
       }
@@ -113,10 +114,16 @@ const UserProfile = () => {
 
   async function createProfile2() {
     const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
-    let txhash = await signMessages(togglePlayer);
-    setTxhash(txhash);
-    toast.success('profile updated');
-  }
+    const txhash = await signMessages(togglePlayer);
+    if (txhash.message === "Transaction added successfully") {
+      // setTxhash(txhash);
+      console.log("Tx report: ", txhash.message);
+      toast.success('profile updated');
+    } else {
+      toast.error('transaction error:');
+    }
+    }
+  
 
 
   return (
@@ -208,7 +215,7 @@ const UserProfile = () => {
           </div>
 
           <aside>
-            {!txhash ? (
+            {!userStatus ? (
               <form className="w-full">
                 <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-[#262f39] after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                   <label
