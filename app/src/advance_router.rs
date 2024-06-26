@@ -167,7 +167,9 @@ pub fn router(route: &JsonValue, payload: &JsonValue, msg_sender: &str, storage:
                     handle_modify_avatar(payload, msg_sender.to_string(), storage);
                 },
 
-                _ => todo!(),
+                _ => {
+                    println!("Method does not exist at the moment");
+                },
             }
         }, 
         None => {
@@ -209,10 +211,16 @@ pub fn handle_create_player(payload: &JsonValue, msg_sender: String, storage: &m
         players_profile::create_player(user_monika, msg_sender.clone(), avatar_url, &mut storage.all_players, &mut storage.total_players);
         storage.record_tx(String::from("create_player"), msg_sender.clone(), TransactionStatus::Success);
 
-        let data = &mut storage.all_players;
-        println!("All players now are: {:?}", data.clone());
+        let datas = &mut storage.all_players;
+        let mut new_data: Vec<String> = Vec::new();
 
-        let json_data = players_profile_to_json(data.to_vec());
+        for data in datas.iter() {
+            new_data.push(data.clone().monika);
+        };
+
+        println!("All players now are: {:?}", new_data);
+
+        let json_data = players_profile_to_json(datas.to_vec());
         structure_notice(String::from("create_player"), &mut storage.total_transactions, msg_sender.clone(), json_data, &mut storage.server_addr);
 
         println!("Total players now is: {}", storage.total_players);

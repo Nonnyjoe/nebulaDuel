@@ -11,14 +11,16 @@ import { useActiveAccount } from "thirdweb/react";
 
 
 const UserProfile = () => {
-    // const modifyAvatar = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
+    const createPlayer = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
+    // const change = {"func": "change_relayer_address", "new_relayer_address": "0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749"}
 
-    // async function createProfile() {
-        // await signMessages({"func": "create_player22", "monika": "Nonso1", "avatar_url": "nonso_image1"});
+    async function createProfile() {
+        // await signMessages({"func": "create_player", "monika": "Nonso1", "avatar_url": "nonso_image1"});
+        await signMessages(createPlayer);
         // const character = 17;
-    //     const {Status, request_payload} = await readGameState(`profile/0x2a69959426f8730bb53a1Af9b69f14B8b41CF4cd`);
-    //     console.log(Status, request_payload)
-    // }
+        const {Status, request_payload} = await readGameState(`profile/0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8`);
+        console.log(Status, request_payload)
+    }
 
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
@@ -109,7 +111,7 @@ const UserProfile = () => {
   getAvatar();
 
 
-  async function createProfile() {
+  async function createProfile2() {
     const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
     let txhash = await signMessages(togglePlayer);
     setTxhash(txhash);
@@ -245,8 +247,15 @@ const UserProfile = () => {
                 </div>
                 <Button
                   type="button"
-                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}                  disabled={!imgUrl}
+                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`} 
                   onClick={handleSetCreatedProfile}
+                >
+                  Submit Now
+                </Button>
+                <Button
+                  type="button"
+                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] bg-[#45f882] hover:bg-[#ffbe18] font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`} 
+                  onClick={createProfile}
                 >
                   Submit Now
                 </Button>

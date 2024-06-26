@@ -9,7 +9,7 @@ import axios from 'axios';
             let finalPayload = await createMessage(message, "dappAddress", address, signature);
             let realSigner = await ethers.utils.verifyMessage(finalPayload.message, finalPayload.signature);
             console.log(`Realsigner is: ${realSigner}`);
-            console.log(finalPayload);
+            console.log("final payload", finalPayload);
             let txhash = await sendTransaction(finalPayload);
             return txhash;
           } catch (err) {

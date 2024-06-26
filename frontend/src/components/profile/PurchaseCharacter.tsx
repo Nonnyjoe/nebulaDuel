@@ -13,8 +13,12 @@ import Img8 from "../../assets/img/komodo.png";
 import { Button } from "../atom/Button";
 import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
-import charactersdata from "../../utils/Charactersdata";
-
+import charactersdata from '../../utils/Charactersdata';
+import { useActiveAccount } from "thirdweb/react";
+import readGameState from "../../utils/readState.js"
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import signMessages from "../../utils/relayTransaction.js"
 
 interface Character {
   id: number;
@@ -28,6 +32,18 @@ interface Character {
   img: string;
 }
 
+// Define the ProfileData type
+interface ProfileData {
+  monika: string;
+  wallet_address: string;
+  avatar_url: string;
+  characters: string;
+  id: number;
+  points: number;
+  // Add other properties if needed
+}
+
+
 
 
 const PurchaseCharacter = () => {
@@ -35,6 +51,33 @@ const PurchaseCharacter = () => {
   const [totalCharacterPrice, setTotalCharacterPrice] = useState<number>(0);
   // const [submitClicked, setSubmitClicked] = useState(false);
   const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>([]);
+  const navigate = useNavigate();
+  const activeAccount = useActiveAccount()?.address;
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const characters = shuffleArray(charactersdata);
+
+
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+        const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
+  
+        if(Status === false){
+            navigate('/profile');
+        }else{
+            // if(request_payload.characters.length >= 3){
+            //     setProfileData(request_payload);
+            // }else{
+            //     navigate('/profile/purchasecharacter');
+            setProfileData(request_payload);
+        }
+    };
+  
+    fetchData(); // Call the function on component mount
+  }, [location]);
+
+
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -50,6 +93,7 @@ const PurchaseCharacter = () => {
         setSelectedCharacters([...selectedCharacters, character]);
         setSelectedCharactersId([...selectedCharactersId, character.id]);
         setTotalCharacterPrice(character.price + totalCharacterPrice);
+        console.log(selectedCharactersId)
 
       } else {
         toast.error("You can select only 3 characters.", {
@@ -74,22 +118,71 @@ const PurchaseCharacter = () => {
     setSelectedCharactersId([]);
   };
 
-  const handlePurchaseCharacter = (e: any) => {
+  const handlePurchaseCharacter = async (e: any) => {
     e.preventDefault();
+    if (selectedCharactersId.length < 3) {
+        toast.error("You can have to select 3 characters.", {
+          position: "top-right",
+        });
+        return;
+    } else {
+      console.log("selected id's are: ", selectedCharactersId);
+  
+      const dataObject = {"func": "purchase_teamZZZZZ", "char_id1": selectedCharactersId[0], "char_id2": selectedCharactersId[1], "char_id3": selectedCharactersId[2]};
+      console.log("data Obj", dataObject);
+      const txhash = await signMessages(dataObject);
+
+      if (txhash) {
+        console.log("tx hash is: ", txhash);
+        await delay(2000);
+
+        const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
+        if (Status == true && request_payload.characters > 0) {
+          setSelectedCharacters([ ]);
+          setSelectedCharactersId([ ]);
+          setTotalCharacterPrice(0);
+          setProfileData(request_payload);
+
+          toast.success("Character(s) purchased successfully!", {
+            position: "top-right",
+          });
+        } else {
+          toast.error("Something went wrong, please submit again!", {
+            position: "top-right",
+          });
+        }
+        
+      }
+      
+    }
   };
+
+  //nebuladuel
+
+  function shuffleArray(array: typeof charactersdata) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function delay(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   return (
     <section className="w-full h-auto bg-bodyBg">
       <main className="w-full lg:py-24 md:py-24 py-20 md:px-6 px-3 flex flex-col items-center gap-4">
         <Text
           as="h2"
-          className="font-bold text-center uppercase lg:text-4xl md:text-3xl text-2xl font-barlow"
+          className="font-bold font-belanosima text-center uppercase lg:text-4xl md:text-3xl text-2xl tracking-wide"
         >
           Select characters to Purchase!
         </Text>
 
-        <section className=" w-full mt-12 grid lg:grid-cols-2 lg:gap-10 md:gap-20 gap-14">
-          <main className="w-full flex flex-col gap-4">
+        <section className=" w-full mt-20 flex flex-row lg:gap-20 md:gap-20 gap-14">
+          <main className="w-6/12 flex flex-col gap-4">
             <Text
               as="h3"
               className="font-semibold font-belanosima text-2xl tracking-wide text-center"
@@ -97,7 +190,7 @@ const PurchaseCharacter = () => {
               All Characters
             </Text>
             <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
-              {charactersdata.map((item, index) => (
+              {characters.map((item, index) => (
                 <div
                   className={`w-full border ${selectedCharactersId.includes(item.id) ? 'border-myGreen' : 'border-gray-800'} border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`}
                   key={index}
@@ -151,7 +244,7 @@ const PurchaseCharacter = () => {
             </div>
           </main>
 
-          <main className="w-full flex flex-col items-center gap-4">
+          <main className=" w-5/12 flex flex-col items-center gap-4">
             <Text
               as="h3"
               className="font-semibold font-belanosima text-2xl tracking-wide text-center"
@@ -159,7 +252,7 @@ const PurchaseCharacter = () => {
               Selected Characters
             </Text>
 
-            <div className="w-full relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 lg:h-[300px] md:h-[240px] h-[220px] rounded-md">
+            <div className="w-full p-5 mb-8 relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 min-h-[220px] lg:h-fit md:h-fit h-fit rounded-md">
               {selectedCharacters?.map((character) => (
                 <div
                   key={character.id}
@@ -192,6 +285,12 @@ const PurchaseCharacter = () => {
               className="font-semibold font-barlow text-xl tracking-wide text-center"
             >
               Total Price: {totalCharacterPrice} points
+            </Text>
+            <Text
+              as="p"
+              className=" text-gray-400 font-thin font-poppins text-md tracking-wide text-center"
+            >
+              Your Availabe point: {(profileData?.points as number) - totalCharacterPrice} points
             </Text>
 
             <Button
