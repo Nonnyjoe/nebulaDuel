@@ -8,18 +8,10 @@ import signMessages from "../../utils/relayTransaction.js"
 import readGameState from "../../utils/readState.js";
 import axios from "axios";
 import { useActiveAccount } from "thirdweb/react";
+import { useNavigate } from 'react-router-dom';
 
 
 const UserProfile = () => {
-    // const modifyAvatar = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
-
-    // async function createProfile() {
-        // await signMessages({"func": "create_player22", "monika": "Nonso1", "avatar_url": "nonso_image1"});
-        // const character = 17;
-    //     const {Status, request_payload} = await readGameState(`profile/0x2a69959426f8730bb53a1Af9b69f14B8b41CF4cd`);
-    //     console.log(Status, request_payload)
-    // }
-
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
@@ -28,9 +20,9 @@ const UserProfile = () => {
   const [gamePoints, setGamePoints] = useState(0);
   const [nebulaBalance, setNebulaBalance] = useState(0);
   const [userAddress, setUserAddress] = useState('');
+  const [profileData, setProfileData] = useState<any>({});
   const [txhash, setTxhash] = useState('');
-
-
+  const navigate = useNavigate();
   const userAccount = useActiveAccount();
 
   useEffect(() => {
@@ -38,27 +30,22 @@ const UserProfile = () => {
     if (userAccount && address) {
       setUserAddress(address);
     }
-  }, [userAccount]);
 
+    const fetchData = async () => {
+      const {Status, request_payload} = await readGameState(`profile/${address}`);
+      console.log(Status, request_payload, 'user profile reading');
 
-  const readProfile = useCallback(async (address: string) => {
-    if (address) {
-      try {
-        const { Status, request_payload } = await readGameState(`profile/${address}`);
-        if (Status) {
-          setCharacters(request_payload.characters.length);
-          setGamePoints(request_payload.points);
-          setNebulaBalance(request_payload.nebula_token_balance);
-        }
-        console.log(Status, "user profile reading");
-      } catch (err) {
-        console.log('Error fetching user profile', err);
+      if(Status === false){
+        setCreatedProfile(false);   
+      } else {
+        console.log(request_payload, 'user profile data');
+          setProfileData(request_payload);
+          setCreatedProfile(true);
       }
-    }
-  }, []);
+    };
 
-  readProfile(userAddress);
-  
+    fetchData(); 
+  }, [userAccount, navigate]);
 
   const handleNameChange = (event: any) => {
     setName(event.target.value);
@@ -98,18 +85,20 @@ const UserProfile = () => {
         if (avatarUrl) {
           setImgUrl(`https://orange-personal-vulture-360.mypinata.cloud/ipfs/${avatarUrl}`);
         }
-        console.log(imgUrl);
       } catch(err) {
         console.log('Pinata API error', err);
         toast.error('upload error');
       }
     }
+    console.log(imgUrl, 'avatar url');
+
   }, [avatar]);
 
   getAvatar();
 
 
   async function createProfile() {
+    console.log(name, imgUrl, 'profile data')
     const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
     let txhash = await signMessages(togglePlayer);
     setTxhash(txhash);
@@ -148,7 +137,7 @@ const UserProfile = () => {
                 ) : (
                   <ImageWrap
                     className="inline-block"
-                    image={avatar ? URL.createObjectURL(avatar) : userImg}
+                    image={profileData ? profileData.avatar_url : userImg}
                     alt=""
                     objectStatus="sm:max-w-full xsm:max-w-full border-[#fff] max-w-[224px] rounded-[50%] border-[3px] border-solid shadow-[0px_3px_7px_0px_rgba(0,0,0,0.21),inset_0px_3px_9px_0px_rgba(0,0,0,0.92)]"
                   />
@@ -157,7 +146,7 @@ const UserProfile = () => {
               <div className="team__content">
                 <h4 className="text-[20px] font-extrabold tracking-[1px] mt-0 mb-px mx-0 text-gray-200">
                   {
-                    name ? name : "KILLER MASTER"
+                    profileData ? profileData.monika : "KILLER MASTER"
                   }
                 </h4>
                 <span className="block font-semibold text-[16px] text-[#45f882] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] font-Barlow">
@@ -174,7 +163,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    {characters}
+                    {profileData.characters.length || 0}
                   </Text>
                 </Text>
                 <Text
@@ -186,7 +175,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    {gamePoints} pts
+                    {profileData.points || 0} pts
                   </Text>
                 </Text>
                 <Text
@@ -198,7 +187,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    {nebulaBalance} $Neb
+                    {profileData.nebula_token_balance || 0} $Neb
                   </Text>
                 </Text>
               </div>
@@ -289,12 +278,10 @@ const UserProfile = () => {
                   />
                 </div>
                 <Button
-                  type="button"
                   className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}
-                  disabled={!imgUrl}
                   onClick={handleSetCreatedProfile}
                 >
-                  Update profile
+                  {createdProfile ? "Update Profile" : "Create Profile"} 
                 </Button>
               </form>
             )}
