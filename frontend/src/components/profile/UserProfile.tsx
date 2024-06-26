@@ -25,27 +25,27 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const userAccount = useActiveAccount();
 
+  const fetchData = async () => {
+    const {Status, request_payload} = await readGameState(`profile/${userAccount?.address}`);
+    console.log(Status, request_payload, 'user profile reading');
+
+    if(Status === false){
+      setCreatedProfile(false);   
+    } else {
+      console.log(request_payload, 'user profile data');
+        setProfileData(request_payload);
+        setCreatedProfile(true);
+    }
+  };
+
   useEffect(() => {
     let address = userAccount?.address;
     if (userAccount && address) {
       setUserAddress(address);
     }
 
-    const fetchData = async () => {
-      const {Status, request_payload} = await readGameState(`profile/${address}`);
-      console.log(Status, request_payload, 'user profile reading');
-
-      if(Status === false){
-        setCreatedProfile(false);   
-      } else {
-        console.log(request_payload, 'user profile data');
-          setProfileData(request_payload);
-          setCreatedProfile(true);
-      }
-    };
-
     fetchData(); 
-  }, [userAccount, navigate]);
+  }, [userAccount, navigate, profileData]);
 
   const handleNameChange = (event: any) => {
     setName(event.target.value);
@@ -91,7 +91,6 @@ const UserProfile = () => {
         toast.error('upload error');
       }
     }
-    console.log(imgUrl, 'avatar url');
 
   }, [avatar]);
 
@@ -106,6 +105,7 @@ const UserProfile = () => {
       // setTxhash(txhash);
       console.log("Tx report: ", txhash.message);
       toast.success('profile updated');
+      fetchData();
     } else {
       toast.error('transaction error:');
     }
@@ -144,7 +144,7 @@ const UserProfile = () => {
                 ) : (
                   <ImageWrap
                     className="inline-block"
-                    image={profileData ? profileData.avatar_url : userImg}
+                    image={ profileData.avatar_url || userImg}
                     alt=""
                     objectStatus="sm:max-w-full xsm:max-w-full border-[#fff] max-w-[224px] rounded-[50%] border-[3px] border-solid shadow-[0px_3px_7px_0px_rgba(0,0,0,0.21),inset_0px_3px_9px_0px_rgba(0,0,0,0.92)]"
                   />
@@ -153,7 +153,7 @@ const UserProfile = () => {
               <div className="team__content">
                 <h4 className="text-[20px] font-extrabold tracking-[1px] mt-0 mb-px mx-0 text-gray-200">
                   {
-                    profileData ? profileData.monika : "KILLER MASTER"
+                    profileData.monika || "KILLER MASTER"
                   }
                 </h4>
                 <span className="block font-semibold text-[16px] text-[#45f882] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] font-Barlow">
@@ -202,7 +202,7 @@ const UserProfile = () => {
           </div>
 
           <aside>
-            {!profileData ? (
+            {!createdProfile ? (
               <form className="w-full">
                 <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-[#262f39] after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                   <label
@@ -244,14 +244,7 @@ const UserProfile = () => {
                   className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`} 
                   onClick={handleSetCreatedProfile}
                 >
-                  Submit Now
-                </Button>
-                <Button
-                  type="button"
-                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] bg-[#45f882] hover:bg-[#ffbe18] font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`} 
-                  onClick={createProfile}
-                >
-                  Submit Now
+                  Create Profile
                 </Button>
               </form>
             ) : (
@@ -295,7 +288,7 @@ const UserProfile = () => {
                   className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}
                   onClick={handleSetCreatedProfile}
                 >
-                  {createdProfile ? "Update Profile" : "Create Profile"} 
+                  Update Profile 
                 </Button>
               </form>
             )}
