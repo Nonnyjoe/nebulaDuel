@@ -11,7 +11,7 @@ import { useActiveAccount } from "thirdweb/react";
 
 
 const UserProfile = () => {
-    const createPlayer = {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"};
+    const createPlayer = {"func": "create_player", "monika": "Nonso", "avatar_url": "Nonso_image1"};
     // const change = {"func": "change_relayer_address", "new_relayer_address": "0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749"}
 
     async function createProfile() {

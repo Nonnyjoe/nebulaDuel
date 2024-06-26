@@ -43,6 +43,9 @@ interface ProfileData {
   // Add other properties if needed
 }
 
+interface charId {
+  char_id: number;
+}
 
 
 
@@ -62,7 +65,8 @@ const PurchaseCharacter = () => {
   useEffect(() => {
     const fetchData = async () => {
         const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
-  
+
+        console.log("characters ==", getArrayLength(request_payload.characters));
         if(Status === false){
             navigate('/profile');
         }else{
@@ -77,7 +81,23 @@ const PurchaseCharacter = () => {
     fetchData(); // Call the function on component mount
   }, [location]);
 
-
+  function getArrayLength(jsonString: string): number | null {
+    try {
+        // Parse the JSON string to an array of objects
+        const array: { char_id: number }[] = JSON.parse(jsonString);
+        
+        // Check if the parsed result is indeed an array
+        if (Array.isArray(array)) {
+            // Return the length of the array
+            return array.length;
+        } else {
+            throw new Error('Parsed result is not an array');
+        }
+    } catch (error: any) {
+        console.error('Error parsing JSON string:', error.message);
+        return null;
+    }
+}
 
   const toggleCharacterSelection = (character: Character) => {
     const index = selectedCharacters.findIndex((c) => c.id === character.id);
@@ -128,7 +148,7 @@ const PurchaseCharacter = () => {
     } else {
       console.log("selected id's are: ", selectedCharactersId);
   
-      const dataObject = {"func": "purchase_teamZZZZZ", "char_id1": selectedCharactersId[0], "char_id2": selectedCharactersId[1], "char_id3": selectedCharactersId[2]};
+      const dataObject = {"func": "purchase_team", "char_id1": selectedCharactersId[0], "char_id2": selectedCharactersId[1], "char_id3": selectedCharactersId[2]};
       console.log("data Obj", dataObject);
       const txhash = await signMessages(dataObject);
 
@@ -137,7 +157,7 @@ const PurchaseCharacter = () => {
         await delay(2000);
 
         const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
-        if (Status == true && request_payload.characters > 0) {
+        if (Status == true && getArrayLength(request_payload.characters) as number > 0) {
           setSelectedCharacters([ ]);
           setSelectedCharactersId([ ]);
           setTotalCharacterPrice(0);
