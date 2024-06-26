@@ -27,7 +27,8 @@ const UserProfile = () => {
   const [gamePoints, setGamePoints] = useState(0);
   const [nebulaBalance, setNebulaBalance] = useState(0);
   const [userAddress, setUserAddress] = useState('');
-  const [txhash, setTxhash] = useState('');
+  // const [txhash, setTxhash] = useState('');
+  const [userStatus, setUserStatus] = useState(false);
 
 
   const userAccount = useActiveAccount();
@@ -48,6 +49,7 @@ const UserProfile = () => {
           setCharacters(request_payload.characters.length);
           setGamePoints(request_payload.points);
           setNebulaBalance(request_payload.nebula_token_balance);
+          setUserStatus(true);
         }
         console.log(Status, "reading user profile... ");
       } catch (err) {
@@ -112,7 +114,7 @@ const UserProfile = () => {
     const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
     const txhash = await signMessages(togglePlayer);
     if (txhash.message === "Transaction added successfully") {
-      setTxhash(txhash);
+      // setTxhash(txhash);
       console.log("Tx report: ", txhash.message);
       toast.success('profile updated');
     } else {
@@ -211,7 +213,7 @@ const UserProfile = () => {
           </div>
 
           <aside>
-            {!txhash ? (
+            {!userStatus ? (
               <form className="w-full">
                 <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-[#262f39] after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                   <label
