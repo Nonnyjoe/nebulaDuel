@@ -230,10 +230,10 @@ const SelectWarriors = () => {
                                         <ImageWrap image={item.img} className="w-full" alt={item.name} objectStatus="object-contain" />
                                         <Text as="h5" className="font-belanosima">{item.name}</Text>
                                         <div className="w-full grid grid-cols-2 gap-1">
-                                            <Text as="span" className="text-gray-500 text-xs font-poppins">Health: {item.health}</Text>
-                                            <Text as="span" className="text-gray-500 text-xs font-poppins">Attack: {item.attack}</Text>
-                                            <Text as="span" className="text-gray-500 text-xs font-poppins">Strength: {item.strength}</Text>
-                                            <Text as="span" className="text-gray-500 text-xs font-poppins">Speed: {item.speed}</Text>
+                                            <Text as="span" className="text-gray-300 text-xs font-poppins">Health: {item.health}</Text>
+                                            <Text as="span" className="text-gray-300 text-xs font-poppins">Attack: {item.attack}</Text>
+                                            <Text as="span" className="text-gray-300 text-xs font-poppins">Strength: {item.strength}</Text>
+                                            <Text as="span" className="text-gray-300 text-xs font-poppins">Speed: {item.speed}</Text>
                                         </div>
                                     </div>
                                 ))

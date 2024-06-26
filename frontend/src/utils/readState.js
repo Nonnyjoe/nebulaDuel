@@ -3,7 +3,7 @@ import {hexToString} from 'viem';
 
 
 async function readGameState(data) {
-    console.log("forwarding transaction to relayer........")
+    console.log("Inspecting state from Cartesi........")
     try {
         const response = await axios.get( `https://nebuladuel.fly.dev/inspect/${data}`, {
             headers: {
