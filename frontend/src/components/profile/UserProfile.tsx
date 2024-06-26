@@ -100,10 +100,16 @@ const UserProfile = () => {
   async function createProfile() {
     console.log(name, imgUrl, 'profile data')
     const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
-    let txhash = await signMessages(togglePlayer);
-    setTxhash(txhash);
-    toast.success('profile updated');
-  }
+    const txhash = await signMessages(togglePlayer);
+    if (txhash.message === "Transaction added successfully") {
+      // setTxhash(txhash);
+      console.log("Tx report: ", txhash.message);
+      toast.success('profile updated');
+    } else {
+      toast.error('transaction error:');
+    }
+    }
+  
 
 
   return (
@@ -195,7 +201,7 @@ const UserProfile = () => {
           </div>
 
           <aside>
-            {!txhash ? (
+            {!userStatus ? (
               <form className="w-full">
                 <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-[#262f39] after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                   <label
@@ -234,8 +240,15 @@ const UserProfile = () => {
                 </div>
                 <Button
                   type="button"
-                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}                  disabled={!imgUrl}
+                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`} 
                   onClick={handleSetCreatedProfile}
+                >
+                  Submit Now
+                </Button>
+                <Button
+                  type="button"
+                  className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] bg-[#45f882] hover:bg-[#ffbe18] font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`} 
+                  onClick={createProfile}
                 >
                   Submit Now
                 </Button>

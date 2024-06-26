@@ -58,7 +58,7 @@ impl Storage {
             nebula_token_address: String::from("0xNebulaTokenAddress"),
             nebula_nft_address: String::from("0xNebulaNftAddress"),
             dapp_contract_address: String::from("0xNebulaNftAddress"),
-            relayer_addr: String::from("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720").to_lowercase(),
+            relayer_addr: String::from("0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749").to_lowercase(),
             total_transactions: 0,
             all_transactions: Vec::new(),
             server_addr,

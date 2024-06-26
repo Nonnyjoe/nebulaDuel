@@ -15,7 +15,7 @@ type DataType = {
 
 const charactersdata: DataType[] = [
   {
-    id: 1,
+    id: 0,
     name: "Mystic Seer",
     health: 80,
     strength: 10,
@@ -26,7 +26,7 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.mystic,
   },
   {
-    id: 2,
+    id: 1,
     name: "Zylar the Conqueror",
     health: 90,
     strength: 10,
@@ -37,7 +37,7 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.zylar,
   },
   {
-    id: 3,
+    id: 2,
     name: "Shadow Strike",
     health: 75,
     strength: 10,
@@ -48,7 +48,7 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.sStrike,
   },
   {
-    id: 4,
+    id: 3,
     name: "Captain Valor",
     health: 85,
     strength: 8,
@@ -59,7 +59,7 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.cValor,
   },
   {
-    id: 5,
+    id: 4,
     name: "Sir Elara the Great",
     health: 88,
     strength: 9,
@@ -70,7 +70,7 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.sElara,
   },
   {
-    id: 6,
+    id: 5,
     name: "Goul King",
     health: 92,
     strength: 11,
@@ -81,7 +81,7 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.ghoul,
   },
   {
-    id: 7,
+    id: 6,
     name: "Elinor Swiftstrike",
     health: 80,
     strength: 10,
@@ -90,6 +90,17 @@ const charactersdata: DataType[] = [
     super_power: "HeadCrush",
     price: 320,
     img: nebulaCharactersImg.eSwiftstrike,
+  },
+  {
+    id: 7,
+    name: "Ravager",
+    health: 75,
+    strength: 8,
+    attack: 16,
+    speed: 6,
+    super_power: "ShadowBall",
+    price: 300,
+    img: nebulaCharactersImg.ravager,
   },
   {
     id: 8,
@@ -223,17 +234,7 @@ const charactersdata: DataType[] = [
     price: 365,
     img: nebulaCharactersImg.sHawk,
   },
-  {
-    id: 20,
-    name: "Ravager",
-    health: 75,
-    strength: 8,
-    attack: 16,
-    speed: 6,
-    super_power: "ShadowBall",
-    price: 300,
-    img: nebulaCharactersImg.ravager,
-  },
+
 ];
 
 export default charactersdata;
