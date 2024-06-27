@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { Canvas, useLoader } from "@react-three/fiber";
 import { useGLTF } from '@react-three/drei';
 import { radToDeg } from 'three/src/math/MathUtils.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 
 
