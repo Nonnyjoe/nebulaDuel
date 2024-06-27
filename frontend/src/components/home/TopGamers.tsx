@@ -61,44 +61,44 @@ type tabDataType = {
 const tabData: tabDataType[] = [
     {
         tab: "tabOne",
-        title: "HUMAN GAME",
+        title: "GLADIATOR",
         rate: "50%",
-        text: "Lorem ipsum dolor sit amet, consteur adipiscing Duis elementum sollicitudin is yaugue euismods Nulla ullamcorper. Morbi pharetra tellus miolslis, tincidunt massa venenatis.",
+        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
         img: tabImg1
     },
     {
         tab: "tabTwo",
         title: "AXIE INFINITY",
         rate: "60%",
-        text: "Lorem ipsum dolor sit amet, consteur adipiscing Duis elementum sollicitudin is yaugue euismods Nulla ullamcorper. Morbi pharetra tellus miolslis, tincidunt massa venenatis.",
+        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
         img: tabImg2
     },
     {
         tab: "tabThree",
         title: "THE WALKING DEAD",
         rate: "75%",
-        text: "Lorem ipsum dolor sit amet, consteur adipiscing Duis elementum sollicitudin is yaugue euismods Nulla ullamcorper. Morbi pharetra tellus miolslis, tincidunt massa venenatis.",
+        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
         img: tabImg3
     },
     {
         tab: "tabFour",
         title: "THE DOGAMI",
         rate: "65%",
-        text: "Lorem ipsum dolor sit amet, consteur adipiscing Duis elementum sollicitudin is yaugue euismods Nulla ullamcorper. Morbi pharetra tellus miolslis, tincidunt massa venenatis.",
+        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
         img: tabImg4
     },
     {
         tab: "tabFive",
         title: "THE SANDBOX",
         rate: "75%",
-        text: "Lorem ipsum dolor sit amet, consteur adipiscing Duis elementum sollicitudin is yaugue euismods Nulla ullamcorper. Morbi pharetra tellus miolslis, tincidunt massa venenatis.",
+        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
         img: tabImg5
     },
     {
         tab: "tabSix",
         title: "PEGAXY HORSES",
         rate: "85%",
-        text: "Lorem ipsum dolor sit amet, consteur adipiscing Duis elementum sollicitudin is yaugue euismods Nulla ullamcorper. Morbi pharetra tellus miolslis, tincidunt massa venenatis.",
+        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
         img: tabImg6
     }
 ]
@@ -210,8 +210,8 @@ const TopGamers = () => {
                                                 <div
                                                     className="w-full grid grid-cols-3 gap-2">
                                                     <a className=" block bg-[#1f2935] bg-[linear-gradient(0deg,#10181f_0%,_transparent_0%,#141a20_100%)] uppercase md:text-[16px] text-[14px] font-bold text-[#adb0bc] text-center tracking-[1px] md:px-[30px] px-[15px] py-[25px] hover:text-[#45f882] font-Barlow" href="">Dragon Ball</a>
-                                                    <a className=" block bg-[#1f2935] bg-[linear-gradient(0deg,#10181f_0%,_transparent_0%,#141a20_100%)] uppercase md:text-[16px] text-[14px] font-bold text-[#adb0bc] text-center tracking-[1px] md:px-[30px] px-[15px] py-[25px] hover:text-[#45f882] font-Barlow" href="">nft market</a>
-                                                    <a className=" block bg-[#1f2935] bg-[linear-gradient(0deg,#10181f_0%,_transparent_0%,#141a20_100%)] uppercase md:text-[16px] text-[14px] font-bold text-[#adb0bc] text-center tracking-[1px] md:px-[30px] px-[15px] py-[25px] hover:text-[#45f882] font-Barlow" href="">support</a>
+                                                    <a className=" block bg-[#1f2935] bg-[linear-gradient(0deg,#10181f_0%,_transparent_0%,#141a20_100%)] uppercase md:text-[16px] text-[14px] font-bold text-[#adb0bc] text-center tracking-[1px] md:px-[30px] px-[15px] py-[25px] hover:text-[#45f882] font-Barlow" href="/marketplace">nft market</a>
+                                                    <a className=" block bg-[#1f2935] bg-[linear-gradient(0deg,#10181f_0%,_transparent_0%,#141a20_100%)] uppercase md:text-[16px] text-[14px] font-bold text-[#adb0bc] text-center tracking-[1px] md:px-[30px] px-[15px] py-[25px] hover:text-[#45f882] font-Barlow" href="/contact">support</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -266,27 +266,27 @@ const Slides = () => {
     const slideData = [
         {
             img: gallery1,
-            title: "DOTA 2 TOURNAMENT",
+            title: " ARENA",
             rate: "RATE 85%"
         },
         {
             img: gallery2,
-            title: "DOTA 2 TOURNAMENT",
+            title: " ARENA",
             rate: "RATE 85%"
         },
         {
             img: gallery3,
-            title: "DOTA 2 TOURNAMENT",
+            title: " ARENA",
             rate: "RATE 85%"
         },
         {
             img: gallery4,
-            title: "DOTA 2 TOURNAMENT",
+            title: " ARENA",
             rate: "RATE 85%"
         },
         {
             img: gallery5,
-            title: "DOTA 2 TOURNAMENT",
+            title: " ARENA",
             rate: "RATE 85%"
         }
     ]

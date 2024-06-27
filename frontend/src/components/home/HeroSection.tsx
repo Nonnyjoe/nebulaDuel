@@ -85,7 +85,7 @@ const HeroSection = () => {
                 <aside className="flex-1 flex flex-col -mt-10 md:mt-0 justify-center md:items-start items-center lg:gap-6 gap-4">
                     <Text as="h3" className="uppercase bg-gradient-to-r from-myGreen/30 text-myGreen px-8 py-3 rounded-md font-barlow font-bold tracking-widest lg:text-2xl md:text-lg text-base">Live Gaming</Text>
                     <Text as="h1" className="uppercase lg:text-8xl md:text-5xl text-4xl leading-[0.8] font-bold drop-shadow-[-1px_5px_0px_rgba(69,248,130,0.66)]
-                         sm:drop-shadow-[-1px_5px_0px_rgba(69,248,130,0.66)] font-belanosima ">POKEMONING</Text>
+                         sm:drop-shadow-[-1px_5px_0px_rgba(69,248,130,0.66)] font-belanosima ">nebula duel</Text>
                     <Text as="h5" className="uppercase font-poppins tracking-widest text-lg lg:text-2xl md:text-lg font-bold">Video Games Online</Text>
                     <Button className="slider-cta-btn text-gray-100 md:text-base text-sm font-bold font-barlow px-4 py-2 flex justify-center items-center" onClick={playgameButton}>
                         Play Now

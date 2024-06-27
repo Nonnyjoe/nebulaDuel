@@ -146,22 +146,22 @@ type listType = {
 const list: listType[] = [
     {
         icon: <IoDiamondSharp />,
-        title: "Year Experience",
-        description: "Lorem ipsum dolor sitamet const adipiscng Duis eletum sollicitudin is yaugue euismods"
+        title: "Experience",
+        description: "Our team has gained many years of experience building innovative solutions"
     },
     {
         icon: <FaUserCog />,
         title: "Expert Teams",
-        description: "Lorem ipsum dolor sitamet const adipiscng Duis eletum sollicitudin is yaugue euismods"
+        description: "We have amazing set of Engineers from various tech stacks"
     },
     {
         icon: <FaEthereum />,
         title: "Best NFT Game",
-        description: "Lorem ipsum dolor sitamet const adipiscng Duis eletum sollicitudin is yaugue euismods"
+        description: "We deliver only the best in the industry"
     },
     {
         icon: <IoSettings />,
-        title: "Worldwide Client",
-        description: "Lorem ipsum dolor sitamet const adipiscng Duis eletum sollicitudin is yaugue euismods"
+        title: "Global reach",
+        description: "We have delivered services to clients from various countries and still counting"
     }
 ]
