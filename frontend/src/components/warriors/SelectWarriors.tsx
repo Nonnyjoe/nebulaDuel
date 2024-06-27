@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import charactersdata from '../../utils/Charactersdata';
+import {charactersdata} from '../../utils/Charactersdata';
 import { useActiveAccount } from "thirdweb/react";
 
 
