@@ -5,24 +5,19 @@ import { Text } from "../atom/Text"
 import { Button } from "../atom/Button"
 import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
-import readGameState from "../../utils/readState.js"
-import signMessages from "../../utils/relayTransaction.js"
+// import readGameState from "../../utils/readState.js"
+import signMessages from "../../utils/relayTransaction.tsx"
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { charactersdata } from '../../utils/Charactersdata';
+import  charactersdata from '../../utils/Charactersdata';
 import { useProfileContext } from '../contexts/ProfileContext.js';
+import fetchNotices from '../../utils/readSubgraph.js';
 
 
 
-interface Character {
-    id: number;
-    name: string;
-    img: string;
-    price: number;
-}
 interface Duel {
     duel_id: number;
     duel_creator: string;
@@ -65,12 +60,12 @@ const JoinDuelComp = () => {
     const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>([]);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>([]);
-    const [playersCharacters, setPlayersCharacters] = useState<CharacterDetails[]>([]);
+    const [, setPlayersCharacters] = useState<CharacterDetails[]>([]);
     const navigate = useNavigate();
     const activeAccount = useActiveAccount();
-    const [acceptStake, setAcceptStake] = useState(false);
-    const [stakeAmount, setStakeAmount] = useState<number>(0.0);
-    const {profile, setProfile} = useProfileContext();
+    const [acceptStake, ] = useState(false);
+    const [stakeAmount, ] = useState<number>(0.0);
+    const {profile, } = useProfileContext();
     const [submiting, setSubmiting] = useState<boolean>(false);
 
 
@@ -88,20 +83,20 @@ const JoinDuelComp = () => {
             let myCharacters: CharacterDetails[] = [];
 
             if (activeAccount?.address?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
-                navigate('/profile');
+                // navigate('/profile');
             } else {
                 setProfileData(profile);
-                const { Status, request_payload } = await readGameState(`players_characters/${activeAccount?.address}`);
-                console.log("Players characters: " + request_payload);
-                if (Status) {
+                let request_payload = await fetchNotices("all_characters");
+                    request_payload = request_payload.filter((character: CharacterDetails) => character.owner == activeAccount?.address.toLowerCase());
+                    console.log("Players characters: " + request_payload);
+
                     setPlayersCharacters(request_payload);
                     console.log(request_payload);
                     myCharacters = request_payload;
 
                     if (request_payload.length == 0) {
-                        navigate('/profile/purchasecharacter');
+                        // navigate('/profile/purchasecharacter');
                     }
-                }
             }
 
             if (profile && profile.characters) {
@@ -150,23 +145,23 @@ const JoinDuelComp = () => {
         </div>;
     }
 
-        function getArrayLength(jsonString: string): number | null {
-            try {
-                // Parse the JSON string to an array of objects
-                const array: { char_id: number }[] = JSON.parse(jsonString);
+        // function getArrayLength(jsonString: string): number | null {
+        //     try {
+        //         // Parse the JSON string to an array of objects
+        //         const array: { char_id: number }[] = JSON.parse(jsonString);
                 
-                // Check if the parsed result is indeed an array
-                if (Array.isArray(array)) {
-                    // Return the length of the array
-                    return array.length;
-                } else {
-                    throw new Error('Parsed result is not an array');
-                }
-            } catch (error: any) {
-                console.error('Error parsing JSON string:', error.message);
-                return null;
-            }
-        }
+        //         // Check if the parsed result is indeed an array
+        //         if (Array.isArray(array)) {
+        //             // Return the length of the array
+        //             return array.length;
+        //         } else {
+        //             throw new Error('Parsed result is not an array');
+        //         }
+        //     } catch (error: any) {
+        //         console.error('Error parsing JSON string:', error.message);
+        //         return null;
+        //     }
+        // }
 
         function delay(ms: number) {
             return new Promise(resolve => setTimeout(resolve, ms));
@@ -190,42 +185,67 @@ const JoinDuelComp = () => {
                 });
                 return;
             }
-            const dataObject = {"func": "join_duel", "char_id1": selectedCharacters[0].id, "char_id2": selectedCharacters[1].id, "char_id3": selectedCharacters[2].id};
+            const dataObject = {"func": "join_duel", "char_id1": selectedCharacters[0].id, "char_id2": selectedCharacters[1].id, "char_id3": selectedCharacters[2].id, "duel_id": duelId};
 
             console.log(dataObject, "dataObject");
             console.log("active account:", activeAccount?.address);
             
-            const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
+            // const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
             setSubmiting(true);
             const txhash = await signMessages(dataObject);
             
             if (txhash) {
                 await delay(2000);
-                const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-                if (Status === true) {
-                    const updatedTxCount = getArrayLength(request_payload.transaction_history) as number;
-                    console.log("prevTX: ", prevNoOfTx, "updated TX: ", updatedTxCount);
-                    if (updatedTxCount > prevNoOfTx) {
-                        setProfile(request_payload);
+                // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
+                let request_payload = await fetchNotices("all_tx");
+                    request_payload = request_payload.filter((tx: any) => tx.caller == activeAccount?.address.toLowerCase());
+                    let Highest_tx;
+                    for (let i = 0; i < request_payload.length; i++) {
+                        Highest_tx = request_payload[i];
+                        if (request_payload[i].tx_id > Highest_tx.tx_id) {
+                            Highest_tx = request_payload[i];
+                        }
+                    }
+
+                    if (Highest_tx.method == "join_duel") {
                         toast.success("Transaction Successful.. Duel Created", {
                             position: 'top-right'
                         })
                         setTotalCharacterPrice(0);
                         setSelectedCharacters([]);
                         setSelectedCharactersId([]);
-                        setProfileData(request_payload);
-                        await delay(2000);
-                        navigate(`/strategy/${duelId}`);
+                        const duels = await fetchNotices("all_duels");
+                        const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
+                        navigate(`/strategy/${userDuels?.duel_id}`);
+                    } else {
+                        toast.error("Transaction Failed.. Try again later.", {
+                            position: 'top-right'
+                        });
+                        setSubmiting(false);
                     }
-                }
             }
             setSubmiting(false);
         }
 
-
-
-
-
+        function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
+            // Filter duels by the given duel_creator
+            const filteredDuels = duels.filter(duel => (duel.duel_creator).toLowerCase() === creator.toLowerCase());
+          
+            if (filteredDuels.length === 0) {
+              return null; // Return null if no duels are found for the given creator
+            }
+          console.log("see them", filteredDuels);
+            // Find the duel with the highest id
+            let highestIdDuel = filteredDuels[0];
+    
+            for (let i = 0; i < filteredDuels.length; i++) {
+              if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
+                highestIdDuel = filteredDuels[i];
+              }
+            }
+          
+            return highestIdDuel;
+          }
 
 
     const toggleCharacterSelection = (character: CharacterDetails) => {

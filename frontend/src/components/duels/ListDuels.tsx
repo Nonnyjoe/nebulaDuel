@@ -3,12 +3,13 @@ import breadcrumb from "../../assets/img/breadcrumb_img03.png";
 import { ImageWrap } from "../atom/ImageWrap.js";
 import "animate.css/animate.min.css";
 import { useState, useEffect } from "react";
-import readGameState from "../../utils/readState.js";
+// import readGameState from "../../utils/readState.js";
 // import DuelCard from "./DuelCard1.js";
 import DuelCard from "./DuelCard.js";
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { useActiveAccount } from "thirdweb/react";
+// import { useActiveAccount } from "thirdweb/react";
+import fetchNotices from "../../utils/readSubgraph.js";
 
 interface Duel {
   id: number;
@@ -48,47 +49,21 @@ interface ProfileData {
 const ListDuels = () => {
   const [activeTab, setActiveTab] = useState<"open" | "all">("open");
   const [duels, setDuels] = useState<Duel[]>([]);
-  const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
+  // const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
   const [activeDuels, setActiveDuels] = useState<Duel[]>([]);
   const [allDuels, setAllDuels] = useState<Duel[]>([]);
   const [allPlayers, setAllPlayers] = useState<ProfileData[]>([]);
   const location = useLocation();
-  const activeAccount = useActiveAccount();
+  // const activeAccount = useActiveAccount();
   const navigate = useNavigate();
 
-  const fetchOpenDuels = async () => {
-    try {
-      const { Status, request_payload } = await readGameState("available_duels");
-      if (Status) {
-        setActiveDuels(request_payload);
-        setDuels(request_payload);
-      }
-    } catch (error) {
-      console.log("Error fetching open duels", error);
-    }
-  };
 
-  console.log("Available Duels", activeDuels);
-  console.log("All Duels", allDuels);
-
-  const fetchAllDuels = async () => {
-    try {
-      const { Status, request_payload } = await readGameState("duels");
-      if (Status) {
-        setAllDuels(request_payload);
-      }
-    } catch (error) {
-      console.log("Error fetching all duels", error);
-    }
-  };
+  // console.log("Available Duels", activeDuels);
+  // console.log("All Duels", allDuels);
 
   const fetchAllPlayers = async () => {
-    const { Status, request_payload } = await readGameState(`profile`);
-    if (Status) {
-      // console.log("All players", request_payload);
-      setAllPlayers(request_payload);
-    }
-
+    const request_payload = await fetchNotices("all_profiles");
+    setAllPlayers(request_payload);
   }
 
   const routeToCreateDuel = async () => {
@@ -98,9 +73,12 @@ const ListDuels = () => {
 
   useEffect(() => {
     async function getDuels() {
-      await fetchOpenDuels();
-      await fetchAllDuels();
       await fetchAllPlayers();
+      const resDuels = await fetchNotices("all_duels");
+      setAllDuels(resDuels);
+      const allAvailavleDuels = resDuels.filter((duel:any) => duel.is_completed == false && duel.difficulty == "P2P")
+      setActiveDuels(allAvailavleDuels);
+      setDuels(allAvailavleDuels);
     }
     getDuels();
   }, [location]);
@@ -115,9 +93,9 @@ const ListDuels = () => {
 
   // console.log("Fetching open duels", duels);
 
-  const toggleAccordion = (id: number) => {
-    setActiveAccordion(activeAccordion === id ? null : id);
-  };
+  // const toggleAccordion = (id: number) => {
+  //   setActiveAccordion(activeAccordion === id ? null : id);
+  // };
 
   return (
     <div className="main--area overflow-x-hidden">
@@ -199,9 +177,9 @@ const ListDuels = () => {
             </button>
           </div>
           <div className=" p-6">
-            {duels.map((duel) => 
+            {duels ? duels?.map((duel) => 
             (<DuelCard duel_id={duel.duel_id} duel_creator={duel.duel_creator} creation_time={duel.creation_time} stake_amount={duel.stake_amount} allPlayers={allPlayers} duel_opponent={duel.duel_opponent} creators_strategy={duel.creators_strategy} opponent_strategy={duel.opponents_strategy} is_completed={duel.is_completed} />)
-            )}
+            ) : <div className=" mt-14 text-center text-white font-belanosima text-xl"> Awaiting Duel Data...... </div>}
           </div>
         </div>
       </section>

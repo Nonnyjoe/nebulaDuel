@@ -3,18 +3,19 @@ import { useState } from "react";
 import { Button } from "../atom/Button"
 import { ImageWrap } from "../atom/ImageWrap"
 import { Text } from "../atom/Text"
-import { data } from "../profile/PurchaseCharacter"
+// import { data } from "../profile/PurchaseCharacter"
 import { toast } from "sonner";
 import { HiOutlineArrowPath } from "react-icons/hi2";
-import { Link, useParams } from "react-router-dom"
-import readGameState from "../../utils/readState.js"
-import signMessages from "../../utils/relayTransaction.js"
+import { useParams } from "react-router-dom"
+// import readGameState from "../../utils/readState.js"
+import signMessages from "../../utils/relayTransaction.tsx"
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+// import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import {charactersdata} from '../../utils/Charactersdata';
+import charactersdata from '../../utils/Charactersdata';
 import { useProfileContext } from "../contexts/ProfileContext.js";
+import fetchNotices from "../../utils/readSubgraph.js";
 
 interface StrategyInterface {
     id: number,
@@ -39,19 +40,19 @@ interface CharacterDetails {
 }
 
 // Define the ProfileData type
-interface ProfileData {
-    monika: string;
-    wallet_address: string;
-    avatar_url: string;
-    characters: string;
-    id: number;
-    cartesi_token_balance: number;
-    // Add other properties if needed
-}
+// interface ProfileData {
+//     monika: string;
+//     wallet_address: string;
+//     avatar_url: string;
+//     characters: string;
+//     id: number;
+//     cartesi_token_balance: number;
+//     // Add other properties if needed
+// }
 
-interface warriorsId {
-    char_id: number;
-}
+// interface warriorsId {
+//     char_id: number;
+// }
 
 const ChooseStrategy = () => {
     const { duelId } = useParams()
@@ -72,13 +73,12 @@ const ChooseStrategy = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-
-            if(Status === false){
+            if (activeAccount?.address.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
                 navigate('/profile');
             } else{
-                const {Status: dStatus, request_payload: dPayload} = await readGameState(`duels/${duelId}`); // Call your function
-                if (dStatus) {
+                let dPayload = await fetchNotices("all_duels");
+                dPayload = dPayload.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId))[0];
+
                     console.log(dPayload, "dPayload");
                     setDuelCreator(dPayload.duel_creator);
                     setDuelJoiner(dPayload.duel_opponent);
@@ -95,7 +95,12 @@ const ChooseStrategy = () => {
                             navigate(`/joinduel/${duelId}`);
                         }
                     }
-                    const {Status: cStatus, request_payload: cPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_creator}`); // Call your function
+
+                    const request_payload = await fetchNotices("all_characters");
+                    const cPayload = request_payload.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.creator_warriors)[0].char_id || character.id == JSON.parse(dPayload.creator_warriors)[1].char_id || character.id == JSON.parse(dPayload.creator_warriors)[2].char_id);
+                    console.log("creator characters: " + request_payload);
+
+                    // const {Status: cStatus, request_payload: cPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_creator}`); // Call your function
                     console.log(cPayload, "cPayload");
                     
                     let placeholder = []; 
@@ -111,8 +116,12 @@ const ChooseStrategy = () => {
                     }
                     setCreatorCharacterDetails(placeholder);
                     placeholder = [];
+                    
+                    const request_payload2 = await fetchNotices("all_characters");
+                    const pPayload = request_payload2.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.opponent_warriors)[0].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[1].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[2].char_id);
+                    console.log("participant characters: " + request_payload);
 
-                    const {Status: pStatus, request_payload: pPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_opponent}`); // Call your function
+                    // const {Status: pStatus, request_payload: pPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_opponent}`); // Call your function
                     console.log(pPayload, "pPayload");
 
                     for (let i = 0; i < pPayload.length; i++) {
@@ -126,7 +135,6 @@ const ChooseStrategy = () => {
                     }
                     setOpponetCharacterDetails(placeholder); //
                     placeholder = [];
-                }
             }
         };
 
@@ -167,7 +175,7 @@ const ChooseStrategy = () => {
                 const dataObject2 = {"func": "select_ai_battle_strategy", "strategy_id": Number(selectedStrategy.id), "duel_id": Number(duelId)};
                 console.log(dataObject1, "dataObject");
                 console.log("...........", duelType);
-                const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
+                // const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
                 setSubmiting(true);
                 let txhash;
                 if( duelType.toLowerCase() != ("P2P".toLowerCase())) {
@@ -175,24 +183,38 @@ const ChooseStrategy = () => {
                 } else {
                     txhash = await signMessages(dataObject1);
                 }
-                if (txhash.message === "Transaction added successfully") {
-                    const { Status, request_payload } = await readGameState(`profile/${activeAccount?.address}`);
-                    if (Status === true) {
-                        const newNoOfTx = getArrayLength(request_payload?.transaction_history as string) as number;
-                        if (prevNoOfTx < newNoOfTx) {
-                            toast.success("Strategy set successfully.", {
-                                position: "top-right",
-                            });
-                            setSubmiting(false);
-                            setProfile(request_payload);
-                            navigate(`/duels/${duelId}`);
-                        } else {
-                            toast.error("Failed to set strategy. Please try again later.", {
-                                position: "top-right",
-                            });
-                            setSubmiting(false);
+                // if (true) {
+                    if (txhash.message === "Transaction added successfully") {
+                       
+                    let request_payload = await fetchNotices("all_tx");
+                    // console.log("payload is:", request_payload);
+                    request_payload = request_payload.filter((tx: any) => tx.caller == activeAccount?.address.toLowerCase());
+                    let Highest_tx;
+                    Highest_tx = request_payload[0];
+                    for (let i = 0; i < request_payload.length; i++) {
+                        if (request_payload[i].tx_id > Highest_tx.tx_id) {
+                            Highest_tx = request_payload[i];
                         }
                     }
+        
+                    if (Highest_tx.method == "set_strategy" || Highest_tx.method == "select_ai_battle_strategy" || Highest_tx.method == "") {
+                        toast.success("Transaction Successful.. Duel Created", {
+                            position: 'top-right'
+                        })
+                        let request_payload = await fetchNotices("all_profiles");
+                        request_payload = request_payload.filter((player: any) => player.wallet_address == activeAccount?.address.toLowerCase());
+                        
+                        setProfile(request_payload[0]);
+                        setSubmiting(false);
+                        navigate(`/duels/${duelId}`);
+                    } else {
+                        toast.error("Transaction Failed.. Try again later.", {
+                            position: 'top-right'
+                        });
+                        setSubmiting(false);
+                    }
+                    
+                    
                 } else {
                     toast.error("Failed to set strategy. Please try again later.", {
                         position: "top-right",
@@ -217,23 +239,23 @@ const ChooseStrategy = () => {
         setSubmiting(false);
     }
 
-    function getArrayLength(jsonString: string): number | null {
-        try {
-            // Parse the JSON string to an array of objects
-            const array: { char_id: number }[] = JSON.parse(jsonString);
+    // function getArrayLength(jsonString: string): number | null {
+    //     try {
+    //         // Parse the JSON string to an array of objects
+    //         const array: { char_id: number }[] = JSON.parse(jsonString);
             
-            // Check if the parsed result is indeed an array
-            if (Array.isArray(array)) {
-                // Return the length of the array
-                return array.length;
-            } else {
-                throw new Error('Parsed result is not an array');
-            }
-        } catch (error: any) {
-            console.error('Error parsing JSON string:', error.message);
-            return null;
-        }
-    }
+    //         // Check if the parsed result is indeed an array
+    //         if (Array.isArray(array)) {
+    //             // Return the length of the array
+    //             return array.length;
+    //         } else {
+    //             throw new Error('Parsed result is not an array');
+    //         }
+    //     } catch (error: any) {
+    //         console.error('Error parsing JSON string:', error.message);
+    //         return null;
+    //     }
+    // }
 
     
     return (

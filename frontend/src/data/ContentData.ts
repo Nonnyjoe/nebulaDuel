@@ -16,8 +16,12 @@ export const NavLinks: NavArray = [
     path: "/",
   },
   {
-    name: "About Us",
-    path: "/about",
+    name: "Join Duel",
+    path: "/duels",
+  },
+  {
+    name: "Market place",
+    path: "/marketplace",
   },
   {
     name: "Settings",
@@ -28,12 +32,8 @@ export const NavLinks: NavArray = [
     ],
   },
   {
-    name: "Market place",
-    path: "/marketplace",
-  },
-  {
-    name: "Arena",
-    path: "/arena",
+    name: "About Us",
+    path: "/about",
   },
   {
     name: "Contact Us",

@@ -13,13 +13,14 @@ import Img8 from "../../assets/img/komodo.png";
 import { Button } from "../atom/Button";
 import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
-import {charactersdata} from '../../utils/Charactersdata';
+import charactersdata from '../../utils/Charactersdata';
 import { useActiveAccount } from "thirdweb/react";
-import readGameState from "../../utils/readState.js"
+// import readGameState from "../../utils/readState.js"
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import signMessages from "../../utils/relayTransaction.js"
+import signMessages from "../../utils/relayTransaction.tsx"
 import { useProfileContext } from "../contexts/ProfileContext.js";
+import fetchNotices from '../../utils/readSubgraph.tsx';
 
 interface Character {
   id: number;
@@ -44,9 +45,7 @@ interface ProfileData {
   // Add other properties if needed
 }
 
-interface charId {
-  char_id: number;
-}
+
 
 
 
@@ -150,8 +149,11 @@ const PurchaseCharacter = () => {
         console.log("tx hash is: ", txhash);
         await delay(2000);
 
-        const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
-        if (Status == true && getArrayLength(request_payload.characters) as number > 0) {
+        // const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
+        let request_payload = await fetchNotices("all_characters");
+        request_payload = request_payload.filter((character: any) => character.owner == activeAccount?.toLowerCase());
+        console.log("Players characters: " + request_payload);
+        if (request_payload.length as number > 0) {
           setSelectedCharacters([ ]);
           setSelectedCharactersId([ ]);
           setTotalCharacterPrice(0);

@@ -5,8 +5,8 @@ import { Text } from "../atom/Text"
 import { Button } from "../atom/Button"
 import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
-import readGameState from "../../utils/readState.js"
-import signMessages from "../../utils/relayTransaction.js"
+// import readGameState from "../../utils/readState.js"
+import signMessages from "../../utils/relayTransaction.tsx"
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -14,15 +14,16 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import charactersdata from '../../utils/Charactersdata';
 import { useProfileContext } from '../contexts/ProfileContext.js';
+import fetchNotices from '../../utils/readSubgraph.tsx';
 
 
 
-interface Character {
-    id: number;
-    name: string;
-    img: string;
-    price: number;
-}
+// interface Character {
+//     id: number;
+//     name: string;
+//     img: string;
+//     price: number;
+// }
 interface Duel {
     duel_id: number;
     duel_creator: string;
@@ -64,12 +65,12 @@ const SelectWarriors = () => {
     const [selectedCharactersId, setSelectedCharactersId] = useState<number[]>([]);
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>([]);
-    const [playersCharacters, setPlayersCharacters] = useState<CharacterDetails[]>([]);
+    const [, setPlayersCharacters] = useState<CharacterDetails[]>([]);
     const navigate = useNavigate();
     const activeAccount = useActiveAccount();
     const [acceptStake, setAcceptStake] = useState(false);
     const [stakeAmount, setStakeAmount] = useState<number>(0.0);
-    const {profile, setProfile} = useProfileContext();
+    const {profile, } = useProfileContext();
     const [submiting, setSubmiting] = useState<boolean>(false);
 
 
@@ -90,16 +91,14 @@ const SelectWarriors = () => {
                 navigate('/profile');
             } else {
                 setProfileData(profile);
-                const { Status, request_payload } = await readGameState(`players_characters/${activeAccount?.address}`);
+                let request_payload = await fetchNotices("all_characters");
+                request_payload = request_payload.filter((character: CharacterDetails) => character.owner == activeAccount?.address.toLowerCase());
                 console.log("Players characters: " + request_payload);
-                if (Status) {
-                    setPlayersCharacters(request_payload);
-                    console.log(request_payload);
-                    myCharacters = request_payload;
+                setPlayersCharacters(request_payload);
+                myCharacters = request_payload;
 
-                    if (request_payload.length == 0) {
-                        navigate('/profile/purchasecharacter');
-                    }
+                if (request_payload.length == 0) {
+                    navigate('/profile/purchasecharacter');
                 }
             }
 
@@ -170,23 +169,23 @@ const SelectWarriors = () => {
         </div>;
     }
 
-        function getArrayLength(jsonString: string): number | null {
-            try {
-                // Parse the JSON string to an array of objects
-                const array: { char_id: number }[] = JSON.parse(jsonString);
+        // function getArrayLength(jsonString: string): number | null {
+        //     try {
+        //         // Parse the JSON string to an array of objects
+        //         const array: { char_id: number }[] = JSON.parse(jsonString);
                 
-                // Check if the parsed result is indeed an array
-                if (Array.isArray(array)) {
-                    // Return the length of the array
-                    return array.length;
-                } else {
-                    throw new Error('Parsed result is not an array');
-                }
-            } catch (error: any) {
-                console.error('Error parsing JSON string:', error.message);
-                return null;
-            }
-        }
+        //         // Check if the parsed result is indeed an array
+        //         if (Array.isArray(array)) {
+        //             // Return the length of the array
+        //             return array.length;
+        //         } else {
+        //             throw new Error('Parsed result is not an array');
+        //         }
+        //     } catch (error: any) {
+        //         console.error('Error parsing JSON string:', error.message);
+        //         return null;
+        //     }
+        // }
 
         function delay(ms: number) {
             return new Promise(resolve => setTimeout(resolve, ms));
@@ -214,33 +213,42 @@ const SelectWarriors = () => {
             console.log(dataObject, "dataObject");
             console.log("active account:", activeAccount?.address);
             
-            const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
             setSubmiting(true);
             const txhash = await signMessages(dataObject);
             
             if (txhash) {
                 await delay(2000);
-                const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-                if (Status === true) {
-                    const updatedTxCount = getArrayLength(request_payload.transaction_history) as number;
-                    console.log("prevTX: ", prevNoOfTx, "updated TX: ", updatedTxCount);
-                    if (updatedTxCount > prevNoOfTx) {
-                        setProfile(request_payload);
-                        toast.success("Transaction Successful.. Duel Created", {
-                            position: 'top-right'
-                        })
-                        setTotalCharacterPrice(0);
-                        setSelectedCharacters([]);
-                        setSelectedCharactersId([]);
-                        setProfileData(request_payload);
-                        const {Status: stat, request_payload: duels} = await readGameState(`duels`); // Call your function
-                        if (stat) {
-                            console.log("Duels are ready: ", duels);
-                            const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
-                            console.log("found created duel.....", userDuels);
-                            navigate(`/strategy/${userDuels?.duel_id}`);
+                // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
+                try {
+                    let request_payload = await fetchNotices("all_tx");
+                        request_payload = request_payload.filter((tx: any) => tx.caller == activeAccount?.address.toLowerCase());
+                        let Highest_tx;
+                        for (let i = 0; i < request_payload.length; i++) {
+                            Highest_tx = request_payload[i];
+                            if (request_payload[i].tx_id > Highest_tx.tx_id) {
+                                Highest_tx = request_payload[i];
+                            }
                         }
-                    }
+    
+                        if (Highest_tx.method == "create_duel") {
+                            toast.success("Transaction Successful.. Duel Created", {
+                                position: 'top-right'
+                            })
+                            setTotalCharacterPrice(0);
+                            setSelectedCharacters([]);
+                            setSelectedCharactersId([]);
+                            const duels = await fetchNotices("all_duels");
+                            const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
+                            navigate(`/strategy/${userDuels?.duel_id}`);
+                        } else {
+                            toast.error("Transaction Failed.. Try again later.", {
+                                position: 'top-right'
+                            });
+                            setSubmiting(false);
+                        }
+                } catch (err) {
+                    console.log(err);
+                    setSubmiting(false);
                 }
             }
             setSubmiting(false);

@@ -12,7 +12,7 @@ import { useConnectModal } from "thirdweb/react";
 // import readGameState from "../../utils/readState.js"
 import { useNavigate } from 'react-router-dom';
 import { useProfileContext } from "../contexts/ProfileContext.js";
-
+import fetchNotices from "../../utils/readSubgraph.js";
 
 const clientId = "5555e76cfe72676f69d044a91ce98d30";
 const client = createThirdwebClient({ clientId });
@@ -25,9 +25,10 @@ const HeroSection = () => {
     const [isProfileFound, setIsProfileFound] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isStartBattle, setIsStartBattle] = useState(false);
-    const { connect, isConnecting } = useConnectModal();
+    const [submiting, setSubmiting] = useState(false);
+    const { connect,  } = useConnectModal();
     const navigate = useNavigate();
-    const {profile, setProfile} = useProfileContext();
+    const {profile, } = useProfileContext();
 
 
       // async function fetchprofile() {
@@ -43,9 +44,11 @@ const HeroSection = () => {
       setIsStartBattle(false);
     };
 
+    // fetchNotices("all_duels");
 
     const playgameButton = async() => {
         if (activeAccount?.address) {
+          setSubmiting(true);
             // const {Status, request_payload} = await fetchprofile();
             // console.log(Status, request_payload);
 
@@ -53,44 +56,49 @@ const HeroSection = () => {
               setIsWalletConnected(true);
                 setIsModalOpen(false);
                 setIsProfileFound(false);
-
+                setSubmiting(false);
             }else{
-                const characters: string = (profile?.characters);
-
-                if ((getArrayLength(characters) as number) >= 3){
+                // const characters: string = (profile?.characters);
+                let request_payload: any[] = await fetchNotices("all_characters");
+                request_payload = request_payload.filter((character: any) => character.owner == activeAccount?.address.toLowerCase());
+                console.log("Players characters: " + request_payload);
+                // setPlayersCharacters(request_payload);
+                if ((request_payload).length >= 3){
                   // navigate('/selectWarriors');
                   setIsStartBattle(true);
                 }else{
                     console.log("You have less than 3 characters");
                     navigate('/profile/purchasecharacter');
                 }
+                setSubmiting(false);
             }
 
         } else {
             console.log("Connected account is not found");
             const wallet = await connect({ client }); // opens the connect modal
             console.log("connected to", wallet); 
+            setSubmiting(false);
         }
 
     }
 
-    function getArrayLength(jsonString: string): number | null {
-      try {
-          // Parse the JSON string to an array of objects
-          const array: { char_id: number }[] = JSON.parse(jsonString);
+  //   function getArrayLength(jsonString: string): number | null {
+  //     try {
+  //         // Parse the JSON string to an array of objects
+  //         const array: { char_id: number }[] = JSON.parse(jsonString);
           
-          // Check if the parsed result is indeed an array
-          if (Array.isArray(array)) {
-              // Return the length of the array
-              return array.length;
-          } else {
-              throw new Error('Parsed result is not an array');
-          }
-      } catch (error: any) {
-          console.error('Error parsing JSON string:', error.message);
-          return null;
-      }
-  }
+  //         // Check if the parsed result is indeed an array
+  //         if (Array.isArray(array)) {
+  //             // Return the length of the array
+  //             return array.length;
+  //         } else {
+  //             throw new Error('Parsed result is not an array');
+  //         }
+  //     } catch (error: any) {
+  //         console.error('Error parsing JSON string:', error.message);
+  //         return null;
+  //     }
+  // }
 
     return (
         <section className="bg-center lg:h-[80vh] md:h-[50vh] h-screen w-full bg-cover z-[1] relative after:right-0 before:content-[''] before:absolute before:w-6/12 before:bg-[#45f882] before:h-[50px] before:left-0 before:bottom-0 before:clip-path-polygon-[0_0,_0_100%,_100%_100%] after:content-[''] after:absolute after:w-6/12 after:bg-[#45f882] after:h-[50px] after:left-auto after:bottom-0 after:clip-path-polygon-[100%_0,_0_100%,_100%_100%] xl:before:h-[40px] xl:after:h-[40px] lg:before:h-[30px] lg:after:h-[30px] md:before:h-[30px] md:after:h-[30px] sm:before:h-[20px] sm:after:h-[20px] 
@@ -115,7 +123,12 @@ const HeroSection = () => {
                          sm:drop-shadow-[-1px_5px_0px_rgba(69,248,130,0.66)] font-belanosima ">nebula duel</Text>
                     <Text as="h5" className="uppercase font-poppins tracking-widest text-lg lg:text-2xl md:text-lg font-bold">Video Games Online</Text>
                     <Button className="slider-cta-btn text-gray-100 md:text-base text-sm font-bold font-barlow px-4 py-2 flex justify-center items-center" onClick={playgameButton}>
-                        Play Now
+                        {submiting ? 
+                          (<div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>)
+                          : 
+                          "Play Now"
+                          }
+                        
                     </Button>
 
                     {isWalletConnected && !isProfileFound && !isModalOpen && (

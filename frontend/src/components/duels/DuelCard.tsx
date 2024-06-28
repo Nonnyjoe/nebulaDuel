@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React  from 'react';
+import {  useNavigate } from 'react-router-dom';
 // import Header from './Header';
 import "./activeDuels.css";
 import { useActiveAccount } from "thirdweb/react";
@@ -35,8 +35,7 @@ const DuelCard: React.FC<DisplayDataProps> = ({duel_id, duel_creator, creation_t
   let creators_uri = ""
   const activeAccount = (useActiveAccount()?.address)?.toLowerCase();
   const navigate = useNavigate();
-
-  for (let i = 0; i < allPlayers.length; i++) {
+  for (let i = 0; i < allPlayers?.length; i++) {
     if ((allPlayers[i].wallet_address).toLowerCase() === duel_creator.toLowerCase()) {
       // console.log("Found the creator", allPlayers[i]);
       creator = allPlayers[i].monika;

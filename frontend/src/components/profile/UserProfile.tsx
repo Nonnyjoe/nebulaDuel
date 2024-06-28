@@ -4,58 +4,63 @@ import userImg from "../../assets/img/team01.png";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Button } from "../atom/Button";
 import { toast } from "sonner";
-import signMessages from "../../utils/relayTransaction.js"
-import readGameState from "../../utils/readState.js";
+import signMessages from "../../utils/relayTransaction.tsx"
+// import readGameState from "../../utils/readState.js";
 import axios from "axios";
 import { useActiveAccount } from "thirdweb/react";
 import { useNavigate } from 'react-router-dom';
 import { useProfileContext } from "../contexts/ProfileContext.js";
+import fetchNotices from "../../utils/readSubgraph.js";
 
 
 const UserProfile = () => {
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
-  const [imgUrl, setImgUrl] = useState<string | null>("testing_image");
-  const [characters, setCharacters] = useState(0);
-  const [gamePoints, setGamePoints] = useState(0);
-  const [nebulaBalance, setNebulaBalance] = useState(0);
-  const [userAddress, setUserAddress] = useState('');
+  const [imgUrl, setImgUrl] = useState<string | null>(" ");
+//   const [characters, setCharacters] = useState(0);
+//   const [gamePoints, setGamePoints] = useState(0);
+//   const [nebulaBalance, setNebulaBalance] = useState(0);
+  const [, setUserAddress] = useState('');
   const [profileData, setProfileData] = useState<any>({});
-  const [txhash, setTxhash] = useState('');
+//   const [txhash, setTxhash] = useState('');
   const [uploading, setUploading] = useState<boolean>(false);
   const navigate = useNavigate();
   const userAccount = useActiveAccount();
   const {profile, setProfile} = useProfileContext();
 
   const fetchData = async () => {
-    const {Status, request_payload} = await readGameState(`profile/${userAccount?.address}`);
-    console.log(Status, request_payload, 'user profile reading');
-
-    if(Status === false){
-      setCreatedProfile(false);   
+    let request_payload = await fetchNotices("all_profiles");
+    request_payload = request_payload.filter((player: any) => player.wallet_address == userAccount?.address.toLowerCase());
+    if (request_payload.length > 0) {
+        setProfile(request_payload[0]);
+        console.log(request_payload, 'user profile data');
+          setProfileData(request_payload[0]);
+          setCreatedProfile(true);
     } else {
-      console.log(request_payload, 'user profile data');
-        setProfileData(request_payload);
-        setCreatedProfile(true);
+        setCreatedProfile(false);   
     }
-  };
+}
 
   useEffect(() => {
-    const address = userAccount?.address;
-    if (userAccount && address) {
-      setUserAddress(address);
-        if (address.toLowerCase() == profile?.wallet_address?.toLowerCase()) {
-            console.log(profile, 'user profile data');
-            setProfileData(profile);
-            setCreatedProfile(true);
-        } else {
-            setCreatedProfile(false);   
+    const getAllData = async() => {
+        await fetchData(); 
+        const address = userAccount?.address;
+        if (userAccount && address) {
+            setUserAddress(address);
+            if (address.toLowerCase() == profile?.wallet_address?.toLowerCase()) {
+                console.log(profile, 'user profile data');
+                setProfileData(profile);
+                setCreatedProfile(true);
+            } else {
+                setCreatedProfile(false);   
+            }
         }
     }
 
-    fetchData(); 
-  }, [userAccount, navigate, profileData]);
+    getAllData()
+
+  }, [userAccount, navigate]);
 
 
 
@@ -63,7 +68,7 @@ const UserProfile = () => {
     setName(event.target.value);
   }
 
-  const handleSetCreatedProfile = async (e) => {
+  const handleSetCreatedProfile = async (e: any) => {
     e.preventDefault();
     if (imgUrl) {
       createProfile();
@@ -142,21 +147,34 @@ const UserProfile = () => {
     setUploading(true);
     const txhash = await signMessages(togglePlayer);
     if (txhash.message === "Transaction added successfully") {
-      // setTxhash(txhash);
-      console.log("Tx report: ", txhash.message);
-        const {Status, request_payload} = await readGameState(`profile/${userAccount?.address}`);
-        if (Status) {
-            setProfile(request_payload);
-            toast.success('profile updated');
-            setProfileData(request_payload);
-            navigate('/duels')
-        }
-    } else {
-      toast.error('transaction error:');
+        // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
+        let request_payload = await fetchNotices("all_tx");
+            request_payload = request_payload.filter((tx: any) => tx.caller == userAccount?.address.toLowerCase());
+            let Highest_tx;
+            for (let i = 0; i < request_payload.length; i++) {
+                Highest_tx = request_payload[i];
+                if (request_payload[i].tx_id > Highest_tx.tx_id) {
+                    Highest_tx = request_payload[i];
+                }
+            }
+
+            if (Highest_tx.method == "create_player") {
+                toast.success("Transaction Successful.. Duel Created", {
+                    position: 'top-right'
+                })
+                let request_payload = await fetchNotices("all_profiles");
+                request_payload = request_payload.filter((player: any) => player.wallet_address == userAccount?.address.toLowerCase());
+                setProfile(request_payload[0]);
+                navigate(`/duels}`);
+            } else {
+                toast.error("Transaction Failed.. Try again later.", {
+                    position: 'top-right'
+                });
+                // setSubmiting(false);
+            }
     }
     setUploading(false);
     }
-  
 
 
   return (

@@ -49,7 +49,7 @@ const Footer = () => {
                                     quickLinks.map((link, index) => (
                                         <li className=" mt-0 mb-1.5 mx-0" key={index}><Link
                                             className=" text-[15px] inline-block text-[#adb0bc] relative hover:text-[#45f882]  after:content-[''] after:absolute after:w-full after:h-px after:origin-[right_top] after:transition-transform after:duration-[0.4s] after:ease-[cubic-bezier(0.74,0.72,0.27,0.24)] after:scale-x-0 after:scale-y-100 after:left-0 after:bottom-0 after:bg-[#45f882]  hover:after:origin-[left_top] hover:after:scale-100"
-                                            to={link.path}>{link.name}</Link></li>
+                                            to={link.path as string}>{link.name}</Link></li>
                                     ))
                                 }
 
@@ -64,7 +64,7 @@ const Footer = () => {
                                     support.map((link, index) => (
                                         <li className=" mt-0 mb-1.5 mx-0" key={index}><Link
                                             className=" text-[15px] inline-block text-[#adb0bc] relative hover:text-[#45f882]  after:content-[''] after:absolute after:w-full after:h-px after:origin-[right_top] after:transition-transform after:duration-[0.4s] after:ease-[cubic-bezier(0.74,0.72,0.27,0.24)] after:scale-x-0 after:scale-y-100 after:left-0 after:bottom-0 after:bg-[#45f882]  hover:after:origin-[left_top] hover:after:scale-100"
-                                            to={link.path}>{link.name}</Link></li>
+                                            to={link.path as string}>{link.name}</Link></li>
                                     ))
                                 }
 

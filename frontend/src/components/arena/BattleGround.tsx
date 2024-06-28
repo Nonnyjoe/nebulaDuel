@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { Canvas, useLoader } from "@react-three/fiber";
-import { useGLTF } from '@react-three/drei';
+// import { useGLTF } from '@react-three/drei';
 import { radToDeg } from 'three/src/math/MathUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 function Createmodel() {
     const models = ['/models/troll.gltf', '/models/drake.gltf', '/models/techno.gltf', '/models/luna.gltf', '/models/zylar.gltf', '/models/vortex.gltf'];
     let element
-    let array1 = []
+    const array1 = []
     for (let index = 0; index < models.length; index++) {
         element = models[index];
         const gltf = useLoader(GLTFLoader, element)

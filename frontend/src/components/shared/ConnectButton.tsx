@@ -5,7 +5,8 @@ import { ConnectButton } from "thirdweb/react";
 import { useActiveAccount } from "thirdweb/react";
 import { useProfileContext } from "../contexts/ProfileContext";
 import { useActiveWalletConnectionStatus } from "thirdweb/react";
-import readGameState from "../../utils/readState.js"
+// import readGameState from "../../utils/readState.js"
+import fetchNotices from "../../utils/readSubgraph.js";
 
 // import { ethers } from "ethers";
 
@@ -41,15 +42,16 @@ const ConnectButton2 = () => {
       if (profile?.wallet_address?.toLowerCase() != activeAccount?.address?.toLowerCase()) {
         console.log("Different wallet address.......");
         console.log("last recorded wallet is: ", profile?.wallet_address);
-        const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-        if (Status) {
+
+        let request_payload = await fetchNotices("all_profiles");
+        request_payload = request_payload.filter((profile: any) => profile.wallet_address == activeAccount?.address.toLowerCase());
+
           console.log(request_payload, "request_payload");
-          setProfile(request_payload);
+          setProfile(request_payload[0]);
           console.log("new wallet address is: ", request_payload?.wallet_address);
         }
         
       }
-    }
   }
 
   syncProfile()
