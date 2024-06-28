@@ -57,7 +57,7 @@ const PurchaseCharacter = () => {
   const navigate = useNavigate();
   const activeAccount = useActiveAccount()?.address;
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const characters = shuffleArray(charactersdata);
+  const characters = charactersdata;
   const {profile, setProfile} = useProfileContext();
   const [submiting, setSubmiting] = useState<boolean>(false);
 
@@ -177,13 +177,13 @@ const PurchaseCharacter = () => {
 
   //nebuladuel
 
-  function shuffleArray(array: typeof charactersdata) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }
+  // function shuffleArray(array: typeof charactersdata) {
+  //   for (let i = array.length - 1; i > 0; i--) {
+  //     const j = Math.floor(Math.random() * (i + 1));
+  //     [array[i], array[j]] = [array[j], array[i]];
+  //   }
+  //   return array;
+  // }
 
   function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
