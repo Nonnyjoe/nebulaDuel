@@ -53,24 +53,38 @@ const HeroSection = () => {
             // console.log(Status, request_payload);
 
             if(activeAccount?.address?.toLowerCase() != profile?.wallet_address?.toLowerCase()){
-              setIsWalletConnected(true);
+                setIsWalletConnected(true);
                 setIsModalOpen(false);
                 setIsProfileFound(false);
                 setSubmiting(false);
             }else{
                 // const characters: string = (profile?.characters);
-                let request_payload: any[] = await fetchNotices("all_characters");
-                request_payload = request_payload.filter((character: any) => character.owner == activeAccount?.address.toLowerCase());
-                console.log("Players characters: " + request_payload);
-                // setPlayersCharacters(request_payload);
-                if ((request_payload).length >= 3){
-                  // navigate('/selectWarriors');
-                  setIsStartBattle(true);
-                }else{
-                    console.log("You have less than 3 characters");
-                    navigate('/profile/purchasecharacter');
+                try {
+                  let request_payload: any[] = await fetchNotices("all_characters");
+
+                  // console.log("Characters: " + request_payload);
+                  if (request_payload.length != undefined) {
+                    
+                    request_payload = request_payload?.filter((character: any) => character.owner == activeAccount?.address.toLowerCase());
+                    console.log("Players characters: " + request_payload);
+                    // setPlayersCharacters(request_payload);
+                    if ((request_payload).length >= 3){
+                      // navigate('/selectWarriors');
+                      setIsStartBattle(true);
+                    }else{
+                      console.log("You have less than 3 characters");
+                      navigate('/profile/purchasecharacter');
+                    }
+                    setSubmiting(false);
+                  } else {
+                    console.log("You don't have any characters. Click here to create one.");
+                    navigate('/profile/purchasecharacter/');
+                  }
+                } catch (e: any) {
+                  console.log("Error: " + e.message);
+                  navigate('/profile/purchasecharacter');
+                  setSubmiting(false);
                 }
-                setSubmiting(false);
             }
 
         } else {

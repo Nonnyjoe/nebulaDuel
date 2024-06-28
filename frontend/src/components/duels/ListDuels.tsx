@@ -62,8 +62,12 @@ const ListDuels = () => {
   // console.log("All Duels", allDuels);
 
   const fetchAllPlayers = async () => {
-    const request_payload = await fetchNotices("all_profiles");
-    setAllPlayers(request_payload);
+    try{
+      const request_payload = await fetchNotices("all_profiles");
+      setAllPlayers(request_payload);
+    } catch(error) {
+      console.log("error", error);
+    }
   }
 
   const routeToCreateDuel = async () => {
@@ -74,11 +78,15 @@ const ListDuels = () => {
   useEffect(() => {
     async function getDuels() {
       await fetchAllPlayers();
-      const resDuels = await fetchNotices("all_duels");
-      setAllDuels(resDuels);
-      const allAvailavleDuels = resDuels.filter((duel:any) => duel.is_completed == false && duel.difficulty == "P2P")
-      setActiveDuels(allAvailavleDuels);
-      setDuels(allAvailavleDuels);
+      try {
+          const resDuels = await fetchNotices("all_duels");
+          setAllDuels(resDuels);
+          const allAvailavleDuels = resDuels.filter((duel:any) => duel.is_completed == false && duel.difficulty == "P2P")
+          setActiveDuels(allAvailavleDuels);
+          setDuels(allAvailavleDuels);
+      } catch (e: any) {
+        console.log("error:", e);
+      }
     }
     getDuels();
   }, [location]);
@@ -177,9 +185,9 @@ const ListDuels = () => {
             </button>
           </div>
           <div className=" p-6">
-            {duels ? duels?.map((duel) => 
+            {duels?.length > 0 ? duels?.map((duel) => 
             (<DuelCard duel_id={duel.duel_id} duel_creator={duel.duel_creator} creation_time={duel.creation_time} stake_amount={duel.stake_amount} allPlayers={allPlayers} duel_opponent={duel.duel_opponent} creators_strategy={duel.creators_strategy} opponent_strategy={duel.opponents_strategy} is_completed={duel.is_completed} />)
-            ) : <div className=" mt-14 text-center text-white font-belanosima text-xl"> Awaiting Duel Data...... </div>}
+            ) : <div className=" mt-14 text-center text-white font-belanosima text-xl h-60 py-28"> Awaiting Duel Data...... </div>}
           </div>
         </div>
       </section>
