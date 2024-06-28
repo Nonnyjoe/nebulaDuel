@@ -17,7 +17,7 @@ const UserProfile = () => {
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
-  const [imgUrl, setImgUrl] = useState<string | null>(" ");
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
 //   const [characters, setCharacters] = useState(0);
 //   const [gamePoints, setGamePoints] = useState(0);
 //   const [nebulaBalance, setNebulaBalance] = useState(0);
