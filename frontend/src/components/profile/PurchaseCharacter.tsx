@@ -158,7 +158,7 @@ const PurchaseCharacter = () => {
           setSelectedCharactersId([ ]);
           setTotalCharacterPrice(0);
           setProfileData(request_payload);
-          setProfile(request_payload);
+          setProfile(request_payload[0]);
           toast.success("Character(s) purchased successfully!", {
             position: "top-right",
           });

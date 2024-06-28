@@ -145,10 +145,12 @@ const UserProfile = () => {
     const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
 
     setUploading(true);
-    const txhash = await signMessages(togglePlayer);
-    if (txhash.message === "Transaction added successfully") {
-        // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-        let request_payload = await fetchNotices("all_tx");
+    try {
+         const txhash = await signMessages(togglePlayer);
+        if (txhash.message === "Transaction added successfully") {
+            // if (true) {
+            // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
+            let request_payload = await fetchNotices("all_tx");
             request_payload = request_payload.filter((tx: any) => tx.caller == userAccount?.address.toLowerCase());
             let Highest_tx;
             for (let i = 0; i < request_payload.length; i++) {
@@ -157,7 +159,7 @@ const UserProfile = () => {
                     Highest_tx = request_payload[i];
                 }
             }
-
+            console.log(`Highest TXxxxxxx: ${Highest_tx}`);
             if (Highest_tx.method == "create_player") {
                 toast.success("Transaction Successful.. Duel Created", {
                     position: 'top-right'
@@ -170,8 +172,17 @@ const UserProfile = () => {
                 toast.error("Transaction Failed.. Try again later.", {
                     position: 'top-right'
                 });
-                // setSubmiting(false);
+                setUploading(false);
             }
+        }    
+    } catch(err) {
+        toast.error("Transaction Failed.. Try again later.", {
+            position: 'top-right'
+        });
+        setUploading(false);
+        // setSubmiting(false);
+        console.log(err)
+        return;
     }
     setUploading(false);
     }
@@ -310,7 +321,9 @@ const UserProfile = () => {
                   disabled={uploading}
                   onClick={handleSetCreatedProfile}
                 >
-                  Create Profile
+                 {uploading ? 
+                        (<div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>)
+                   : "Create Profile"} 
                 </Button>
               </form>
             ) : (
@@ -354,7 +367,7 @@ const UserProfile = () => {
                 <Button
                   className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}
                   onClick={handleSetCreatedProfile}
-                  disabled={false}
+                  disabled={uploading}
                 >
                   {uploading ? 
                         (<div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>)

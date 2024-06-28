@@ -48,7 +48,7 @@ const ConnectButton2 = () => {
 
           console.log(request_payload, "request_payload");
           setProfile(request_payload[0]);
-          console.log("new wallet address is: ", request_payload?.wallet_address);
+          console.log("new wallet address is: ", request_payload[0]?.wallet_address);
         }
         
       }
