@@ -49,17 +49,17 @@ type creatorObj = {
 
 export const creators: creatorObj[] = [
   {
-    title: "POKEMON DRAGON",
+    title: "DRAGON",
     createdBy: "0xblackadam",
     amount: "1.002",
   },
   {
-    title: "POKEMON PRINCESS",
+    title: "PRINCESS",
     createdBy: "Nonnyjoe",
     amount: "2.502",
   },
   {
-    title: "POKEMON FIREFLY",
+    title: "FIREFLY",
     createdBy: "Evans",
     amount: "4.200",
   },

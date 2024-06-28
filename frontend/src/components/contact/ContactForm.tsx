@@ -9,7 +9,7 @@ const ContactForm = () => {
             <main className="w-full lg:py-44 md:py-32 py-24 px-6 grid md:grid-cols-2 lg:gap-4 md:gap-8 gap-12">
                 <div className="flex flex-col relative">
                     <Text as="h1" className="uppercase lg:text-5xl  text-3xl font-extrabold text-gray-100 mb-7">CONTACT US AND FIND YOUR ANswers</Text>
-                    <Text as="p" className="text-gray-400 text-lg text-left font-medium mb-6">Axcepteur sint occaecat atat non proident, sunt culpa officia deserunt mollit anim id est labor umLor emdolor</Text>
+                    <Text as="p" className="text-gray-400 text-lg text-left font-medium mb-6">Our team is available 24/7 to help and answer your questions, reach out to us.</Text>
 
                     <Text as="h4" className="flex items-center mb-7">
                         <Text as={`span`} className="text-xl">
@@ -21,9 +21,9 @@ const ContactForm = () => {
                         <Text as={`span`} className="uppercase text-lg font-bold text-gray-100 ml-3">INFORMATION</Text>
                     </Text>
 
-                    <a href="tel:+971 333 222 557" className="block hover:text-myGreen">+971 333 222 557</a>
-                    <a href="mailto:info@exemple.com" className="block hover:text-myGreen">info@exemple.com</a>
-                    <Text as={`p`} className="text-lg">New Central Park W7 Street, New York</Text>
+                    <a href="tel:+234 806 8977" className="block hover:text-myGreen">+234 806 587 8977</a>
+                    <a href="mailto:hello@nebula.io" className="block hover:text-myGreen">hello@nebula.io</a>
+                    <Text as={`p`} className="text-lg">1/3 Adebola Gbadebo Drive, Off Abadek Avenue, Off Akin Ogunlewe Rd, Igbogbo, Ikorodu, Lagos</Text>
                 </div>
 
                 <div className="w-full">

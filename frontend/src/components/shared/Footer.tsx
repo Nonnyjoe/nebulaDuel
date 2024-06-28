@@ -18,8 +18,8 @@ const Footer = () => {
                                     alt="Logo" /></Link>
                             </div>
                             <div className=" mr-[30px] sm:mr-0 xsm:mr-0">
-                                <Text as="p" className=" text-[15px] mt-0 mb-[25px] mx-0">Lorem ipsum dolor sitamet consectur
-                                    adipiscing Duis esollici tudin augue euismod. Nulla ullam dolor sitamet consectetur
+                                <Text as="p" className=" text-[15px] mt-0 mb-[25px] mx-0">
+                                Follow us on social media to connect with fellow gamers, share your experiences, and be the first to know about exciting events and promotions.
                                 </Text>
                                 <Text as="p"
                                     className="text-[16px] font-semibold uppercase text-[#ecebeb] leading-none mt-0 mb-[25px] mx-0">
@@ -75,7 +75,7 @@ const Footer = () => {
                             <h4 className="  text-[20px] mt-0 mb-7 mx-0 ">Newsletter</h4>
                             <div className="footer-newsletter">
                                 <p className=" text-[15px] mt-0 mb-[25px] mx-0">Subscribe our newsletter to get our latest
-                                    update & newsconsectetur</p>
+                                    updates</p>
                                 <form action="#" className="footer-newsletter-form relative">
                                     <input type="email" placeholder="Your email address"
                                         className=" block w-full text-[14px] h-[60px] pl-[25px] pr-[100px] py-[17px] rounded-md border-none bg-[#1f2935] placeholder:text-[14px] focus:ring-[none] focus:!border-none " />

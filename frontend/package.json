@@ -30,7 +30,8 @@
     "tailwind-clip-path": "^1.0.0",
     "thirdweb": "^5.29.6",
     "three": "^0.165.0",
-    "wow.js": "^1.2.2"
+    "wow.js": "^1.2.2",
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

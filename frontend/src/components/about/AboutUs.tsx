@@ -38,8 +38,12 @@ const AboutUs = () => {
                         <div className=" absolute top-1/2 left-1/2 bg-myGreen h-12 w-12"></div>
                     </main>
                     <Text as="p" className="text-gray-400 bg-navBg absolute -bottom-8 py-3 text-base md:text-lg font-medium">
-                        Lorem ipsum dolor sit amet, consteur adipiscing Duis elementum sollicitudin is yaugue euismods Nulla ullamcorper. Morbi pharetra tellus miolslis tincidunt massa venenatis. Lorem Ipsum is simply dummyd the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s when an unknown printer took a galley.</Text>
-
+                        <b>Welcome to Nebula Duel!</b> <br/> We are a dynamic team of builders with a shared passion for creating immersive gaming experience, with years of expertise in blockchain, frontend and backend technologies, 3D animation and game development.
+                        Our journey started with a bold idea: to build a game that fuses groundbreaking technology with captivating and immersive experience. 
+                    <br/>
+                    <br/>
+                        Embark on an epic adventure with us and explore the extraordinary world of Nebula Duel. Your journey begins here—join us and build your legacy as a duel warrior.
+                    </Text>
                     <div className="absolute text-[#45f882] groupOfBars right-[22px] top-5 
                             xl:right-[50px] xl:top-[15px]
                             md:right-3 md:top-[7px]

@@ -1,7 +1,7 @@
-//import nebulaCharactersImg from "../../public/characters/nebulaCharactersImg.js";
+//import nebulaCharactersImg from "../../public/characters/nebulaCharactersImg.js"; 
 import nebulaCharactersImg from "../../public/nebula-characters/nebulaCharactersImg.js";
 
-export type DataType = {
+type DataType = {
   id: number;
   name: string;
   health: number;
@@ -11,11 +11,12 @@ export type DataType = {
   super_power: string;
   price: number;
   img: string;
+  model: string
 };
 
-export const charactersdata: DataType[] = [
+const charactersdata: DataType[] = [
   {
-    id: 0,
+    id: 1,
     name: "Mystic Seer",
     health: 80,
     strength: 10,
@@ -24,9 +25,10 @@ export const charactersdata: DataType[] = [
     super_power: "Thunderbolt",
     price: 317,
     img: nebulaCharactersImg.mystic,
+    model: "models/mystic.gltf"
   },
   {
-    id: 1,
+    id: 2,
     name: "Zylar the Conqueror",
     health: 90,
     strength: 10,
@@ -35,9 +37,10 @@ export const charactersdata: DataType[] = [
     super_power: "Flamethrower",
     price: 385,
     img: nebulaCharactersImg.zylar,
+    model: "models/zylar.gltf"
   },
   {
-    id: 2,
+    id: 3,
     name: "Shadow Strike",
     health: 75,
     strength: 10,
@@ -46,9 +49,10 @@ export const charactersdata: DataType[] = [
     super_power: "VineWhip",
     price: 307,
     img: nebulaCharactersImg.sStrike,
+    model: "models/s-strike.gltf"
   },
   {
-    id: 3,
+    id: 4,
     name: "Captain Valor",
     health: 85,
     strength: 8,
@@ -57,9 +61,10 @@ export const charactersdata: DataType[] = [
     super_power: "WaterGun",
     price: 350,
     img: nebulaCharactersImg.cValor,
+    model: "models/c-valor.gltf"
   },
   {
-    id: 4,
+    id: 5,
     name: "Sir Elara the Great",
     health: 88,
     strength: 9,
@@ -68,10 +73,11 @@ export const charactersdata: DataType[] = [
     super_power: "SleepSong",
     price: 362,
     img: nebulaCharactersImg.sElara,
+    model: "models/s-elara.gltf"
   },
   {
-    id: 5,
-    name: "Goul King",
+    id: 6,
+    name: "Ghoul King",
     health: 92,
     strength: 11,
     attack: 14,
@@ -79,9 +85,10 @@ export const charactersdata: DataType[] = [
     super_power: "Psychic",
     price: 415,
     img: nebulaCharactersImg.ghoul,
+    model: "models/ghoul.gltf"
   },
   {
-    id: 6,
+    id: 7,
     name: "Elinor Swiftstrike",
     health: 80,
     strength: 10,
@@ -90,17 +97,7 @@ export const charactersdata: DataType[] = [
     super_power: "HeadCrush",
     price: 320,
     img: nebulaCharactersImg.eSwiftstrike,
-  },
-  {
-    id: 7,
-    name: "Ravager",
-    health: 75,
-    strength: 8,
-    attack: 16,
-    speed: 6,
-    super_power: "ShadowBall",
-    price: 300,
-    img: nebulaCharactersImg.ravager,
+    model: "models/e-swiftstrike.gltf"
   },
   {
     id: 8,
@@ -112,6 +109,7 @@ export const charactersdata: DataType[] = [
     super_power: "Adaptability",
     price: 440,
     img: nebulaCharactersImg.bCollector,
+    model: "models/b-collector.gltf"
   },
   {
     id: 9,
@@ -123,6 +121,7 @@ export const charactersdata: DataType[] = [
     super_power: "SonicKick",
     price: 370,
     img: nebulaCharactersImg.vortex,
+    model: "models/vortex.gltf"
   },
   {
     id: 10,
@@ -134,6 +133,7 @@ export const charactersdata: DataType[] = [
     super_power: "TelekineticHit",
     price: 397,
     img: nebulaCharactersImg.dWolf,
+    model: "models/d-wolf.gltf"
   },
   {
     id: 11,
@@ -145,6 +145,7 @@ export const charactersdata: DataType[] = [
     super_power: "InvisibleClaws",
     price: 357,
     img: nebulaCharactersImg.luna,
+    model: "models/luna.gltf"
   },
   {
     id: 12,
@@ -156,6 +157,7 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 338,
     img: nebulaCharactersImg.blaze,
+    model: "models/blaze.gltf"
   },
   {
     id: 13,
@@ -167,6 +169,7 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 430,
     img: nebulaCharactersImg.techno,
+    model: "models/techno.gltf"
   },
   {
     id: 14,
@@ -178,6 +181,7 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 480,
     img: nebulaCharactersImg.berzerker,
+    model: "models/berzerker.gltf"
   },
   {
     id: 15,
@@ -189,6 +193,7 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 405,
     img: nebulaCharactersImg.gorgon,
+    model: "models/gorgon.gltf"
   },
   {
     id: 16,
@@ -200,6 +205,7 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 440,
     img: nebulaCharactersImg.troll,
+    model: "models/troll.gltf"
   },
   {
     id: 17,
@@ -211,6 +217,7 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 380,
     img: nebulaCharactersImg.drake,
+    model: "models/drake.gltf"
   },
   {
     id: 18,
@@ -222,6 +229,7 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 400,
     img: nebulaCharactersImg.sGolem,
+    model: "models/s-golem.gltf"
   },
   {
     id: 19,
@@ -233,6 +241,20 @@ export const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 365,
     img: nebulaCharactersImg.sHawk,
+    model: "models/s-hawk.gltf"
   },
-
+  {
+    id: 20,
+    name: "Ravager",
+    health: 75,
+    strength: 8,
+    attack: 16,
+    speed: 6,
+    super_power: "ShadowBall",
+    price: 300,
+    img: nebulaCharactersImg.ravager,
+    model: "models/ravager.gltf"
+  },
 ];
+
+export default charactersdata;
