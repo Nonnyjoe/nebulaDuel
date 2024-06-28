@@ -3,6 +3,7 @@ import {  useNavigate } from 'react-router-dom';
 // import Header from './Header';
 import "./activeDuels.css";
 import { useActiveAccount } from "thirdweb/react";
+import readGameState from '../../utils/readState';
 
 
 // Define the ProfileData type
@@ -26,9 +27,10 @@ interface DisplayDataProps {
   creators_strategy: string;
   opponent_strategy: string;
   is_completed: boolean;
+  difficulty: string;
 }
 
-const DuelCard: React.FC<DisplayDataProps> = ({duel_id, duel_creator, creation_time, stake_amount, allPlayers, duel_opponent, creators_strategy, opponent_strategy, is_completed}) => {
+const DuelCard: React.FC<DisplayDataProps> = ({duel_id, duel_creator, creation_time, stake_amount, allPlayers, duel_opponent, creators_strategy, opponent_strategy, is_completed, difficulty}) => {
   // const data = duelData; 
   // console.log("Data obtained..........." + JSON.stringify(data));
   let creator = "";
@@ -43,8 +45,22 @@ const DuelCard: React.FC<DisplayDataProps> = ({duel_id, duel_creator, creation_t
     }
   }
 
+  
 
-  function decideRoute(): string {
+  async function decideRoute(): Promise<string> {
+    try {
+      if ( difficulty != "P2P") {
+        const { request_payload} = await readGameState(`duels/${duel_id}`);
+        const is_completed = request_payload.is_completed
+        console.log("is_completed", request_payload);
+        if (is_completed) {
+          return `/duels/${duel_id}`;
+        }
+      }
+    } catch (err) {
+      console.log("Error", err);
+    }
+
     if ((activeAccount == duel_creator || activeAccount == duel_opponent) && creators_strategy != "Yet_to_select" &&  opponent_strategy != "Yet_to_select" && is_completed == false) {
       return `/duels/${duel_id}`;
     } else if ((activeAccount == duel_creator || activeAccount == duel_opponent) && (creators_strategy == "Yet_to_select" || opponent_strategy == "Yet_to_select")) {
@@ -73,9 +89,9 @@ const DuelCard: React.FC<DisplayDataProps> = ({duel_id, duel_creator, creation_t
   }
 
 
-  const handleDuelClicked = () => {
+  const handleDuelClicked = async () => {
     console.log("Duel Card clicked: ", duel_id);
-    navigate(decideRoute());
+    navigate(await decideRoute());
   }
 
   return (

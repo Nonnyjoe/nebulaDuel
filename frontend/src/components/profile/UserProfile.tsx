@@ -167,7 +167,7 @@ const UserProfile = () => {
                 let request_payload = await fetchNotices("all_profiles");
                 request_payload = request_payload.filter((player: any) => player.wallet_address == userAccount?.address.toLowerCase());
                 setProfile(request_payload[0]);
-                navigate(`/profile/purchasecharacter}`);
+                navigate(`purchasecharacter`);
             } else {
                 toast.error("Transaction Failed.. Try again later.", {
                     position: 'top-right'

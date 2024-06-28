@@ -61,6 +61,8 @@ async function fetchNotices(request: string) {
         return fetch_duels(specific_tx);
       } else if (request == "all_tx") {
         return fetch_all_tx(all_tx);
+      } else if (request == "ai_duels") {
+        return fetch_ai_duels(specific_tx);
       }
     } catch (error) {
       console.error('Error fetching notices:', error);
@@ -97,7 +99,23 @@ function fetch_characters(specific_tx: any) {
 
 function fetch_duels(specific_tx: any) {
     console.log(specific_tx);
-    const all_duels = specific_tx.filter((tx: any) => tx.method == 'create_duel' || tx.method == 'create_ai_duel');
+    const all_duels = specific_tx.filter((tx: any) => tx.method == 'create_duel');
+    console.log("all duels are:", all_duels)
+    let highest_id;
+    for (let i = 0; i < all_duels.length; i++) {
+        highest_id = all_duels[i];
+        if (all_duels[i].tx_id > highest_id) {
+            highest_id = all_duels[i].tx_id;
+        }
+    }
+    // console.log("All Player Characters: ", JSON.parse(highest_id));
+    console.log("All Player Characters: ", (highest_id));
+    return JSON.parse(highest_id?.data);
+}
+
+function fetch_ai_duels(specific_tx: any) {
+    console.log(specific_tx);
+    const all_duels = specific_tx.filter((tx: any) => tx.method == 'create_ai_duel');
     console.log("all duels are:", all_duels)
     let highest_id;
     for (let i = 0; i < all_duels.length; i++) {
