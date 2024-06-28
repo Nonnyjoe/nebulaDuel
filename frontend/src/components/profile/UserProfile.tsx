@@ -9,62 +9,68 @@ import readGameState from "../../utils/readState.js";
 import axios from "axios";
 import { useActiveAccount } from "thirdweb/react";
 import { useNavigate } from 'react-router-dom';
+import { useProfileContext } from "../contexts/ProfileContext.js";
 
 
 const UserProfile = () => {
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
-  const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const [imgUrl, setImgUrl] = useState<string | null>("testing_image");
   const [characters, setCharacters] = useState(0);
   const [gamePoints, setGamePoints] = useState(0);
   const [nebulaBalance, setNebulaBalance] = useState(0);
   const [userAddress, setUserAddress] = useState('');
   const [profileData, setProfileData] = useState<any>({});
   const [txhash, setTxhash] = useState('');
+  const [uploading, setUploading] = useState<boolean>(false);
   const navigate = useNavigate();
   const userAccount = useActiveAccount();
+  const {profile, setProfile} = useProfileContext();
 
   useEffect(() => {
-    let address = userAccount?.address;
+    const address = userAccount?.address;
     if (userAccount && address) {
       setUserAddress(address);
+        if (address.toLowerCase() == profile?.wallet_address?.toLowerCase()) {
+            console.log(profile, 'user profile data');
+            setProfileData(profile);
+            setCreatedProfile(true);
+        } else {
+            setCreatedProfile(false);   
+        }
     }
 
-    const fetchData = async () => {
-      const {Status, request_payload} = await readGameState(`profile/${address}`);
-      console.log(Status, request_payload, 'user profile reading');
-
-      if(Status === false){
-        setCreatedProfile(false);   
-      } else {
-        console.log(request_payload, 'user profile data');
-          setProfileData(request_payload);
-          setCreatedProfile(true);
-      }
-    };
-
-    fetchData(); 
   }, [userAccount, navigate]);
+
+
 
   const handleNameChange = (event: any) => {
     setName(event.target.value);
   }
 
-  const handleSetCreatedProfile = async () => {
+  const handleSetCreatedProfile = async (e) => {
+    e.preventDefault();
     if (imgUrl) {
       createProfile();
+    } else {
+        toast.error("Please upload an avatar before creating a profile");
     }
   }
 
   const handleAvatarChange = async (event: any) => {
     if (event.target.files && event.target.files[0]) {
       setAvatar(event.target.files[0]);
+        getAvatar(event.target.files[0]);
     }
   };
 
-  const getAvatar = useCallback(async () => {
+  const getAvatar = useCallback(async (avatar: any) => {
+    toast.info("Sending avatar to Ipfs...");
+    setUploading(true);
+
     if(avatar) {
+        console.log(avatar, 'avatar is already set');
       try {
         const formData = new FormData();
         formData.append("file", avatar!);
@@ -84,31 +90,57 @@ const UserProfile = () => {
         const avatarUrl = response.data.IpfsHash;
         if (avatarUrl) {
           setImgUrl(`https://orange-personal-vulture-360.mypinata.cloud/ipfs/${avatarUrl}`);
+          toast.success("Successfully uploaded image to Ipfs, click the button to continue...");
         }
+        setUploading(false);
       } catch(err) {
-      
         console.log('Pinata API error', err);
         toast.error('upload error');
+        setUploading(false);
       }
     }
     console.log(imgUrl, 'avatar url');
-
+    setUploading(false);
   }, [avatar]);
 
-  getAvatar();
 
-
+  function getArrayLength(jsonString: string): number | null {
+    try {
+        // Parse the JSON string to an array of objects
+        const array: { char_id: number }[] = JSON.parse(jsonString);
+        
+        // Check if the parsed result is indeed an array
+        if (Array.isArray(array)) {
+            // Return the length of the array
+            return array.length;
+        } else {
+            throw new Error('Parsed result is not an array');
+        }
+    } catch (error: any) {
+        // console.error('Error parsing JSON string:', error.message);
+        return null;
+    }
+}
   async function createProfile() {
     console.log(name, imgUrl, 'profile data')
     const togglePlayer = { "func": "create_player", "monika": name, "avatar_url": imgUrl };
+
+    setUploading(true);
     const txhash = await signMessages(togglePlayer);
     if (txhash.message === "Transaction added successfully") {
       // setTxhash(txhash);
       console.log("Tx report: ", txhash.message);
-      toast.success('profile updated');
+        const {Status, request_payload} = await readGameState(`profile/${userAccount?.address}`);
+        if (Status) {
+            setProfile(request_payload);
+            toast.success('profile updated');
+            setProfileData(request_payload);
+            navigate('/duels')
+        }
     } else {
       toast.error('transaction error:');
     }
+    setUploading(false);
     }
   
 
@@ -170,7 +202,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    {profileData.characters || 0}
+                    {getArrayLength(profileData.characters) || 0}
                   </Text>
                 </Text>
                 <Text
@@ -236,12 +268,14 @@ const UserProfile = () => {
                     accept="image/*"
                     className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-[25px] py-3.5 border-2 border-solid border-[#19222b] bg-transparent placeholder:opacity-80 focus:!border-[#19222b] focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
                     required
+                    disabled={uploading}
                     onChange={handleAvatarChange}
                   />
                 </div>
                 <Button
                   type="button"
                   className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`} 
+                  disabled={uploading}
                   onClick={handleSetCreatedProfile}
                 >
                   Submit Now
@@ -288,14 +322,18 @@ const UserProfile = () => {
                     accept="image/*"
                     className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-[25px] py-3.5 border-2 border-solid border-[#19222b] bg-transparent placeholder:opacity-80 focus:!border-[#19222b] focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
                     required
+                    disabled={uploading}
                     onChange={handleAvatarChange}
                   />
                 </div>
                 <Button
                   className={`text-[#0f161b] uppercase font-bold tracking-[1px] px-[30px] py-3.5 border-[none] ${imgUrl ? 'bg-[#45f882] hover:bg-[#ffbe18]' : 'bg-[#45f882] opacity-50 cursor-not-allowed'} font-Barlow clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]`}
                   onClick={handleSetCreatedProfile}
+                  disabled={false}
                 >
-                  {createdProfile ? "Update Profile" : "Create Profile"} 
+                  {uploading ? 
+                        (<div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>)
+                   :createdProfile ? "Update Profile" : "Create Profile"} 
                 </Button>
               </form>
             )}

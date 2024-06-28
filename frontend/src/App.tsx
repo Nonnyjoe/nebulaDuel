@@ -9,25 +9,28 @@ import 'react-multi-carousel/lib/styles.css';
 import { Toaster } from 'sonner';
 import PageNotFound from "./utils/PageNotFound"
 import ScrollToTop from "./utils/ScrollToTop"
+import { ProfileProvider } from "./components/contexts/ProfileContext"
 
 function App() {
 
   return (
-    <main className='w-full min-h-screen bg-bodyBg text-gray-100'>
-      <Header />
-      <Suspense fallback={<Preloader />}>
-        <Routes>
-          {routes.map(({ path, component: Component }, index) => (
-            <Route key={index} index={path === "/"} path={path} element={<Component />} />
-          ))}
-          <Route path="*" element={<PageNotFound />} />
-        </Routes>
-      </Suspense>
-      <Footer />
-      <ScrollToTop />
-      <ScrollButton />
-      <Toaster richColors />
-    </main>
+    <ProfileProvider>
+      <main className='w-full min-h-screen bg-bodyBg text-gray-100'>
+        <Header />
+        <Suspense fallback={<Preloader />}>
+          <Routes>
+            {routes.map(({ path, component: Component }, index) => (
+              <Route key={index} index={path === "/"} path={path} element={<Component />} />
+            ))}
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+        </Suspense>
+        <Footer />
+        <ScrollToTop />
+        <ScrollButton />
+        <Toaster richColors />
+      </main>
+    </ProfileProvider>
   )
 }
 

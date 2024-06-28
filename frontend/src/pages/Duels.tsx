@@ -1,9 +1,9 @@
-import JoinDuels from "../components/duels/JoinDuels";
+import ListDuels from "../components/duels/ListDuels";
 
 const Duels = () => {
   return (
     <main className="w-full flex flex-col">
-      <JoinDuels />
+      <ListDuels />
     </main>
   );
 };

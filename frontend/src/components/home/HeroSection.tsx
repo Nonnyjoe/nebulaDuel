@@ -9,8 +9,9 @@ import { useActiveAccount } from "thirdweb/react";
 import { Link } from "react-router-dom"
 import { createThirdwebClient } from "thirdweb";
 import { useConnectModal } from "thirdweb/react";
-import readGameState from "../../utils/readState.js"
+// import readGameState from "../../utils/readState.js"
 import { useNavigate } from 'react-router-dom';
+import { useProfileContext } from "../contexts/ProfileContext.js";
 
 
 const clientId = "5555e76cfe72676f69d044a91ce98d30";
@@ -23,38 +24,46 @@ const HeroSection = () => {
     const [isWalletConnected, setIsWalletConnected] = useState(false);
     const [isProfileFound, setIsProfileFound] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isStartBattle, setIsStartBattle] = useState(false);
     const { connect, isConnecting } = useConnectModal();
     const navigate = useNavigate();
+    const {profile, setProfile} = useProfileContext();
 
 
-      async function fetchprofile() {
-        const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`);
-        return {Status, request_payload};
-      }
+      // async function fetchprofile() {
+      //   const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`);
+      //   return {Status, request_payload};
+      // }
 
     const handleModal = () => {
       setIsModalOpen(true);
     };
 
+    const handleModal2 = () => {
+      setIsStartBattle(false);
+    };
+
 
     const playgameButton = async() => {
         if (activeAccount?.address) {
-            const {Status, request_payload} = await fetchprofile();
-            console.log(Status, request_payload);
+            // const {Status, request_payload} = await fetchprofile();
+            // console.log(Status, request_payload);
 
-            if(Status === false){
+            if(activeAccount?.address?.toLowerCase() != profile?.wallet_address?.toLowerCase()){
               setIsWalletConnected(true);
                 setIsModalOpen(false);
                 setIsProfileFound(false);
 
             }else{
-                if(request_payload.characters.length >= 3){
-                  navigate('/selectWarriors');
+                const characters: string = (profile?.characters);
+
+                if ((getArrayLength(characters) as number) >= 3){
+                  // navigate('/selectWarriors');
+                  setIsStartBattle(true);
                 }else{
                     console.log("You have less than 3 characters");
                     navigate('/profile/purchasecharacter');
                 }
-
             }
 
         } else {
@@ -64,6 +73,24 @@ const HeroSection = () => {
         }
 
     }
+
+    function getArrayLength(jsonString: string): number | null {
+      try {
+          // Parse the JSON string to an array of objects
+          const array: { char_id: number }[] = JSON.parse(jsonString);
+          
+          // Check if the parsed result is indeed an array
+          if (Array.isArray(array)) {
+              // Return the length of the array
+              return array.length;
+          } else {
+              throw new Error('Parsed result is not an array');
+          }
+      } catch (error: any) {
+          console.error('Error parsing JSON string:', error.message);
+          return null;
+      }
+  }
 
     return (
         <section className="bg-center lg:h-[80vh] md:h-[50vh] h-screen w-full bg-cover z-[1] relative after:right-0 before:content-[''] before:absolute before:w-6/12 before:bg-[#45f882] before:h-[50px] before:left-0 before:bottom-0 before:clip-path-polygon-[0_0,_0_100%,_100%_100%] after:content-[''] after:absolute after:w-6/12 after:bg-[#45f882] after:h-[50px] after:left-auto after:bottom-0 after:clip-path-polygon-[100%_0,_0_100%,_100%_100%] xl:before:h-[40px] xl:after:h-[40px] lg:before:h-[30px] lg:after:h-[30px] md:before:h-[30px] md:after:h-[30px] sm:before:h-[20px] sm:after:h-[20px] 
@@ -92,29 +119,54 @@ const HeroSection = () => {
                     </Button>
 
                     {isWalletConnected && !isProfileFound && !isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="fixed inset-0 bg-[#e0ffe0] bg-opacity-60"></div>
-          <div className="relative bg-black border-2 border-[#45f882] rounded-lg shadow-2xl p-6 max-w-sm w-full h-auto min-h-[300px] z-10 flex flex-col justify-between">
-            <button
-              onClick={handleModal}
-              className="text-white text-xl absolute top-4 right-4"
-            >
-              &times;
-            </button>
-            <div className="flex-1 flex flex-col justify-center items-center">
-              <h1 className="text-2xl text-white mb-4">
-                You Don't Have a Profile Yet
-              </h1>
-            </div>
-            <div className="flex justify-center">
-              <Link to='/profile' className="bg-[#45f882] text-black font-bold py-2 px-4 rounded-full hover:bg-green-500">
-                Create Profile
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-                    
+                        <div className="fixed inset-0 flex items-center justify-center z-50">
+                          <div className="fixed inset-0 bg-[#e0ffe0] bg-opacity-60"></div>
+                          <div className="relative bg-black border-2 border-[#45f882] rounded-lg shadow-2xl p-6 max-w-sm w-full h-auto min-h-[300px] z-10 flex flex-col justify-between">
+                            <button
+                              onClick={handleModal}
+                              className="text-white text-xl absolute top-4 right-4"
+                            >
+                              &times;
+                            </button>
+                            <div className="flex-1 flex flex-col justify-center items-center">
+                              <h1 className="text-2xl text-white mb-4">
+                                You Don't Have a Profile Yet
+                              </h1>
+                            </div>
+                            <div className="flex justify-center">
+                              <Link to='/profile' className="bg-[#45f882] text-black font-bold py-2 px-4 rounded-full hover:bg-green-500">
+                                Create Profile
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                       {isStartBattle && (
+                        <div className="fixed inset-0 flex items-center justify-center z-50 ">
+                          <div className="fixed inset-0 bg-[#596e59] bg-opacity-80 overflow-hidden"></div>
+                          <div className="relative bg-black border-2 border-[#45f882] rounded-lg shadow-2xl p-6 max-w-md w-full h-auto min-h-[300px] z-10 flex flex-col justify-between">
+                            <button
+                              onClick={handleModal2}
+                              className="text-white text-xl absolute top-4 right-4"
+                            >
+                              &times;
+                            </button>
+                            <div className="flex-1 flex flex-col justify-center items-center">
+                              <h1 className="text-2xl text-white mb-4">
+                                Select Battle Type
+                              </h1>
+                            </div>
+                            <div className="flex justify-center flex-row gap-10">
+                              <Link to='/aiduel' className="bg-[#45f882] text-black font-semibold py-2 px-4 rounded-full hover:bg-green-500 font-belanosima">
+                                Duel against AI
+                              </Link>
+                              <Link to='/duels' className="bg-[#45f882] text-black  font-semibold py-2 px-4 rounded-full hover:bg-green-500 font-belanosima">
+                                Duel other Players
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      )}                  
                 </aside>
                 <aside className="flex-1 flex flex-col justify-end items-center">
                     <ImageWrap image={SliderImg} className="w-[75%] md:w-[80%] lg:w-[75%] xxl:w-[60%] 2xl:w-[60%]" alt="Game-Avatar" />

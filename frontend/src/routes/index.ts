@@ -12,6 +12,8 @@ const WarriorsSelection = lazy(() => import("../pages/Warriors"));
 const MarketPlace = lazy(() => import("../pages/MarketPlace"));
 const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const Duels = lazy(() => import("../pages/Duels"));
+const JoinDuel = lazy(() => import("../pages/JoinDuel"));
+const AIduel = lazy(() => import("../pages/Aiduel"));
 
 type Route = {
   path: string;
@@ -30,6 +32,11 @@ const coreRoutes: coreRoutes = [
     path: "/about",
     title: "About",
     component: About,
+  },
+  {
+    path: "/aiduel",
+    title: "AI Duel",
+    component: AIduel,
   },
   {
     path: "/contact",
@@ -57,17 +64,22 @@ const coreRoutes: coreRoutes = [
     component: Arena,
   },
   {
+    path: "/joinduel/:duelId",
+    title: "Joinduel",
+    component: JoinDuel,
+  },
+  {
     path: "/duels",
     title: "Duels",
     component: Duels,
   },
   {
-    path: "/duels/duelId",
+    path: "/duels/:duelId",
     title: "Duel",
     component: Arena,
   },
   {
-    path: "/strategy",
+    path: "/strategy/:duelId",
     title: "Strategy",
     component: Strategy,
   },

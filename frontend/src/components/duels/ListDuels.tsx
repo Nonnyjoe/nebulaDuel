@@ -1,9 +1,14 @@
 import { Link } from "react-router-dom";
 import breadcrumb from "../../assets/img/breadcrumb_img03.png";
-import { ImageWrap } from "../atom/ImageWrap";
+import { ImageWrap } from "../atom/ImageWrap.js";
 import "animate.css/animate.min.css";
 import { useState, useEffect } from "react";
 import readGameState from "../../utils/readState.js";
+// import DuelCard from "./DuelCard1.js";
+import DuelCard from "./DuelCard.js";
+import { useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useActiveAccount } from "thirdweb/react";
 
 interface Duel {
   id: number;
@@ -12,30 +17,50 @@ interface Duel {
 }
 
 interface Duel {
-  id: number;
-  title: string;
+  duel_id: number;
+  duel_creator: string;
   description: string;
-  creator: {
-    name: string;
-    avatar: string;
-  };
   characters: string[];
   winner: string;
   competitors: string[];
   logs: string[];
+  creation_time: number;
+  stake_amount: number;
+  duel_opponent: string;
+  creators_strategy: string;
+  opponents_strategy: string;
+  duel_winner: string;
+  is_completed: boolean;
 }
 
-const JoinDuels = () => {
+// Define the ProfileData type
+interface ProfileData {
+  monika: string;
+  wallet_address: string;
+  avatar_url: string;
+  characters: string;
+  id: number;
+  cartesi_token_balance: number;
+  // Add other properties if needed
+}
+
+
+const ListDuels = () => {
   const [activeTab, setActiveTab] = useState<"open" | "all">("open");
   const [duels, setDuels] = useState<Duel[]>([]);
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
+  const [activeDuels, setActiveDuels] = useState<Duel[]>([]);
+  const [allDuels, setAllDuels] = useState<Duel[]>([]);
+  const [allPlayers, setAllPlayers] = useState<ProfileData[]>([]);
+  const location = useLocation();
+  const activeAccount = useActiveAccount();
+  const navigate = useNavigate();
 
   const fetchOpenDuels = async () => {
     try {
-      const { Status, request_payload } = await readGameState(
-        "inspect/available_duels"
-      );
+      const { Status, request_payload } = await readGameState("available_duels");
       if (Status) {
+        setActiveDuels(request_payload);
         setDuels(request_payload);
       }
     } catch (error) {
@@ -43,26 +68,52 @@ const JoinDuels = () => {
     }
   };
 
-  console.log("Duels", duels);
+  console.log("Available Duels", activeDuels);
+  console.log("All Duels", allDuels);
 
   const fetchAllDuels = async () => {
     try {
-      const { Status, request_payload } = await readGameState("inspect/duels");
+      const { Status, request_payload } = await readGameState("duels");
       if (Status) {
-        setDuels(request_payload);
+        setAllDuels(request_payload);
       }
     } catch (error) {
       console.log("Error fetching all duels", error);
     }
   };
 
+  const fetchAllPlayers = async () => {
+    const { Status, request_payload } = await readGameState(`profile`);
+    if (Status) {
+      // console.log("All players", request_payload);
+      setAllPlayers(request_payload);
+    }
+
+  }
+
+  const routeToCreateDuel = async () => {
+    navigate(`/selectWarriors`)
+  }
+
+
+  useEffect(() => {
+    async function getDuels() {
+      await fetchOpenDuels();
+      await fetchAllDuels();
+      await fetchAllPlayers();
+    }
+    getDuels();
+  }, [location]);
+
   useEffect(() => {
     if (activeTab === "open") {
-      fetchOpenDuels();
+      setDuels(activeDuels);
     } else {
-      fetchAllDuels();
+      setDuels(allDuels);
     }
   }, [activeTab]);
+
+  // console.log("Fetching open duels", duels);
 
   const toggleAccordion = (id: number) => {
     setActiveAccordion(activeAccordion === id ? null : id);
@@ -77,8 +128,8 @@ const JoinDuels = () => {
             <div className="flex flex-wrap mx-[-15px]">
               <div className="w-6/12 basis-6/12 xl:w-6/12 xl:basis-6/12 lg:w-7/12 lg:basis-7/12 md:w-full md:basis-full sm:w-full sm:basis-full xsm:w-full xsm:basis-full relative px-[15px]">
                 <div className="breadcrumb__content text-left md:text-center sm:text-center xsm:text-center">
-                  <h2 className="title text-[60px] font-extrabold tracking-[3px] leading-none m-0 xl:text-[50px] xl:tracking-[2px] lg:text-[50px] lg:tracking-[2px] md:text-[50px] md:tracking-[2px] sm:text-[43px] sm:tracking-[2px] xsm:text-[43px] xsm:tracking-[2px]">
-                    Tournament
+                  <h2 className="title text-[60px] font-extrabold tracking-[3px] leading-none m-0 xl:text-[50px] xl:tracking-[2px] lg:text-[50px] lg:tracking-[2px] md:text-[50px] md:tracking-[2px] sm:text-[43px] sm:tracking-[2px] xsm:text-[43px] xsm:tracking-[2px] uppercase">
+                    ALL DUELS
                   </h2>
                   <nav>
                     <ol className=" justify-start sm:justify-center xsm:justify-center mt-3 mb-0 mx-0 flex flex-wrap list-none md:justify-center sm:text-center xsm:text-center">
@@ -116,43 +167,47 @@ const JoinDuels = () => {
         <aside className="flex flex-col justify-end items-center">
           <ImageWrap
             image={breadcrumb}
-            className="w-[100%] md:w-[80%] lg:w-[75%] xxl:w-[60%] 2xl:w-[60%]"
+            className="w-[100%] md:w-[80%] lg:w-[80%] xxl:w-[60%] 2xl:w-[60%]"
             alt="Game-Avatar"
           />
         </aside>
       </section>
 
       {/* See Duel List */}
+      <div className=" float-right border mr-20 mt-10 mb-20 py-3 px-10 rounded-md border-[#45f882] text-lg shadow-md shadow-green-300 hover:bg-[#45f882] hover:text-black hover:cursor-pointer" onClick={routeToCreateDuel}>
+            <p className=" font-belanosima"> + Create Duel</p>
+      </div>
 
-      <section className="breadcrumb-area-02 w-full pb-[120px] pt-[120px] bg-center bg-cover ">
-        <div className="container">
+      <section className="breadcrumb-area-02 w-full pb-[120px] pt-10 bg-center bg-cover mt-10">
+        <div className=" p-10">
           <div className="flex justify-center mb-4">
             <button
               onClick={() => setActiveTab("open")}
-              className={`px-4 py-2 mx-2 rounded-2xl transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110 ${
-                activeTab === "open" ? "bg-[#45f882] text-white" : "bg-gray-700"
+              className={`px-10 py-2 mx-2 rounded-xl transition duration-500 ease-in-out transform hover:-translate-y-1 text-xl font-belanosima hover:scale-110 ${
+                activeTab === "open" ? "bg-[#45f882] text-black" : "bg-gray-700"
               }`}
             >
               Open Duels
             </button>
             <button
               onClick={() => setActiveTab("all")}
-              className={`px-4 py-2 mx-2 rounded-2xl transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110 ${
-                activeTab === "all" ? "bg-[#45f882] text-white" : "bg-gray-700"
+              className={`px-10 py-2 mx-2 rounded-xl transition duration-500 ease-in-out transform hover:-translate-y-1 text-xl font-belanosima hover:scale-110 ${
+                activeTab === "all" ? "bg-[#45f882] text-black" : "bg-gray-700"
               }`}
             >
               All Duels
             </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {duels.map((duel) => (
-              <div key={duel.id}></div>
-            ))}
+          <div className=" p-6">
+            {duels.map((duel) => 
+            (<DuelCard duel_id={duel.duel_id} duel_creator={duel.duel_creator} creation_time={duel.creation_time} stake_amount={duel.stake_amount} allPlayers={allPlayers} duel_opponent={duel.duel_opponent} creators_strategy={duel.creators_strategy} opponent_strategy={duel.opponents_strategy} is_completed={duel.is_completed} />)
+            )}
           </div>
         </div>
       </section>
+      {/* <DuelComponent /> */}
     </div>
   );
 };
 
-export default JoinDuels;
+export default ListDuels;

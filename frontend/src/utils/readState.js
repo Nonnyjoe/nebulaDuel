@@ -25,10 +25,26 @@ async function readGameState(data) {
 function destructureResponse(reports, data) {
     if (data.includes("/")) {
         console.log("returning a single response");
+        if (data.includes("players_characters")) {
+            console.log("fetching all characters belonging to user.....");
+            // console.log(reports[0].payload);
+            let payload = hexToArray(reports[0].payload);
+            // console.log(payload);
+            return {Status: true, request_payload: payload};
+        } else if (data.includes("get_duel_characters")) {
+            // console.log("fetching characters participating in duel......");
+            // console.log(reports[0].payload);
+            let payload = hexToArray(reports[0].payload);
+            return {Status: true, request_payload: payload};
+        }
         // console.log(reports[0].payload);
-        let payload = hexToString(reports[0].payload);
-        payload = JSON.parse(`{${payload}`);
-        return {Status: true, request_payload: payload};
+        if (reports[0].payload) {
+            let payload = hexToString(reports[0].payload);
+            payload = JSON.parse(`{${payload}`);
+            return {Status: true, request_payload: payload};
+        } else {
+            return {Status: false, request_payload: "Empty response"};
+        }
 
     } else {
 
