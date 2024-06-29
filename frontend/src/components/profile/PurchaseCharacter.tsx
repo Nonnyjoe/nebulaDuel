@@ -200,7 +200,7 @@ const PurchaseCharacter = () => {
         </Text>
 
         <section className=" w-full mt-20 flex flex-row lg:gap-20 md:gap-20 gap-14">
-          <main className="w-6/12 flex flex-col gap-4">
+          <main className="w-7/12 flex flex-col gap-4">
             <Text
               as="h3"
               className="font-semibold font-belanosima text-2xl tracking-wide text-center"
