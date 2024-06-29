@@ -11,7 +11,7 @@ import { useActiveAccount } from "thirdweb/react";
 import { useNavigate } from 'react-router-dom';
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
-import readGameState from "../../utils/readState.tsx";
+// import readGameState from "../../utils/readState.tsx";
 
 
 const UserProfile = () => {

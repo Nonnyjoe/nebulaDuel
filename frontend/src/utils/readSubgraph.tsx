@@ -1,5 +1,5 @@
 import {hexToString} from 'viem';
-import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
+// import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 
 // Initialize Apollo Client
 async function fetchNotices(request: string) {
