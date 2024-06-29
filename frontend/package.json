@@ -10,13 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@apollo/client": "^3.10.8",
     "@react-three/drei": "^9.107.0",
     "@react-three/fiber": "^8.16.8",
+    "@types/axios": "^0.14.0",
     "@types/react-scroll": "^1.8.10",
     "animate.css": "^4.1.1",
     "axios": "^1.7.2",
     "buffer": "^6.0.3",
     "ethers": "5.4.5",
+    "graphql": "^16.9.0",
     "nft.storage": "^7.0.3",
     "react": "^18.2.0",
     "react-countdown-circle-timer": "^3.2.1",

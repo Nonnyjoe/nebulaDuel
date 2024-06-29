@@ -1,10 +1,70 @@
 import Carousel from "react-multi-carousel";
 import { Text } from "../atom/Text"
-import { data } from "./PurchaseCharacter";
 import { ImageWrap } from "../atom/ImageWrap";
+import { useLocation } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useActiveAccount } from "thirdweb/react";
+import fetchNotices from "../../utils/readSubgraph";
+import charactersdata from "../../utils/Charactersdata";
 
+
+interface CharacterDetails {
+    id: number;
+    name: string;
+    health: number;
+    strength: number;
+    attack: number;
+    speed: number;
+    owner: string;
+    price: number;
+    super_power: string;
+    total_battles: number;
+    total_losses: number;
+    total_wins: number;
+    img: string;
+}
 
 const YourCharacters = () => {
+    const location = useLocation();
+    const activeAccount = useActiveAccount();
+    const [creatorCharacterDetails, setCreatorCharacterDetails] = useState<CharacterDetails[]>([]);
+
+
+
+    function delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
+    useEffect(() => {
+        async function fetchCharacters() {
+
+            delay(3000);
+            
+            const placeholder = [];
+                    
+            const request_payload = await fetchNotices("all_characters");
+            // console.log("PPayload...... ", JSON.parse(request_payload.opponent_warriors));
+            const pPayload = request_payload.filter((character: CharacterDetails) => character.owner == activeAccount?.address.toLowerCase());
+            console.log("your characters: " + pPayload);
+            
+            // const {Status: pStatus, request_payload: pPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_opponent}`); // Call your function
+            // console.log(pPayload, "pPayload");
+            
+            for (let i = 0; i < pPayload.length; i++) {
+                const characterData = charactersdata.find((character) => character.name === pPayload[i].name);
+                console.log(characterData, "characterData");
+                const details = {
+                    ...pPayload[i],
+                    img: characterData ? characterData.img : undefined,
+                };
+                placeholder.push(details);
+            }
+            setCreatorCharacterDetails(placeholder); //
+        }
+
+        fetchCharacters();
+    }, [location]);
+
 
     const responsive = {
         superLargeDesktop: {
@@ -37,7 +97,7 @@ const YourCharacters = () => {
                 <section className="w-full mt-7 px-3 md:px-0">
                     <Carousel responsive={responsive} itemClass="md:mx-3" infinite={true} showDots={true}>
                         {
-                            data.map((item, index) => (
+                            creatorCharacterDetails.map((item, index) => (
                                 <div className=" border-4 border-gray-800 bg-myBlack rounded-md p-3 mb-12 relative group cursor-pointer hover:border-myGreen/60 overflow-hidden" key={index}>
                                     <ImageWrap image={item.img} alt={item.name} className="w-full" objectStatus="object-contain" />
                                     <Text as="h5" className="mt-5 font-belanosima text-center text-xl">{item.name}</Text>
@@ -55,9 +115,9 @@ const YourCharacters = () => {
                                         </div>
                                         <div className="flex flex-col gap-1.5 items-start">
                                             <Text as="h6" className="font-barlow text-myGreen font-semibold text-center text-base">Score Board</Text>
-                                            <Text as="span" className="text-gray-300 text-xs md:text-sm font-poppins">Total Wins: {item.totalWins}</Text>
-                                            <Text as="span" className="text-gray-300 text-xs md:text-sm font-poppins">Total Loss: {item.totalLoss}</Text>
-                                            <Text as="span" className="text-gray-300 text-xs md:text-sm font-poppins">Price: ${item.price}</Text>
+                                            <Text as="span" className="text-gray-300 text-xs md:text-sm font-poppins">Total Wins: {item.total_wins}</Text>
+                                            <Text as="span" className="text-gray-300 text-xs md:text-sm font-poppins">Total Loss: {item.total_losses}</Text>
+                                            <Text as="span" className="text-gray-300 text-xs md:text-sm font-poppins">Price: {item.price} Points</Text>
                                         </div>
                                     </div>
                                 </div>

@@ -40,7 +40,7 @@ const ConnectButton2 = () => {
   async function syncProfile() { 
     if (status === "connected") {
       if (profile?.wallet_address?.toLowerCase() != activeAccount?.address?.toLowerCase()) {
-        console.log("Different wallet address.......");
+        // console.log("Different wallet address.......");
         console.log("last recorded wallet is: ", profile?.wallet_address);
 
         let request_payload = await fetchNotices("all_profiles");

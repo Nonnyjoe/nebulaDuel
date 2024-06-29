@@ -101,6 +101,18 @@ const charactersdata: DataType[] = [
   },
   {
     id: 8,
+    name: "Ravager",
+    health: 75,
+    strength: 8,
+    attack: 16,
+    speed: 6,
+    super_power: "ShadowBall",
+    price: 300,
+    img: nebulaCharactersImg.ravager,
+    model: "/models/ravager.gltf"
+  },
+  {
+    id: 9,
     name: "Bone Collector",
     health: 93,
     strength: 12,
@@ -112,7 +124,7 @@ const charactersdata: DataType[] = [
     model: "/models/b-collector.gltf"
   },
   {
-    id: 9,
+    id: 10,
     name: "Vortex",
     health: 88,
     strength: 10,
@@ -124,7 +136,7 @@ const charactersdata: DataType[] = [
     model: "/models/vortex.gltf"
   },
   {
-    id: 10,
+    id: 11,
     name: "Dire Wolf",
     health: 90,
     strength: 11,
@@ -136,7 +148,7 @@ const charactersdata: DataType[] = [
     model: "/models/d-wolf.gltf"
   },
   {
-    id: 11,
+    id: 12,
     name: "Luna Empress",
     health: 87,
     strength: 8,
@@ -148,7 +160,7 @@ const charactersdata: DataType[] = [
     model: "/models/luna.gltf"
   },
   {
-    id: 12,
+    id: 13,
     name: "Blaze",
     health: 83,
     strength: 8,
@@ -160,7 +172,7 @@ const charactersdata: DataType[] = [
     model: "/models/blaze.gltf"
   },
   {
-    id: 13,
+    id: 14,
     name: "Techno Mage",
     health: 93,
     strength: 10,
@@ -172,7 +184,7 @@ const charactersdata: DataType[] = [
     model: "/models/techno.gltf"
   },
   {
-    id: 14,
+    id: 15,
     name: "Berzerker",
     health: 96,
     strength: 13,
@@ -184,7 +196,7 @@ const charactersdata: DataType[] = [
     model: "/models/berzerker.gltf"
   },
   {
-    id: 15,
+    id: 16,
     name: "Gorgon",
     health: 92,
     strength: 11,
@@ -196,7 +208,7 @@ const charactersdata: DataType[] = [
     model: "/models/gorgon.gltf"
   },
   {
-    id: 16,
+    id: 17,
     name: "Troll",
     health: 93,
     strength: 11,
@@ -208,7 +220,7 @@ const charactersdata: DataType[] = [
     model: "/models/troll.gltf"
   },
   {
-    id: 17,
+    id: 18,
     name: "Drake Fire",
     health: 90,
     strength: 10,
@@ -220,7 +232,7 @@ const charactersdata: DataType[] = [
     model: "/models/drake.gltf"
   },
   {
-    id: 18,
+    id: 19,
     name: "Stone Golem",
     health: 91,
     strength: 10,
@@ -232,7 +244,7 @@ const charactersdata: DataType[] = [
     model: "/models/s-golem.gltf"
   },
   {
-    id: 19,
+    id: 20,
     name: "Serena Hawk",
     health: 88,
     strength: 10,
@@ -243,18 +255,7 @@ const charactersdata: DataType[] = [
     img: nebulaCharactersImg.sHawk,
     model: "/models/s-hawk.gltf"
   },
-  {
-    id: 20,
-    name: "Ravager",
-    health: 75,
-    strength: 8,
-    attack: 16,
-    speed: 6,
-    super_power: "ShadowBall",
-    price: 300,
-    img: nebulaCharactersImg.ravager,
-    model: "/models/ravager.gltf"
-  },
+
 ];
 
 export default charactersdata;

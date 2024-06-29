@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 // import { demoLog2 } from './BattleData';
 // import fetchNotices from '../../utils/readSubgraph';
-import { useActiveAccount } from 'thirdweb/react';
+// import { useActiveAccount } from 'thirdweb/react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import charactersdata from '../../utils/Charactersdata';
 import readGameState from '../../utils/readState';
@@ -84,9 +84,9 @@ const GameLayout = ( ) => {
   const [hasCharacters, setHasCharacters] = useState<boolean>(false);
   const [hasDisplayedGame, setHasDisplayedGame] = useState<boolean>(false);
   const [duelCreator, setDuelCreator] = useState<string>(" ");
-  const [ setDuelJoiner] = useState<string>(" ");
+  // const [ setDuelJoiner] = useState<string>(" ");
   const [duelWinner, setDuelWinner] = useState<string>(" ");
-  const [ setDuelType] = useState<string>(" ");
+  // const [ setDuelType] = useState<string>(" ");
   const [duelData, setDuelData] = useState<any>( );
   const [showPopup, setShowPopup] = useState<boolean>(false);
   // const activeAccount = useActiveAccount();
@@ -278,6 +278,7 @@ useEffect(() => {
   const animateStep = (step: number) => {
     if (step >= battleLog.length) {
       setIsAnimating(false);
+      setShowPopup(true);
       return;
     }
 
@@ -395,9 +396,10 @@ useEffect(() => {
     <section className='flex overflow-hidden gap-10'>
 
     <main className=" w-3/12  mt-12 ml-10">
-      <div className="text-myGreen font-belanosima text-xl text-center mb-6 font-medium p-5 h-fit ">
+      <div className="text-myGreen font-belanosima text-xl text-center font-medium p-5 h-fit ">
         Creator Warriors
       </div>
+      <p className='mb-6 text-center font-poppins'> {duelData?.opponents_strategy} </p>
       <div className='grid md:gap-6 gap-3'>
         {creatorCharacterDetails?.map((item, index) => (
           <div
@@ -438,7 +440,7 @@ useEffect(() => {
 
       <div className=" mb-20 flex-row w-6/12 mt-10 mr-8">
         <div className="w-fit mx-auto">
-          <div className="flex justify-between items-center p-8 border-8 border-green-800 w-[50vw] bg-[url('/nebulaDuelArena9.webp')] bg-cover bg-center py-20 min-h-fit ">
+          <div className="flex justify-between items-center p-8 border-8 border-green-800 w-[50vw] bg-[url('/nebulaDuelArena9.webp')] bg-cover bg-center py-20 min-h-[60vh] h-fit">
             <div className="flex flex-col h-fit overflow-visible ">
             {creatorCharacterDetails.map((warrior) => (
               <div
@@ -480,16 +482,17 @@ useEffect(() => {
           </div>
         </div>
         <div className="w-[100%] flex mt-10">
-          <div className=' mx-auto flex border px-12 rounded-md py-4 cursor-pointer' onClick={() =>renderAnimations()} >
+          <button className=' mx-auto flex border px-12 rounded-md py-4 cursor-pointer hover:bg-green-800 hover:border-white' onClick={() =>renderAnimations()} disabled={isAnimating} >
               <p className=' font-belanosima'> Start Game</p>
-          </div>
+          </button>
         </div>
       </div>
 
       <main className=" w-3/12  mt-12 mr-2 ">
-      <div className="text-myGreen font-belanosima text-xl text-center mb-6 font-medium p-5 h-fit ">
+      <div className="text-myGreen font-belanosima text-xl text-center font-medium p-5 h-fit ">
         Opponent Warriors
       </div>
+        <p className='mb-6 text-center font-poppins'> {duelData?.opponents_strategy} </p>
       <div className='grid md:gap-6 gap-3'>
         {opponentCharacterDetails?.map((item, index) => (
           <div

@@ -21,6 +21,7 @@ import { useEffect } from 'react';
 import signMessages from "../../utils/relayTransaction.tsx"
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from '../../utils/readSubgraph.tsx';
+import readGameState from "../../utils/readState.tsx";
 
 interface Character {
   id: number;
@@ -64,13 +65,28 @@ const PurchaseCharacter = () => {
 
 
   useEffect(() => {
-    
-    if (activeAccount?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
-      navigate('/profile');
-    } else {
-      setProfileData(profile);
-      console.log("characters ==", getArrayLength(profile?.characters as string));
+    async function SetUp() {
+
+      if (activeAccount?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {   
+        try {
+          let request_payload = await fetchNotices("all_profiles");
+          request_payload = request_payload.filter((player: any) => player.wallet_address == activeAccount?.toLowerCase());
+          if (request_payload.length > 0){
+            setProfile(request_payload[0]);
+          } else {
+            navigate('/profile');
+          }
+        } catch (e) {
+          navigate('/profile');
+        console.log(e);
     }
+  } else {
+    setProfileData(profile);
+    console.log("characters ==", getArrayLength(profile?.characters as string));
+  }
+}
+
+SetUp();
   
   }, [location]);
 
@@ -141,24 +157,22 @@ const PurchaseCharacter = () => {
     } else {
       console.log("selected id's are: ", selectedCharactersId);
       setSubmiting(true);
-      const dataObject = {"func": "purchase_team", "char_id1": selectedCharactersId[0], "char_id2": selectedCharactersId[1], "char_id3": selectedCharactersId[2]};
+      const dataObject = {"func": "purchase_team", "char_id1": (selectedCharactersId[0] - 1), "char_id2": (selectedCharactersId[1] - 1), "char_id3": (selectedCharactersId[2] - 1)};
       console.log("data Obj", dataObject);
       const txhash = await signMessages(dataObject);
 
       if (txhash) {
-        console.log("tx hash is: ", txhash);
+        // console.log("tx hash is: ", txhash);
         await delay(2000);
 
-        // const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
-        let request_payload = await fetchNotices("all_characters");
-        request_payload = request_payload.filter((character: any) => character.owner == activeAccount?.toLowerCase());
-        console.log("Players characters: " + request_payload);
-        if (request_payload.length as number > 0) {
+        const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
+        if (Status && JSON.parse(request_payload.characters).length > 0) {
           setSelectedCharacters([ ]);
           setSelectedCharactersId([ ]);
           setTotalCharacterPrice(0);
           setProfileData(request_payload);
-          setProfile(request_payload[0]);
+          setProfile(request_payload);
+          
           toast.success("Character(s) purchased successfully!", {
             position: "top-right",
           });
@@ -168,7 +182,10 @@ const PurchaseCharacter = () => {
             position: "top-right",
           });
         }
-        
+      } else {
+        toast.error("Something went wrong, please submit again!", {
+          position: "top-right",
+        });
       }
       
     }
