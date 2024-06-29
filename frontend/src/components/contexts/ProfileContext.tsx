@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface ProfileType {
   id: number;
@@ -31,13 +31,13 @@ export const ProfileProvider: React.FC<{ children: ReactNode }> = ({ children })
     return savedStruct ? JSON.parse(savedStruct) : null;
   });
 
-  useEffect(() => {
-    if (profile) {
-      localStorage.setItem('struct', JSON.stringify(profile));
-    } else {
-      localStorage.removeItem('struct');
-    }
-  }, [profile]);
+//   useEffect(() => {
+//     if (profile) {
+//       localStorage.setItem('struct', JSON.stringify(profile));
+//     } else {
+//       localStorage.removeItem('struct');
+//     }
+//   }, [profile]);
 
   const updateStruct = (newStruct: ProfileType | null) => {
     setProfile(newStruct);

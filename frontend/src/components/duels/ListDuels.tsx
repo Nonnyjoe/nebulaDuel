@@ -32,6 +32,7 @@ interface Duel {
   opponents_strategy: string;
   duel_winner: string;
   is_completed: boolean;
+  difficulty: string;
 }
 
 // Define the ProfileData type
@@ -47,11 +48,12 @@ interface ProfileData {
 
 
 const ListDuels = () => {
-  const [activeTab, setActiveTab] = useState<"open" | "all">("open");
+  const [activeTab, setActiveTab] = useState<"open" | "all" | "ai">("open");
   const [duels, setDuels] = useState<Duel[]>([]);
   // const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
-  const [activeDuels, setActiveDuels] = useState<Duel[]>([]);
+  const [aiDuels, setAIDuels] = useState<Duel[]>([]);
   const [allDuels, setAllDuels] = useState<Duel[]>([]);
+  const [availableDuels, setAvailableDuels] = useState<Duel[]>([]);
   const [allPlayers, setAllPlayers] = useState<ProfileData[]>([]);
   const location = useLocation();
   // const activeAccount = useActiveAccount();
@@ -74,27 +76,38 @@ const ListDuels = () => {
     navigate(`/selectWarriors`)
   }
 
-
-  useEffect(() => {
     async function getDuels() {
       await fetchAllPlayers();
       try {
           const resDuels = await fetchNotices("all_duels");
+          // setDuels(resDuels);
+          console.log(resDuels, "all the total duels");
+          const allAvailavleDuels = resDuels.filter((duel:Duel) => duel.is_completed == false && duel.duel_opponent == "")
+          setAvailableDuels(allAvailavleDuels);
+
           setAllDuels(resDuels);
-          const allAvailavleDuels = resDuels.filter((duel:any) => duel.is_completed == false && duel.difficulty == "P2P")
-          setActiveDuels(allAvailavleDuels);
+          console.log(allAvailavleDuels, "all available duels");
+
+          const aiDuelsRes = await fetchNotices("ai_duels");
+          setAIDuels(aiDuelsRes);
           setDuels(allAvailavleDuels);
       } catch (e: any) {
         console.log("error:", e);
       }
     }
+
+  useEffect(() => {
+
     getDuels();
   }, [location]);
 
   useEffect(() => {
     if (activeTab === "open") {
-      setDuels(activeDuels);
+      setDuels(availableDuels);
+    } else if (activeTab === "ai") {
+      setDuels(aiDuels);
     } else {
+      // getDuels();
       setDuels(allDuels);
     }
   }, [activeTab]);
@@ -167,13 +180,13 @@ const ListDuels = () => {
       <section className="breadcrumb-area-02 w-full pb-[120px] pt-10 bg-center bg-cover mt-10">
         <div className=" p-10">
           <div className="flex justify-center mb-4">
-            <button
+          <button
               onClick={() => setActiveTab("open")}
               className={`px-10 py-2 mx-2 rounded-xl transition duration-500 ease-in-out transform hover:-translate-y-1 text-xl font-belanosima hover:scale-110 ${
                 activeTab === "open" ? "bg-[#45f882] text-black" : "bg-gray-700"
               }`}
             >
-              Open Duels
+              Available Duels
             </button>
             <button
               onClick={() => setActiveTab("all")}
@@ -181,12 +194,20 @@ const ListDuels = () => {
                 activeTab === "all" ? "bg-[#45f882] text-black" : "bg-gray-700"
               }`}
             >
-              All Duels
+              P2P Duels
+            </button>
+            <button
+              onClick={() => setActiveTab("ai")}
+              className={`px-10 py-2 mx-2 rounded-xl transition duration-500 ease-in-out transform hover:-translate-y-1 text-xl font-belanosima hover:scale-110 ${
+                activeTab === "ai" ? "bg-[#45f882] text-black" : "bg-gray-700"
+              }`}
+            >
+              AI Duels
             </button>
           </div>
           <div className=" p-6">
             {duels?.length > 0 ? duels?.map((duel) => 
-            (<DuelCard duel_id={duel.duel_id} duel_creator={duel.duel_creator} creation_time={duel.creation_time} stake_amount={duel.stake_amount} allPlayers={allPlayers} duel_opponent={duel.duel_opponent} creators_strategy={duel.creators_strategy} opponent_strategy={duel.opponents_strategy} is_completed={duel.is_completed} />)
+            (<DuelCard duel_id={duel.duel_id} duel_creator={duel.duel_creator} creation_time={duel.creation_time} stake_amount={duel.stake_amount} allPlayers={allPlayers} duel_opponent={duel.duel_opponent} creators_strategy={duel.creators_strategy} opponent_strategy={duel.opponents_strategy} is_completed={duel.is_completed} difficulty={duel.difficulty} />)
             ) : <div className=" mt-14 text-center text-white font-belanosima text-xl h-60 py-28"> Awaiting Duel Data...... </div>}
           </div>
         </div>
