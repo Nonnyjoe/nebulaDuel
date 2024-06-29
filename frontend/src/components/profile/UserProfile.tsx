@@ -11,6 +11,7 @@ import { useActiveAccount } from "thirdweb/react";
 import { useNavigate } from 'react-router-dom';
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
+import readGameState from "../../utils/readState.tsx";
 
 
 const UserProfile = () => {
@@ -144,33 +145,17 @@ const UserProfile = () => {
     try {
          const txhash = await signMessages(togglePlayer);
         if (txhash.message === "Transaction added successfully") {
-            // if (true) {
-            // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
             let request_payload = await fetchNotices("all_tx");
             request_payload = request_payload.filter((tx: any) => tx.caller == userAccount?.address.toLowerCase());
-            let Highest_tx;
-            for (let i = 0; i < request_payload.length; i++) {
-                Highest_tx = request_payload[i];
-                if (request_payload[i].tx_id > Highest_tx.tx_id) {
-                    Highest_tx = request_payload[i];
-                }
+            if (request_payload.length > 0) {
+                console.log(request_payload);
+                toast.success("Transaction Successful.. Profile Created", {
+                position: 'top-right'
+             })
             }
-            console.log(`Highest TXxxxxxx: ${Highest_tx}`);
-            if (Highest_tx.method == "create_player") {
-                toast.success("Transaction Successful.. Duel Created", {
-                    position: 'top-right'
-                })
-                let request_payload = await fetchNotices("all_profiles");
-                request_payload = request_payload.filter((player: any) => player.wallet_address == userAccount?.address.toLowerCase());
-                setProfile(request_payload[0]);
-                navigate(`purchasecharacter`);
-            } else {
-                toast.error("Transaction Failed.. Try again later.", {
-                    position: 'top-right'
-                });
-                setUploading(false);
-            }
-        }    
+            navigate("/");
+        }
+
     } catch(err) {
         toast.error("Transaction Failed.. Try again later.", {
             position: 'top-right'

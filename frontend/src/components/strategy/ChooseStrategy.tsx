@@ -11,11 +11,12 @@ import { useParams } from "react-router-dom"
 import signMessages from "../../utils/relayTransaction.tsx"
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from 'react';
-// import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import charactersdata from '../../utils/Charactersdata';
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
+import readGameState from "../../utils/readState.tsx";
 
 interface StrategyInterface {
     id: number,
@@ -61,24 +62,38 @@ const ChooseStrategy = () => {
     // const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [creatorCharacterDetails, setCreatorCharacterDetails] = useState<CharacterDetails[]>([]);
     const [opponentCharacterDetails, setOpponetCharacterDetails] = useState<CharacterDetails[]>([]);
-    const [duelCreator, setDuelCreator] = useState<string>(" ");
+    const [duelCreator, setDuelCreator] = useState<string>("");
     const [duelJoiner, setDuelJoiner] = useState<string>(" ");
     const [duelType, setDuelType] = useState<string>(" ");
     // const [refresher, setRefresher] = useState<number>();
     const navigate = useNavigate();
+    const location = useLocation();
     const activeAccount = useActiveAccount();
-    const {profile, setProfile} = useProfileContext();
+    // const {profile, setProfile} = useProfileContext();
     const [submiting, setSubmiting] = useState<boolean>(false);
 
 
+    function delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+      }
+
     useEffect(() => {
         const fetchData = async () => {
-            if (activeAccount?.address.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
-                navigate('/profile');
-            } else{
+                delay(3000);
                 let dPayload = await fetchNotices("all_duels");
-                dPayload = dPayload.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId))[0];
-
+                dPayload = (dPayload.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId)));
+                if (dPayload.length == 0) { 
+                    console.log("PAYLOADDDDDDDD ", dPayload.length);
+                    let ai_duels = await fetchNotices("ai_duels");
+                    ai_duels = (ai_duels.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId)));
+                    if (ai_duels.length != 0) {
+                        dPayload = ai_duels[0];
+                    }
+                    console.log("AI DUELS HERE: ", dPayload);
+                } else {
+                    dPayload = dPayload[0];
+                }  if (dPayload != undefined || dPayload != null) {
+   
                     console.log(dPayload, "dPayload");
                     setDuelCreator(dPayload.duel_creator);
                     setDuelJoiner(dPayload.duel_opponent);
@@ -91,17 +106,18 @@ const ChooseStrategy = () => {
                         if (dPayload.is_complete == true) {
                             navigate(`/duels/${duelId}`);
                         } else {
-                            console.log("Invalid position in duel!");
-                            navigate(`/joinduel/${duelId}`);
+                            console.log("Invalid position in duel! " + dPayload);
+                            // navigate(`/joinduel/${duelId}`);
+                            
                         }
                     }
 
                     const request_payload = await fetchNotices("all_characters");
                     const cPayload = request_payload.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.creator_warriors)[0].char_id || character.id == JSON.parse(dPayload.creator_warriors)[1].char_id || character.id == JSON.parse(dPayload.creator_warriors)[2].char_id);
                     console.log("creator characters: " + request_payload);
-
+                    
                     // const {Status: cStatus, request_payload: cPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_creator}`); // Call your function
-                    console.log(cPayload, "cPayload");
+                    // console.log(cPayload, "cPayload");
                     
                     let placeholder = []; 
 
@@ -117,13 +133,14 @@ const ChooseStrategy = () => {
                     setCreatorCharacterDetails(placeholder);
                     placeholder = [];
                     
-                    const request_payload2 = await fetchNotices("all_characters");
-                    const pPayload = request_payload2.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.opponent_warriors)[0].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[1].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[2].char_id);
+                    // const request_payload = await fetchNotices("all_characters");
+                    // console.log("PPayload...... ", JSON.parse(dPayload.opponent_warriors));
+                    const pPayload = request_payload.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.opponent_warriors)[0].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[1].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[2].char_id);
                     console.log("participant characters: " + request_payload);
-
+                    
                     // const {Status: pStatus, request_payload: pPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_opponent}`); // Call your function
                     console.log(pPayload, "pPayload");
-
+                    
                     for (let i = 0; i < pPayload.length; i++) {
                         const characterData = charactersdata.find((character) => character.name === pPayload[i].name);
                         console.log(characterData, "characterData");
@@ -135,8 +152,9 @@ const ChooseStrategy = () => {
                     }
                     setOpponetCharacterDetails(placeholder); //
                     placeholder = [];
-            }
-        };
+                }
+                }
+                
 
         fetchData(); // Call the function on component mount
     }, [location]);
@@ -178,40 +196,46 @@ const ChooseStrategy = () => {
                 // const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
                 setSubmiting(true);
                 let txhash;
-                if( duelType.toLowerCase() != ("P2P".toLowerCase())) {
-                    txhash = await signMessages(dataObject2);
-                } else {
-                    txhash = await signMessages(dataObject1);
-                }
-                // if (true) {
-                    if (txhash.message === "Transaction added successfully") {
-                       
-                    let request_payload = await fetchNotices("all_tx");
-                    // console.log("payload is:", request_payload);
-                    request_payload = request_payload.filter((tx: any) => tx.caller == activeAccount?.address.toLowerCase());
-                    let Highest_tx;
-                    Highest_tx = request_payload[0];
-                    for (let i = 0; i < request_payload.length; i++) {
-                        if (request_payload[i].tx_id > Highest_tx.tx_id) {
-                            Highest_tx = request_payload[i];
-                        }
-                    }
-        
-                    if (Highest_tx.method == "set_strategy" || Highest_tx.method == "select_ai_battle_strategy" || Highest_tx.method == "") {
-                        toast.success("Transaction Successful.. Duel Created", {
-                            position: 'top-right'
-                        })
-                        let request_payload = await fetchNotices("all_profiles");
-                        request_payload = request_payload.filter((player: any) => player.wallet_address == activeAccount?.address.toLowerCase());
-                        
-                        setProfile(request_payload[0]);
-                        setSubmiting(false);
-                        navigate(`/duels/${duelId}`);
+                try {
+                    if( duelType.toLowerCase() != ("P2P".toLowerCase())) {
+                        txhash = await signMessages(dataObject2);
                     } else {
-                        toast.error("Transaction Failed.. Try again later.", {
-                            position: 'top-right'
-                        });
-                        setSubmiting(false);
+                        txhash = await signMessages(dataObject1);
+                    }
+                } catch (e: any) {
+                    toast.error("Error in transaction: " + e.message, {
+                        position: 'top-right'
+                    })
+                    setSubmiting(false);
+                    return;
+                }
+                if (txhash.message === "Transaction added successfully") {
+                        // if (true) {
+                        
+                    delay(2000);  
+
+                   const {Status, request_payload} = await readGameState(`duels/${duelId}`);
+                    
+                    if (Status) {
+                            console.log("GETTING TX DATA HERE", request_payload);
+                            if (duelCreator == activeAccount?.address.toLowerCase()  && request_payload.creators_strategy != "Yet_to_select") {
+                                toast.success("Transaction Successful.. Duel Created", {
+                                    position: 'top-right'
+                                })
+                                setSubmiting(false);
+                                navigate(`/duels/${duelId}`);
+                            }  else if (duelJoiner == activeAccount?.address.toLowerCase() && request_payload.opponents_strategy != "Yet_to_select") {
+                                toast.success("Transaction Successful.. Duel Started", {
+                                    position: 'top-right'
+                                })
+                                setSubmiting(false);
+                                navigate(`/duels/${duelId}`);
+                            } else {
+                                toast.error("Transaction Failed.. Try again later.", {
+                                    position: 'top-right'
+                                });
+                                setSubmiting(false);
+                            }
                     }
                     
                     

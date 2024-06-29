@@ -65,9 +65,9 @@ const CreateAiDuel = () => {
     const activeAccount = useActiveAccount();
     const [acceptStake, ] = useState(false);
     const [stakeAmount, ] = useState<number>(0.0);
-    const {profile, } = useProfileContext();
+    const {profile, setProfile} = useProfileContext();
     const [submiting, setSubmiting] = useState<boolean>(false);
-    const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
+    const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('hard');
 
     function shuffleArray(array: CharacterDetails[]) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -83,7 +83,20 @@ const CreateAiDuel = () => {
             let myCharacters: CharacterDetails[] = [];
 
             if (activeAccount?.address?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
-                // navigate('/profile');
+
+                try {
+                    let request_payload = await fetchNotices("all_profiles");
+                    request_payload = request_payload.filter((player: any) => player.wallet_address == activeAccount?.address.toLowerCase());
+                    if (request_payload.length > 0){
+                        setProfile(request_payload[0]);
+                    } else {
+                        navigate('/profile');
+                    }
+                } catch (e) {
+                    navigate('/profile');
+                    console.log(e);
+                }
+
             } else {
                 setProfileData(profile);
                 let request_payload = await fetchNotices("all_characters");
@@ -132,9 +145,9 @@ const CreateAiDuel = () => {
 
 
  
-    if (!profileData) {
-        navigate('/profile');
-    }
+    // if (!profileData) {
+    //     navigate('/profile');
+    // }
 
     if (!profileData?.characters) {
         return <div>
@@ -215,9 +228,10 @@ const CreateAiDuel = () => {
             const txhash = await signMessages(dataObject);
             
             if (txhash) {
-                await delay(2000);
-                // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-                let request_payload = await fetchNotices("all_tx");
+                try {
+                    await delay(2000);
+                    // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
+                    let request_payload = await fetchNotices("all_tx");
                     request_payload = request_payload.filter((tx: any) => tx.caller == activeAccount?.address.toLowerCase());
                     console.log(request_payload);
                     let Highest_tx;
@@ -227,7 +241,7 @@ const CreateAiDuel = () => {
                             Highest_tx = request_payload[i];
                         }
                     }
-
+                    
                     if (Highest_tx.method == "create_ai_duel") {
                         toast.success("Transaction Successful.. Duel Created", {
                             position: 'top-right'
@@ -235,7 +249,7 @@ const CreateAiDuel = () => {
                         setTotalCharacterPrice(0);
                         setSelectedCharacters([]);
                         setSelectedCharactersId([]);
-                        const duels = await fetchNotices("all_duels");
+                        const duels = await fetchNotices("ai_duels");
                         console.log(duels);
                         const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
                         navigate(`/strategy/${userDuels?.duel_id}`);
@@ -245,6 +259,13 @@ const CreateAiDuel = () => {
                         });
                         setSubmiting(false);
                     }
+                } catch (err) {
+                    console.log(err);
+                    toast.error("Error submitting transaction. Please try again later.", {
+                        position: "top-right",
+                    });
+                    setSubmiting(false);
+                }
             }
             setSubmiting(false);
         }

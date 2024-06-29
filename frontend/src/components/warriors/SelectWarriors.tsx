@@ -70,8 +70,8 @@ const SelectWarriors = () => {
     const activeAccount = useActiveAccount();
     const [acceptStake, setAcceptStake] = useState(false);
     const [stakeAmount, setStakeAmount] = useState<number>(0.0);
-    const {profile, } = useProfileContext();
     const [submiting, setSubmiting] = useState<boolean>(false);
+    const {profile, setProfile} = useProfileContext();
 
 
     function shuffleArray(array: CharacterDetails[]) {
@@ -88,7 +88,18 @@ const SelectWarriors = () => {
             let myCharacters: CharacterDetails[] = [];
 
             if (activeAccount?.address?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
-                navigate('/profile');
+                try {
+                    let request_payload = await fetchNotices("all_profiles");
+                    request_payload = request_payload.filter((player: any) => player.wallet_address == activeAccount?.address.toLowerCase());
+                    if (request_payload.length > 0){
+                      setProfile(request_payload[0]);
+                    } else {
+                      navigate('/profile');
+                    }
+                  } catch (e) {
+                    navigate('/profile');
+                  console.log(e);
+              }
             } else {
                 setProfileData(profile);
                 let request_payload = await fetchNotices("all_characters");
@@ -248,6 +259,10 @@ const SelectWarriors = () => {
                         }
                 } catch (err) {
                     console.log(err);
+                    setSubmiting(false);
+                    toast.error("Transaction Failed.. Try again later.", {
+                        position: 'top-right'
+                    });
                     setSubmiting(false);
                 }
             }
