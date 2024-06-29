@@ -17,13 +17,9 @@ const UserProfile = () => {
   const [createdProfile, setCreatedProfile] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState("");
-  const [imgUrl, setImgUrl] = useState<string | null>(" ");
-//   const [characters, setCharacters] = useState(0);
-//   const [gamePoints, setGamePoints] = useState(0);
-//   const [nebulaBalance, setNebulaBalance] = useState(0);
+  const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [, setUserAddress] = useState('');
   const [profileData, setProfileData] = useState<any>({});
-//   const [txhash, setTxhash] = useState('');
   const [uploading, setUploading] = useState<boolean>(false);
   const navigate = useNavigate();
   const userAccount = useActiveAccount();
@@ -34,7 +30,7 @@ const UserProfile = () => {
     request_payload = request_payload.filter((player: any) => player.wallet_address == userAccount?.address.toLowerCase());
     if (request_payload.length > 0) {
         setProfile(request_payload[0]);
-        console.log(request_payload, 'user profile data');
+        console.log(request_payload[0], 'user profile data');
           setProfileData(request_payload[0]);
           setCreatedProfile(true);
     } else {
@@ -80,7 +76,7 @@ const UserProfile = () => {
   const handleAvatarChange = async (event: any) => {
     if (event.target.files && event.target.files[0]) {
       setAvatar(event.target.files[0]);
-        getAvatar(event.target.files[0]);
+      getAvatar(event.target.files[0]);
     }
   };
 
@@ -209,18 +205,19 @@ const UserProfile = () => {
           <div className="w-full h-auto relative lg:px-12 px-3">
             <div className="text-center border shadow-[0px_3px_13px_0px_rgba(0,0,0,0.17)] relative transition-[0.3s] duration-500 overflow-hidden z-[1] mt-0 mb-[30px] mx-0 pt-[30px] pb-[35px] px-[25px] rounded-xl border-solid border-[#27313f] bg-[#1c242f] before:content-[''] before:absolute before:top-[-60px] before:w-[70px] before:h-80 before:rotate-[-55deg] before:transition-all before:duration-[0.3s] before:ease-[ease-out] before:delay-[0s] before:opacity-[0.55] before:z-[-1] before:left-0 before:bg-[#45f882] after:content-[''] after:absolute after:top-[-60px] after:w-[70px] after:h-80 after:rotate-[55deg] after:transition-all after:duration-[0.3s] after:ease-[ease-out] after:delay-[0s] after:opacity-[0.55] after:z-[-1] after:left-auto after:right-0 after:bg-[#45f882] hover:translate-y-[-7px] hover:before:opacity-[1] hover:after:opacity-[1] group sm:before:!h-[295px] sm:before:!-top-12 sm:after:!h-[295px] sm:after:!-top-12 xsm:before:!h-[295px] xsm:before:!-top-12 xsm:after:!h-[295px] xsm:after:!-top-12 xsm:m-[0_auto_30px] xsm:max-w-[320px]">
               <div className="mt-0 mb-[33px] mx-0 after:right-[75px] group-hover:before:opacity-40 group-hover:after:opacity-40 before:content-[''] before:absolute before:top-[-50px] before:w-px before:h-[260px] before:rotate-[-55deg] before:transition-all before:duration-[0.3s] before:ease-[ease-out] before:delay-[0s] before:z-[-1] before:opacity-20 before:left-[75px] before:bg-[#45f882] after:content-[''] after:absolute after:top-[-50px] after:w-px after:h-[260px] after:rotate-[55deg] after:transition-all after:duration-[0.3s] after:ease-[ease-out] after:delay-[0s] after:z-[-1] after:opacity-20 after:left-auto after:bg-[#45f882]">
-                {imgUrl ? (
+                {profileData.avatar_url ? (
                   <img
-                    src={imgUrl}
-                    onError={(e) => console.log('Image load error:', e)}
+                    src={ profileData.avatar_url || userImg}
+                    // onError={(e) => console.log('Image load error:', e)}
+                    onError={(e: any) => { e.currentTarget.src = userImg; console.log('Image load error' ,e); }}
                     className="inline-block sm:max-w-full xsm:max-w-full border-[#fff] max-w-[224px] rounded-[50%] border-[3px] border-solid shadow-[0px_3px_7px_0px_rgba(0,0,0,0.21),inset_0px_3px_9px_0px_rgba(0,0,0,0.92)]"
                     alt="Avatar"
                   />
                 ) : (
                   <ImageWrap
                     className="inline-block"
-                    image={ profileData.avatar_url || userImg}
-                    alt=""
+                    image={userImg}
+                    alt="user avatar"
                     objectStatus="sm:max-w-full xsm:max-w-full border-[#fff] max-w-[224px] rounded-[50%] border-[3px] border-solid shadow-[0px_3px_7px_0px_rgba(0,0,0,0.21),inset_0px_3px_9px_0px_rgba(0,0,0,0.92)]"
                   />
                 )}
