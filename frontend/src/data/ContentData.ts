@@ -16,8 +16,12 @@ export const NavLinks: NavArray = [
     path: "/",
   },
   {
-    name: "About Us",
-    path: "/about",
+    name: "Join Duel",
+    path: "/duels",
+  },
+  {
+    name: "Market place",
+    path: "/marketplace",
   },
   {
     name: "Settings",
@@ -28,12 +32,8 @@ export const NavLinks: NavArray = [
     ],
   },
   {
-    name: "Market place",
-    path: "/marketplace",
-  },
-  {
-    name: "Arena",
-    path: "/arena",
+    name: "About Us",
+    path: "/about",
   },
   {
     name: "Contact Us",
@@ -49,17 +49,17 @@ type creatorObj = {
 
 export const creators: creatorObj[] = [
   {
-    title: "POKEMON DRAGON",
+    title: "DRAGON",
     createdBy: "0xblackadam",
     amount: "1.002",
   },
   {
-    title: "POKEMON PRINCESS",
+    title: "PRINCESS",
     createdBy: "Nonnyjoe",
     amount: "2.502",
   },
   {
-    title: "POKEMON FIREFLY",
+    title: "FIREFLY",
     createdBy: "Evans",
     amount: "4.200",
   },

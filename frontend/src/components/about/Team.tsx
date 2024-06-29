@@ -17,23 +17,23 @@ const Team = () => {
 
     const teamMates: teamMateType[] = [
         {
-            name: "KILLER MASTER",
-            position: "Blockchain Expert",
-            img: Images[0],
+            name: "Nonny",
+            position: "Blockchain Developer, Backend engineer",
+            img: Images[1],
         },
         {
-            name: "TANU MARK",
-            position: "Devloper",
-            img: Images[1]
+            name: "Evans",
+            position: "Blockchain & Backend Developer",
+            img: Images[0]
         },
         {
-            name: "THOMPSON SCOT",
-            position: "Art Director",
+            name: "Black-Adam",
+            position: "Blockchain Developer",
             img: Images[2]
         },
         {
-            name: "SHAKH DANIAL",
-            position: "Crypto Adviser",
+            name: "Femi Babs",
+            position: "Blockchain Developer, Frontend Engineer",
             img: Images[3]
         }
     ]

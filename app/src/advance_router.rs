@@ -260,6 +260,9 @@ pub fn handle_purchase_team(payload: &JsonValue, msg_sender: String, storage: &m
         let json_data = character_to_json(data.to_vec());
         structure_notice(String::from("purchase_team"), &mut storage.total_transactions, msg_sender.clone(), json_data.clone(), &mut storage.server_addr);
 
+        let datas = &mut storage.all_players;
+        let json_data = players_profile_to_json(datas.to_vec());
+        structure_notice(String::from("create_player"), &mut storage.total_transactions, msg_sender.clone(), json_data, &mut storage.server_addr);
     } else {
         panic!("Parsed JSON is not an object");
     }

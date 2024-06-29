@@ -18,8 +18,8 @@ const Footer = () => {
                                     alt="Logo" /></Link>
                             </div>
                             <div className=" mr-[30px] sm:mr-0 xsm:mr-0">
-                                <Text as="p" className=" text-[15px] mt-0 mb-[25px] mx-0">Lorem ipsum dolor sitamet consectur
-                                    adipiscing Duis esollici tudin augue euismod. Nulla ullam dolor sitamet consectetur
+                                <Text as="p" className=" text-[15px] mt-0 mb-[25px] mx-0">
+                                Follow us on social media to connect with fellow gamers, share your experiences, and be the first to know about exciting events and promotions.
                                 </Text>
                                 <Text as="p"
                                     className="text-[16px] font-semibold uppercase text-[#ecebeb] leading-none mt-0 mb-[25px] mx-0">
@@ -49,7 +49,7 @@ const Footer = () => {
                                     quickLinks.map((link, index) => (
                                         <li className=" mt-0 mb-1.5 mx-0" key={index}><Link
                                             className=" text-[15px] inline-block text-[#adb0bc] relative hover:text-[#45f882]  after:content-[''] after:absolute after:w-full after:h-px after:origin-[right_top] after:transition-transform after:duration-[0.4s] after:ease-[cubic-bezier(0.74,0.72,0.27,0.24)] after:scale-x-0 after:scale-y-100 after:left-0 after:bottom-0 after:bg-[#45f882]  hover:after:origin-[left_top] hover:after:scale-100"
-                                            to={link.path}>{link.name}</Link></li>
+                                            to={link.path as string}>{link.name}</Link></li>
                                     ))
                                 }
 
@@ -64,7 +64,7 @@ const Footer = () => {
                                     support.map((link, index) => (
                                         <li className=" mt-0 mb-1.5 mx-0" key={index}><Link
                                             className=" text-[15px] inline-block text-[#adb0bc] relative hover:text-[#45f882]  after:content-[''] after:absolute after:w-full after:h-px after:origin-[right_top] after:transition-transform after:duration-[0.4s] after:ease-[cubic-bezier(0.74,0.72,0.27,0.24)] after:scale-x-0 after:scale-y-100 after:left-0 after:bottom-0 after:bg-[#45f882]  hover:after:origin-[left_top] hover:after:scale-100"
-                                            to={link.path}>{link.name}</Link></li>
+                                            to={link.path as string}>{link.name}</Link></li>
                                     ))
                                 }
 
@@ -75,7 +75,7 @@ const Footer = () => {
                             <h4 className="  text-[20px] mt-0 mb-7 mx-0 ">Newsletter</h4>
                             <div className="footer-newsletter">
                                 <p className=" text-[15px] mt-0 mb-[25px] mx-0">Subscribe our newsletter to get our latest
-                                    update & newsconsectetur</p>
+                                    updates</p>
                                 <form action="#" className="footer-newsletter-form relative">
                                     <input type="email" placeholder="Your email address"
                                         className=" block w-full text-[14px] h-[60px] pl-[25px] pr-[100px] py-[17px] rounded-md border-none bg-[#1f2935] placeholder:text-[14px] focus:ring-[none] focus:!border-none " />

@@ -2,11 +2,11 @@ import { Link } from "react-router-dom";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Text } from "../atom/Text";
 //import { ProductType } from "./ProductData";
-import { DataType } from "../../utils/Charactersdata";
+import charactersdata from "../../utils/Charactersdata";
 import { Button } from "../atom/Button";
 import { MdOutlineKeyboardDoubleArrowRight } from "react-icons/md";
 
-const ProductList = ({ data }: { data: DataType[] }) => {
+const ProductList = ({ data }: { data: typeof charactersdata }) => {
   return (
     <main className="w-full flex-1 flex flex-col gap-4 order-1 md:order-2 ">
       <div className="w-full flex justify-end">

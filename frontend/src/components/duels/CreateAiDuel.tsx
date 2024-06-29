@@ -14,16 +14,11 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import charactersdata from '../../utils/Charactersdata';
 import { useProfileContext } from '../contexts/ProfileContext.js';
-import fetchNotices from '../../utils/readSubgraph.tsx';
+import fetchNotices from '../../utils/readSubgraph.js';
 
 
 
-// interface Character {
-//     id: number;
-//     name: string;
-//     img: string;
-//     price: number;
-// }
+
 interface Duel {
     duel_id: number;
     duel_creator: string;
@@ -57,7 +52,7 @@ interface ProfileData {
     // Add other properties if needed
 }
 
-const SelectWarriors = () => {
+const CreateAiDuel = () => {
     const location = useLocation();
     const [selectedCharacters, setSelectedCharacters] = useState<CharacterDetails[]>([]);
     const [totalCharacterPrice, setTotalCharacterPrice] = useState<number>(0);
@@ -68,11 +63,11 @@ const SelectWarriors = () => {
     const [, setPlayersCharacters] = useState<CharacterDetails[]>([]);
     const navigate = useNavigate();
     const activeAccount = useActiveAccount();
-    const [acceptStake, setAcceptStake] = useState(false);
-    const [stakeAmount, setStakeAmount] = useState<number>(0.0);
+    const [acceptStake, ] = useState(false);
+    const [stakeAmount, ] = useState<number>(0.0);
     const {profile, } = useProfileContext();
     const [submiting, setSubmiting] = useState<boolean>(false);
-
+    const [difficulty, setDifficulty] = useState<'easy' | 'hard'>('easy');
 
     function shuffleArray(array: CharacterDetails[]) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -88,18 +83,20 @@ const SelectWarriors = () => {
             let myCharacters: CharacterDetails[] = [];
 
             if (activeAccount?.address?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
-                navigate('/profile');
+                // navigate('/profile');
             } else {
                 setProfileData(profile);
                 let request_payload = await fetchNotices("all_characters");
-                request_payload = request_payload.filter((character: CharacterDetails) => character.owner == activeAccount?.address.toLowerCase());
-                console.log("Players characters: " + request_payload);
-                setPlayersCharacters(request_payload);
-                myCharacters = request_payload;
+                    request_payload = request_payload.filter((character: CharacterDetails) => character.owner == activeAccount?.address.toLowerCase());
+                    console.log("Players characters: " + request_payload);
 
-                if (request_payload.length == 0) {
-                    navigate('/profile/purchasecharacter');
-                }
+                    setPlayersCharacters(request_payload);
+                    console.log(request_payload);
+                    myCharacters = request_payload;
+
+                    if (request_payload.length == 0) {
+                        navigate('/profile/purchasecharacter');
+                    }
             }
 
             if (profile && profile.characters) {
@@ -134,27 +131,6 @@ const SelectWarriors = () => {
     }, [location]);
 
 
-    function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
-        // Filter duels by the given duel_creator
-        const filteredDuels = duels.filter(duel => (duel.duel_creator).toLowerCase() === creator.toLowerCase());
-      
-        if (filteredDuels.length === 0) {
-          return null; // Return null if no duels are found for the given creator
-        }
-      console.log("see them", filteredDuels);
-        // Find the duel with the highest id
-        let highestIdDuel = filteredDuels[0];
-
-        for (let i = 0; i < filteredDuels.length; i++) {
-          if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
-            highestIdDuel = filteredDuels[i];
-          }
-        }
-      
-        return highestIdDuel;
-      }
-
-
  
     if (!profileData) {
         navigate('/profile');
@@ -187,6 +163,26 @@ const SelectWarriors = () => {
         //     }
         // }
 
+        function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
+            // Filter duels by the given duel_creator
+            const filteredDuels = duels.filter(duel => (duel.duel_creator).toLowerCase() === creator.toLowerCase());
+          
+            if (filteredDuels.length === 0) {
+              return null; // Return null if no duels are found for the given creator
+            }
+          console.log("see them", filteredDuels);
+            // Find the duel with the highest id
+            let highestIdDuel = filteredDuels[0];
+    
+            for (let i = 0; i < filteredDuels.length; i++) {
+              if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
+                highestIdDuel = filteredDuels[i];
+              }
+            }
+          
+            return highestIdDuel;
+          }
+
         function delay(ms: number) {
             return new Promise(resolve => setTimeout(resolve, ms));
           }
@@ -198,7 +194,7 @@ const SelectWarriors = () => {
                     position: "top-right",
                 });
                 return;
-            } else if (stakeAmount > profileData?.cartesi_token_balance) {
+            } else if (stakeAmount > (profileData?.cartesi_token_balance as number)) {
                 toast.error("You don't have enough Cartesi Tokens.", {
                     position: "top-right",
                 });
@@ -209,7 +205,9 @@ const SelectWarriors = () => {
                 });
                 return;
             }
-            const dataObject = {"func": "create_duel", "char_id1": selectedCharacters[0].id, "char_id2": selectedCharacters[1].id, "char_id3": selectedCharacters[2].id, "has_staked": acceptStake, "stake_amount": stakeAmount ? stakeAmount : 0};
+
+            const dataObject = {"func": "create_ai_duel", "char_id1": selectedCharacters[0].id, "char_id2": selectedCharacters[1].id, "char_id3": selectedCharacters[2].id, "difficulty_id": difficulty == "easy" ? 1 : 2 };
+
             console.log(dataObject, "dataObject");
             console.log("active account:", activeAccount?.address);
             
@@ -219,44 +217,37 @@ const SelectWarriors = () => {
             if (txhash) {
                 await delay(2000);
                 // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-                try {
-                    let request_payload = await fetchNotices("all_tx");
-                        request_payload = request_payload.filter((tx: any) => tx.caller == activeAccount?.address.toLowerCase());
-                        let Highest_tx;
-                        for (let i = 0; i < request_payload.length; i++) {
+                let request_payload = await fetchNotices("all_tx");
+                    request_payload = request_payload.filter((tx: any) => tx.caller == activeAccount?.address.toLowerCase());
+                    console.log(request_payload);
+                    let Highest_tx;
+                    Highest_tx = request_payload[0];
+                    for (let i = 0; i < request_payload.length; i++) {
+                        if (request_payload[i].tx_id > Highest_tx.tx_id) {
                             Highest_tx = request_payload[i];
-                            if (request_payload[i].tx_id > Highest_tx.tx_id) {
-                                Highest_tx = request_payload[i];
-                            }
                         }
-    
-                        if (Highest_tx.method == "create_duel") {
-                            toast.success("Transaction Successful.. Duel Created", {
-                                position: 'top-right'
-                            })
-                            setTotalCharacterPrice(0);
-                            setSelectedCharacters([]);
-                            setSelectedCharactersId([]);
-                            const duels = await fetchNotices("all_duels");
-                            const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
-                            navigate(`/strategy/${userDuels?.duel_id}`);
-                        } else {
-                            toast.error("Transaction Failed.. Try again later.", {
-                                position: 'top-right'
-                            });
-                            setSubmiting(false);
-                        }
-                } catch (err) {
-                    console.log(err);
-                    setSubmiting(false);
-                }
+                    }
+
+                    if (Highest_tx.method == "create_ai_duel") {
+                        toast.success("Transaction Successful.. Duel Created", {
+                            position: 'top-right'
+                        })
+                        setTotalCharacterPrice(0);
+                        setSelectedCharacters([]);
+                        setSelectedCharactersId([]);
+                        const duels = await fetchNotices("all_duels");
+                        console.log(duels);
+                        const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
+                        navigate(`/strategy/${userDuels?.duel_id}`);
+                    } else {
+                        toast.error("Transaction Failed.. Try again later.", {
+                            position: 'top-right'
+                        });
+                        setSubmiting(false);
+                    }
             }
             setSubmiting(false);
         }
-
-
-
-
 
 
 
@@ -349,29 +340,39 @@ const SelectWarriors = () => {
                                 >
                                 Your Availabe CTSI balance: {(profileData?.cartesi_token_balance)} CTSI
                             </Text>
-                            <div className="mb-4">
-                                <label className="inline-flex items-center">
-                                <input
-                                    type="checkbox"
-                                    className="form-checkbox text-indigo-600"
-                                    checked={acceptStake}
-                                    onChange={() => setAcceptStake(!acceptStake)}
-                                />
-                                <span className="ml-2 text-gray-400 font-poppins">Accept stake</span>
-                                </label>
-                            </div>
-                            {acceptStake && (
-                                <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-400">Staked amount</label>
-                                <input
-                                    type="number"
-                                    className="mt-1 block w-full px-3 py-2 bg-gray-900 border border-gray-800 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm font-poppins text-gray-600"
-                                    value={stakeAmount}
-                                    placeholder='0.0'
-                                    onChange={(e) => setStakeAmount(Number(e.target.value))}
-                                />
+                            <div className=' text-center mt-5'>
+                                <label className="block text-md font-poppins font-medium text-gray-400">Select Difficulty</label>
+                                <div className=" flex space-x-4 text-center px-auto mt-5 w-fit mx-auto">
+                                    <div className='flex flex-row'>
+                                        <input
+                                            type="radio"
+                                            id="easy"
+                                            name="difficulty"
+                                            value="easy"
+                                            checked={difficulty === 'easy'}
+                                            onChange={(e) => setDifficulty(e.target.value as 'easy')}
+                                            className="focus:ring-green-600 h-4 w-4 text-green-600 border-yellow-300"
+                                        />
+                                        <label htmlFor="easy" className="ml-2 block text-sm text-gray-400">
+                                            Easy
+                                        </label>
+                                    </div>
+                                    <div className='flex flex-row'>
+                                        <input
+                                            type="radio"
+                                            id="hard"
+                                            name="difficulty"
+                                            value="hard"
+                                            checked={difficulty === 'hard'}
+                                            onChange={(e) => setDifficulty(e.target.value as 'hard')}
+                                            className="focus:ring-green-600 h-4 w-4 text-green-600 border-yellow-300"
+                                        />
+                                        <label htmlFor="hard" className="ml-2 block text-sm text-gray-400">
+                                            Hard
+                                        </label>
+                                    </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
 
                         <Button type="button" className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]" onClick={handleSelectWarriors} disabled={submiting}>
@@ -388,5 +389,5 @@ const SelectWarriors = () => {
     )
 }
 
-export default SelectWarriors
+export default CreateAiDuel
 

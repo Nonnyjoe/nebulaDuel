@@ -15,10 +15,12 @@ import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 import charactersdata from '../../utils/Charactersdata';
 import { useActiveAccount } from "thirdweb/react";
-import readGameState from "../../utils/readState.js"
+// import readGameState from "../../utils/readState.js"
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import signMessages from "../../utils/relayTransaction.js"
+import signMessages from "../../utils/relayTransaction.tsx"
+import { useProfileContext } from "../contexts/ProfileContext.js";
+import fetchNotices from '../../utils/readSubgraph.tsx';
 
 interface Character {
   id: number;
@@ -43,9 +45,7 @@ interface ProfileData {
   // Add other properties if needed
 }
 
-interface charId {
-  char_id: number;
-}
+
 
 
 
@@ -57,28 +57,21 @@ const PurchaseCharacter = () => {
   const navigate = useNavigate();
   const activeAccount = useActiveAccount()?.address;
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const characters = shuffleArray(charactersdata);
-
+  const characters = charactersdata;
+  const {profile, setProfile} = useProfileContext();
+  const [submiting, setSubmiting] = useState<boolean>(false);
 
 
 
   useEffect(() => {
-    const fetchData = async () => {
-        const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
-
-        console.log("characters ==", getArrayLength(request_payload.characters));
-        if(Status === false){
-            navigate('/profile');
-        }else{
-            // if(request_payload.characters.length >= 3){
-            //     setProfileData(request_payload);
-            // }else{
-            //     navigate('/profile/purchasecharacter');
-            setProfileData(request_payload);
-        }
-    };
+    
+    if (activeAccount?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
+      navigate('/profile');
+    } else {
+      setProfileData(profile);
+      console.log("characters ==", getArrayLength(profile?.characters as string));
+    }
   
-    fetchData(); // Call the function on component mount
   }, [location]);
 
   function getArrayLength(jsonString: string): number | null {
@@ -147,7 +140,7 @@ const PurchaseCharacter = () => {
         return;
     } else {
       console.log("selected id's are: ", selectedCharactersId);
-  
+      setSubmiting(true);
       const dataObject = {"func": "purchase_team", "char_id1": selectedCharactersId[0], "char_id2": selectedCharactersId[1], "char_id3": selectedCharactersId[2]};
       console.log("data Obj", dataObject);
       const txhash = await signMessages(dataObject);
@@ -156,16 +149,20 @@ const PurchaseCharacter = () => {
         console.log("tx hash is: ", txhash);
         await delay(2000);
 
-        const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
-        if (Status == true && getArrayLength(request_payload.characters) as number > 0) {
+        // const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
+        let request_payload = await fetchNotices("all_characters");
+        request_payload = request_payload.filter((character: any) => character.owner == activeAccount?.toLowerCase());
+        console.log("Players characters: " + request_payload);
+        if (request_payload.length as number > 0) {
           setSelectedCharacters([ ]);
           setSelectedCharactersId([ ]);
           setTotalCharacterPrice(0);
           setProfileData(request_payload);
-
+          setProfile(request_payload[0]);
           toast.success("Character(s) purchased successfully!", {
             position: "top-right",
           });
+          navigate('/duels');
         } else {
           toast.error("Something went wrong, please submit again!", {
             position: "top-right",
@@ -175,17 +172,18 @@ const PurchaseCharacter = () => {
       }
       
     }
+    setSubmiting(false)
   };
 
   //nebuladuel
 
-  function shuffleArray(array: typeof charactersdata) {
-    for (let i = array.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-  }
+  // function shuffleArray(array: typeof charactersdata) {
+  //   for (let i = array.length - 1; i > 0; i--) {
+  //     const j = Math.floor(Math.random() * (i + 1));
+  //     [array[i], array[j]] = [array[j], array[i]];
+  //   }
+  //   return array;
+  // }
 
   function delay(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -317,8 +315,11 @@ const PurchaseCharacter = () => {
               type="button"
               className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
               onClick={handlePurchaseCharacter}
-            >
-              Purchase Characters
+            > { submiting ?
+              (<div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>)
+              : 
+              "Purchase Characters"
+            }
             </Button>
           </main>
         </section>

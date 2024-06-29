@@ -7,15 +7,15 @@ import PriceRange from "./PriceRange";
 import { useEffect, useState } from "react";
 import ProductList from "./ProductList";
 import { animateScroll } from "react-scroll";
-import readGameState from "../../utils/readState.js";
-import { charactersdata, DataType } from "../../utils/Charactersdata.js";
+import readGameState from "../../utils/readState.tsx";
+import charactersdata from "../../utils/Charactersdata.js";
 
 export type ScrollToTopOptions = {
   duration: number;
 };
 
 const Container = () => {
-  const [data, setData] = useState<DataType[]>(charactersdata);
+  const [data, setData] = useState<typeof charactersdata>(charactersdata);
   const [selectedCategory, setSelectedCategory] = useState<string>("nebula");
 
   // const categoryCounts = useMemo(() => countCategories(ListOfProducts), []);
