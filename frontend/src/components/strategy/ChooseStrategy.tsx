@@ -11,11 +11,12 @@ import { useParams } from "react-router-dom"
 import signMessages from "../../utils/relayTransaction.tsx"
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from 'react';
-// import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import charactersdata from '../../utils/Charactersdata';
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
+import readGameState from "../../utils/readState.tsx";
 
 interface StrategyInterface {
     id: number,
@@ -61,11 +62,12 @@ const ChooseStrategy = () => {
     // const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [creatorCharacterDetails, setCreatorCharacterDetails] = useState<CharacterDetails[]>([]);
     const [opponentCharacterDetails, setOpponetCharacterDetails] = useState<CharacterDetails[]>([]);
-    const [duelCreator, setDuelCreator] = useState<string>(" ");
+    const [duelCreator, setDuelCreator] = useState<string>("");
     const [duelJoiner, setDuelJoiner] = useState<string>(" ");
     const [duelType, setDuelType] = useState<string>(" ");
     // const [refresher, setRefresher] = useState<number>();
     const navigate = useNavigate();
+    const location = useLocation();
     const activeAccount = useActiveAccount();
     const {profile, setProfile} = useProfileContext();
     const [submiting, setSubmiting] = useState<boolean>(false);
@@ -76,8 +78,12 @@ const ChooseStrategy = () => {
             if (activeAccount?.address.toLowerCase() != profile?.wallet_address?.toLowerCase()) {
                 navigate('/profile');
             } else{
-                let dPayload = await fetchNotices("all_duels");
-                dPayload = dPayload.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId))[0];
+                // let dPayload = await fetchNotices("all_duels");
+                // dPayload = dPayload.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId))[0];
+                if (duelCreator == "") {
+
+                const {Status, request_payload: dPayload} = await readGameState(`duels/${duelId}`);
+                if (Status) {
 
                     console.log(dPayload, "dPayload");
                     setDuelCreator(dPayload.duel_creator);
@@ -117,8 +123,8 @@ const ChooseStrategy = () => {
                     setCreatorCharacterDetails(placeholder);
                     placeholder = [];
                     
-                    const request_payload2 = await fetchNotices("all_characters");
-                    const pPayload = request_payload2.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.opponent_warriors)[0].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[1].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[2].char_id);
+                    // const request_payload = await fetchNotices("all_characters");
+                    const pPayload = request_payload.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.opponent_warriors)[0].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[1].char_id || character.id == JSON.parse(dPayload.opponent_warriors)[2].char_id);
                     console.log("participant characters: " + request_payload);
 
                     // const {Status: pStatus, request_payload: pPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_opponent}`); // Call your function
@@ -135,7 +141,12 @@ const ChooseStrategy = () => {
                     }
                     setOpponetCharacterDetails(placeholder); //
                     placeholder = [];
+                }
+                
+                
             }
+        }
+            
         };
 
         fetchData(); // Call the function on component mount

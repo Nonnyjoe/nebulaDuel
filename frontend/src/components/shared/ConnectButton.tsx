@@ -33,8 +33,8 @@ const ConnectButton2 = () => {
   const {profile, setProfile} = useProfileContext();
   const status = useActiveWalletConnectionStatus();
 
-  console.log("Connected account is " + activeAccount?.address);
-  console.log("Status is........... " + status);
+  // console.log("Connected account is " + activeAccount?.address);
+  // console.log("Status is........... " + status);
 
 
   async function syncProfile() { 
