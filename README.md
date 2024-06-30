@@ -6,6 +6,11 @@
 Nebula duel is built for persons that love the thrills and entertainment of the gaming world. Players get to purchase their favorite warriors, create duels or join already created ones. At the end of each duel, only one winner emerges.
 
 
+## DEMO VIDEO
+[DEMO VIDEO ON YOUTUBE ](https://youtu.be/_3c-XJvmBMo)
+
+
+
 ## COMPONENTS OF NEBULADUEL
 #### Backend bulit with rust and deployed on Cartesi (Base network).
 #### Frontend Built with react and a complex integration with 3d models.
