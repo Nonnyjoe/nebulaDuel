@@ -80,10 +80,13 @@ const ChooseStrategy = () => {
     useEffect(() => {
         const fetchData = async () => {
                 delay(3000);
-                let dPayload = await fetchNotices("all_duels");
-                dPayload = (dPayload.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId)));
-                if (dPayload.length == 0) { 
-                    console.log("PAYLOADDDDDDDD ", dPayload.length);
+                // let dPayload = await fetchNotices("all_duels");
+                let {Status, request_payload: dPayload} = await readGameState(`duels/${duelId}}`); // Call your function
+                if (Status) {
+
+                    // dPayload = (dPayload.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId)));
+                if (dPayload == undefined) { 
+                        console.log("PAYLOADDDDDDDD ", dPayload.length);
                     let ai_duels = await fetchNotices("ai_duels");
                     ai_duels = (ai_duels.filter((Payload: any) => Number(Payload.duel_id) == Number(duelId)));
                     if (ai_duels.length != 0) {
@@ -91,9 +94,10 @@ const ChooseStrategy = () => {
                     }
                     console.log("AI DUELS HERE: ", dPayload);
                 } else {
-                    dPayload = dPayload[0];
-                }  if (dPayload != undefined || dPayload != null) {
-   
+                    dPayload = dPayload;
+                }  
+                if (dPayload != undefined && dPayload != null) {
+                    
                     console.log(dPayload, "dPayload");
                     setDuelCreator(dPayload.duel_creator);
                     setDuelJoiner(dPayload.duel_opponent);
@@ -111,7 +115,7 @@ const ChooseStrategy = () => {
                             
                         }
                     }
-
+                    
                     const request_payload = await fetchNotices("all_characters");
                     const cPayload = request_payload.filter((character: CharacterDetails) => character.id == JSON.parse(dPayload.creator_warriors)[0].char_id || character.id == JSON.parse(dPayload.creator_warriors)[1].char_id || character.id == JSON.parse(dPayload.creator_warriors)[2].char_id);
                     console.log("creator characters: " + request_payload);
@@ -120,7 +124,7 @@ const ChooseStrategy = () => {
                     // console.log(cPayload, "cPayload");
                     
                     let placeholder = []; 
-
+                    
                     for (let i = 0; i < cPayload.length; i++) {
                         const characterData = charactersdata.find((character) => character.name === cPayload[i].name);
                         console.log(characterData, "characterData");
@@ -153,7 +157,10 @@ const ChooseStrategy = () => {
                     setOpponetCharacterDetails(placeholder); //
                     placeholder = [];
                 }
-                }
+            } else {
+                toast.error("Error Fetching Game details..... If duel id is valid refreash screen");
+            }
+        }
                 
 
         fetchData(); // Call the function on component mount
@@ -254,7 +261,7 @@ const ChooseStrategy = () => {
                 return;
             }
         } else {
-            toast.error("Please wait for opponent to join before starting duel.", {
+            toast.error("Please wait for opponent to join before starting duel... Refreash screen to confirm a new partificipant.", {
                 position: "top-right",
             });
             setSubmiting(false);

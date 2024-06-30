@@ -185,7 +185,7 @@ const JoinDuelComp = () => {
                 });
                 return;
             }
-            const dataObject = {"func": "join_duel", "char_id1": selectedCharacters[0].id, "char_id2": selectedCharacters[1].id, "char_id3": selectedCharacters[2].id, "duel_id": duelId};
+            const dataObject = {"func": "join_duel", "char_id1": selectedCharacters[0].id, "char_id2": selectedCharacters[1].id, "char_id3": selectedCharacters[2].id, "duel_id": Number(duelId)};
 
             console.log(dataObject, "dataObject");
             console.log("active account:", activeAccount?.address);
@@ -214,9 +214,9 @@ const JoinDuelComp = () => {
                         setTotalCharacterPrice(0);
                         setSelectedCharacters([]);
                         setSelectedCharactersId([]);
-                        const duels = await fetchNotices("all_duels");
-                        const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
-                        navigate(`/strategy/${userDuels?.duel_id}`);
+                        // const duels = await fetchNotices("all_duels");
+                        // const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
+                        navigate(`/strategy/${duelId}`);
                     } else {
                         toast.error("Transaction Failed.. Try again later.", {
                             position: 'top-right'

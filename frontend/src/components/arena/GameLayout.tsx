@@ -15,6 +15,7 @@ import { SkeletonUtils } from 'three/examples/jsm/Addons.js';
 import { ImageWrap } from '../atom/ImageWrap';
 // import charactersdata from '../../utils/Charactersdata';
 import Popup from './Popup';
+import signMessages from '../../utils/relayTransaction';
 
 type BattleLogStep = [number, number];
 
@@ -370,14 +371,18 @@ useEffect(() => {
     }
   };
 
-  const renderAnimations = () => {
-    if (!isAnimating) {
-      setCurrentStep(0);
-      // setCreatorCharacterDetails(creatorCharacterDetailsB);
-      // setOpponetCharacterDetails(opponentCharacterDetailsB);
-      animateStep(0);
-      setIsAnimating(false);
-      setCurrentStep(0);
+  const renderAnimations = async() => {
+    if (duelData?.difficulty == "P2P" && duelData.is_completed == false) {
+      const dataObject = {"func": "fight", "duel_id": duelId};  
+      const txhash = await signMessages(dataObject);
+      console.log("TX HASH: ", txhash);
+    } else {
+      if (!isAnimating) {
+        setCurrentStep(0);
+        animateStep(0);
+        setIsAnimating(false);
+        setCurrentStep(0);
+      }
     }
   };
 
