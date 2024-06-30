@@ -61,44 +61,44 @@ type tabDataType = {
 const tabData: tabDataType[] = [
     {
         tab: "tabOne",
-        title: "GLADIATOR",
-        rate: "50%",
-        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
+        title: "BASE BLOCKCHAIN",
+        rate: "90%",
+        text: "Nebuladuel is currently built on base and users are not expected to have gass fees to interact with our dApp but you need to have a wallet connected to the Base sepolia network",
         img: tabImg1
     },
     {
         tab: "tabTwo",
-        title: "AXIE INFINITY",
-        rate: "60%",
-        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
+        title: "CARTESI",
+        rate: "90%",
+        text: "Nebularduel's backend and complex code is currently runining on the Cartesi Rollup infrastructure, this is to enable us build and run more complex application in our Dapp withoit considering the gas cost. Our backend is currently built with rust and this is all thanks to Cartesi",
         img: tabImg2
     },
     {
         tab: "tabThree",
-        title: "THE WALKING DEAD",
-        rate: "75%",
-        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
+        title: "THIRD WEB SDK",
+        rate: "90%",
+        text: "Thanks to Third web we have our very interactive and user friendly wallet connect feauture, to help connect our users to Nebuladuel",
         img: tabImg3
     },
     {
         tab: "tabFour",
-        title: "THE DOGAMI",
+        title: "ETHERS",
         rate: "65%",
-        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
+        text: "Thanks to the Ethers Js Library we are able to help users sign and also authenticate their signatures when they try to interact with NebulaDuel without gas fees",
         img: tabImg4
     },
     {
         tab: "tabFive",
-        title: "THE SANDBOX",
+        title: "NEBULA DUEL RELAYER",
         rate: "75%",
-        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
+        text: "Thanks to our very own home built relayer, we're able to abstract the concept of gas fees from our users who are now able to duel without gas",
         img: tabImg5
     },
     {
         tab: "tabSix",
-        title: "PEGAXY HORSES",
+        title: "CARTESI DEVAD TEAM",
         rate: "85%",
-        text: "Legends are forged when real men prove their mettle in the arena. Prove your strength, eliminate your enemies and emerge in a grand way as a victor",
+        text: "Thanks to the increadible and very friendly Cartesi DevAd temam, we're able to build and also delpoy Nebuladuel without major issues",
         img: tabImg6
     }
 ]
@@ -112,7 +112,7 @@ const TopGamers = () => {
 
 
     return (
-        <section className="w-full bg-cover bg-area bg-[top-center] bg-no-repeat">
+        <section className="w-full bg-cover bg-area bg-[top-center] bg-no-repeat px-10">
             {/* TAB */}
             <main className="md:py-[130px] py-24">
                 <div className="container">
@@ -123,15 +123,15 @@ const TopGamers = () => {
                                 className="text-center mb-[60px] relative after:content-[''] after:block after:bg-myGreen after:w-[65px] after:h-[5px] after:mt-5 after:mb-0 after:mx-auto">
                                 <Text as="span"
                                     className="block uppercase text-[14px] tracking-[2px] font-semibold text-[#45f882] leading-none mt-0 mb-[7px] mx-0  sm:mt-0 sm:mb-2.5 sm:mx-0 xsm:mt-0 xsm:mb-2.5 xsm:mx-0">know
-                                    about us</Text>
+                                    about our partners</Text>
                                 <Text as="h3" className=" md:text-[45px] text-center mt-2 text-4xl font-extrabold tracking-[1px] m-0
                             sm:text-[35px] sm:leading-[1.1]
                             xsm:text-[35px] uppercase xsm:leading-[1.1]
-                            ">top rated steamers</Text>
+                            ">top rated gammers</Text>
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-wrap mx-[-15px]  justify-center ">
+                    <div className="flex flex-wrap mx-[-15px]  justify-center">
                         <div
                             className="w-10/12 basis-10/12 xl:w-10/12 xl:basis-10/12 lg:w-full lg:basis-full md:w-full md:basis-full sm:w-full sm:basis-full xsm:w-full xsm:basis-full relative px-[15px]">
                             <div className="flex items-center flex-wrap justify-center gap-[15px_35px] mt-0 mb-10 mx-0">
@@ -225,7 +225,7 @@ const TopGamers = () => {
             {/* End of Tab */}
 
             {/* Slides */}
-            <main className="w-full pb-16 overflow-x-hidden">
+            <main className="w-full pb-16 overflow-x-hidden my-20">
                 <Slides />
             </main>
         </section>

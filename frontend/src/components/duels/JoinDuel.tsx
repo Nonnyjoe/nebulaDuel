@@ -18,11 +18,11 @@ import fetchNotices from '../../utils/readSubgraph.js';
 
 
 
-interface Duel {
-    duel_id: number;
-    duel_creator: string;
-    // duel_data: string;
-  }
+// interface Duel {
+//     duel_id: number;
+//     duel_creator: string;
+//     // duel_data: string;
+//   }
 
 interface CharacterDetails {
     id: number;
@@ -227,25 +227,25 @@ const JoinDuelComp = () => {
             setSubmiting(false);
         }
 
-        function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
-            // Filter duels by the given duel_creator
-            const filteredDuels = duels.filter(duel => (duel.duel_creator).toLowerCase() === creator.toLowerCase());
+        // function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
+        //     // Filter duels by the given duel_creator
+        //     const filteredDuels = duels.filter(duel => (duel.duel_creator).toLowerCase() === creator.toLowerCase());
           
-            if (filteredDuels.length === 0) {
-              return null; // Return null if no duels are found for the given creator
-            }
-          console.log("see them", filteredDuels);
-            // Find the duel with the highest id
-            let highestIdDuel = filteredDuels[0];
+        //     if (filteredDuels.length === 0) {
+        //       return null; // Return null if no duels are found for the given creator
+        //     }
+        //   console.log("see them", filteredDuels);
+        //     // Find the duel with the highest id
+        //     let highestIdDuel = filteredDuels[0];
     
-            for (let i = 0; i < filteredDuels.length; i++) {
-              if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
-                highestIdDuel = filteredDuels[i];
-              }
-            }
+        //     for (let i = 0; i < filteredDuels.length; i++) {
+        //       if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
+        //         highestIdDuel = filteredDuels[i];
+        //       }
+        //     }
           
-            return highestIdDuel;
-          }
+        //     return highestIdDuel;
+        //   }
 
 
     const toggleCharacterSelection = (character: CharacterDetails) => {

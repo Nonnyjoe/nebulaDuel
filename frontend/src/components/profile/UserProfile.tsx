@@ -176,7 +176,7 @@ const UserProfile = () => {
           as="h2"
           className="font-bold text-center uppercase lg:text-5xl md:text-4xl text-2xl font-barlow"
         >
-          Create your profile
+          { profileData != null && profileData != undefined ? "Update your profile" : "Create your profile"}
         </Text>
         <Text
           as="p"

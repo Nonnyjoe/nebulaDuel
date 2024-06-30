@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import * as THREE from "three"
+import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+// import React, { useState, useEffect, useMemo, useRef } from 'react';
+// import * as THREE from "three"
 // import { demoLog2 } from './BattleData';
 // import fetchNotices from '../../utils/readSubgraph';
 // import { useActiveAccount } from 'thirdweb/react';
@@ -7,7 +8,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import charactersdata from '../../utils/Charactersdata';
 import readGameState from '../../utils/readState';
 import { Canvas } from '@react-three/fiber';
-import { Suspense } from 'react';
+// import { Suspense } from 'react';
 // import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { useAnimations, useGLTF } from '@react-three/drei';
 import { Html, useProgress } from '@react-three/drei'
@@ -16,11 +17,7 @@ import { SkeletonUtils } from 'three/examples/jsm/Addons.js';
 import { ImageWrap } from '../atom/ImageWrap';
 // import charactersdata from '../../utils/Charactersdata';
 import Popup from './Popup';
-<<<<<<< HEAD
-import signMessages from '../../utils/relayTransaction';
-=======
-import { useFrame } from '@react-three/fiber';
->>>>>>> 9f4f4dbb0993a7b67438ae7cc3e88c2240432de7
+// import { useFrame } from '@react-three/fiber';
 
 type BattleLogStep = [number, number];
 
@@ -42,6 +39,7 @@ interface CharacterDetails {
   total_wins: number;
   img: string;
   model: string;
+  animiation_code: number;
 }
 
 
@@ -49,6 +47,7 @@ interface CharacterDetails {
 interface CharacterModelProps {
   modelPath: string;
   creator: boolean;
+  animiation_code: number;
 }
 
 
@@ -62,7 +61,7 @@ function Loader() {
 
 
 
-const CharacterModel: React.FC<CharacterModelProps> = ({ modelPath, creator }) => {
+const CharacterModel: React.FC<CharacterModelProps> = ({ modelPath, creator, animiation_code }) => {
   const okref = useRef();
   const model = useGLTF(modelPath);
   const clone = useMemo(() => SkeletonUtils.clone(model.scene), [model.scene]);
@@ -70,7 +69,7 @@ const CharacterModel: React.FC<CharacterModelProps> = ({ modelPath, creator }) =
   const { actions, names } = useAnimations(model.animations, okref);
   // actions[names[0]]?.reset().play();
   useEffect(() => {
-    actions[names[1]]?.reset().fadeIn(0.5).play()
+    actions[names[animiation_code]]?.reset().fadeIn(0.5).play()
   }, [])
   
   // console.log(names)
@@ -197,6 +196,7 @@ const GameLayout = () => {
               ...cPayload[i],
               img: characterData ? characterData.img : undefined,
               model: characterData ? characterData.model : undefined,
+              animiation_code: 4,
             };
             creatorPlaceholder.push(details);
           }
@@ -220,6 +220,7 @@ const GameLayout = () => {
               ...pPayload[i],
               img: characterData ? characterData.img : undefined,
               model: characterData ? characterData.model : undefined,
+              animiation_code: 4,
             };
             opponentPlaceholder.push(details);
           }
@@ -327,19 +328,31 @@ const GameLayout = () => {
       fromElement.style.transition = 'transform 1s';
 
 
+      setCreatorCharacterDetails((prevDetails) =>
+        prevDetails.map((character) =>
+          character.id === fromChar.character_id ? { ...character, animiation_code: 0 } : character
+        )
+      );
+
+      setOpponetCharacterDetails((prevDetails) =>
+        prevDetails.map((character) =>
+          character.id === fromChar.character_id ? { ...character, animiation_code: 0 } : character
+        )
+      );
+
+
+
       setTimeout(() => {
         fromElement.style.transform = '';
         fromElement.style.transition = 'transform 1s';
 
-        setTimeout(() => {
-          setCurrentStep(step + 1);
 
           // MODIFY CHARACTER STATS AFTER EACH BATTLE ROUND
           if (fromChar.owner == duelCreator) {
 
             setCreatorCharacterDetails((prevDetails) =>
               prevDetails.map((character) =>
-                character.id === fromChar.character_id ? { ...character, health: fromChar.health, strength: fromChar.strength, attack: fromChar.attack } : character
+                character.id === fromChar.character_id ? { ...character, health: fromChar.health, strength: fromChar.strength, attack: fromChar.attack, animiation_code: 4 } : character
               )
             );
             console.log("CREATOR DUEL MODOFIED.........", JSON.parse(duelData?.battle_log)[step][0]);
@@ -347,7 +360,7 @@ const GameLayout = () => {
           } else {
             setOpponetCharacterDetails((prevDetails) => {
               return prevDetails.map((character) =>
-                character.id === fromChar.character_id ? { ...character, health: fromChar.health, strength: fromChar.strength, attack: fromChar.attack } : character
+                character.id === fromChar.character_id ? { ...character, health: fromChar.health, strength: fromChar.strength, attack: fromChar.attack, animiation_code: 4 } : character
               );
             });
             console.log("OPPONENT DUEL MODOFIED.........");
@@ -358,7 +371,7 @@ const GameLayout = () => {
 
             setCreatorCharacterDetails((prevDetails) => {
               return prevDetails.map((character) =>
-                character.id === toChar.character_id ? { ...character, health: toChar.health, strength: toChar.strength, attack: toChar.attack } : character
+                character.id === toChar.character_id ? { ...character, health: toChar.health, strength: toChar.strength, attack: toChar.attack, animiation_code: 4 } : character
               );
             });
             console.log("CREATOR DUEL MODOFIED.........");
@@ -366,13 +379,16 @@ const GameLayout = () => {
           } else {
             setOpponetCharacterDetails((prevDetails) => {
               return prevDetails.map((character) =>
-                character.id === toChar.character_id ? { ...character, health: toChar.health, strength: toChar.strength, attack: toChar.attack } : character
+                character.id === toChar.character_id ? { ...character, health: toChar.health, strength: toChar.strength, attack: toChar.attack, animiation_code: 4 } : character
               );
             });
             console.log("OPPONENT DUEL MODOFIED.........");
 
           }
 
+
+        setTimeout(() => {
+          setCurrentStep(step + 1);
           animateStep(step + 1);
         }, 1000);
       }, 1000);
@@ -383,18 +399,14 @@ const GameLayout = () => {
     }
   };
 
-  const renderAnimations = async() => {
-    if (duelData?.difficulty == "P2P" && duelData.is_completed == false) {
-      const dataObject = {"func": "fight", "duel_id": duelId};  
-      const txhash = await signMessages(dataObject);
-      console.log("TX HASH: ", txhash);
-    } else {
-      if (!isAnimating) {
-        setCurrentStep(0);
-        animateStep(0);
-        setIsAnimating(false);
-        setCurrentStep(0);
-      }
+  const renderAnimations = () => {
+    if (!isAnimating) {
+      setCurrentStep(0);
+      // setCreatorCharacterDetails(creatorCharacterDetailsB);
+      // setOpponetCharacterDetails(opponentCharacterDetailsB);
+      animateStep(0);
+      setIsAnimating(false);
+      setCurrentStep(0);
     }
   };
 
@@ -416,6 +428,7 @@ const GameLayout = () => {
         <div className="text-myGreen font-belanosima text-xl text-center font-medium p-5 h-fit ">
           Creator Warriors
         </div>
+        <p className=' text-center'> {duelData ? `${duelData.duel_creator.slice(0,9)}........${duelData.duel_creator.slice(-10)}` : "0x00" }</p>
         <p className='mb-6 text-center font-poppins'> {duelData?.opponents_strategy} </p>
         <div className='grid md:gap-6 gap-3'>
           {creatorCharacterDetails?.map((item, index) => (
@@ -470,7 +483,7 @@ const GameLayout = () => {
                     <directionalLight position={[3.3, 1.0, 4.4]} intensity={5} />
                     <directionalLight intensity={16} position={[1, 1, 1]} castShadow shadow-mapSize={2048} shadow-bias={-0.0001} />
                     <Suspense fallback={<Loader />}>
-                      <CharacterModel modelPath={warrior?.model} creator={true} />
+                      <CharacterModel modelPath={warrior?.model} creator={true} animiation_code={warrior.animiation_code} />
                     </Suspense>
                   </Canvas>
                 </div>
@@ -489,7 +502,7 @@ const GameLayout = () => {
                     <directionalLight position={[1, 1, 1]} intensity={5} />
                     <directionalLight intensity={16} position={[3.3, 1.0, 4.4]} castShadow shadow-mapSize={2048} shadow-bias={-0.0001} />
                     <Suspense fallback={<Loader />}>
-                      <CharacterModel modelPath={warrior?.model} creator={false} />
+                      <CharacterModel modelPath={warrior?.model} creator={false} animiation_code={warrior.animiation_code} />
                     </Suspense>
                   </Canvas>
                 </div>
@@ -498,7 +511,7 @@ const GameLayout = () => {
           </div>
         </div>
         <div className="w-[100%] flex mt-10">
-          <button className=' mx-auto flex border px-12 rounded-md py-4 cursor-pointer hover:bg-green-800 hover:border-white' onClick={() => renderAnimations()} disabled={isAnimating} >
+          <button className=' mx-auto flex border px-12 rounded-md py-4 cursor-pointer hover:bg-green-800 hover:border-white disabled:bg-red-600' onClick={() => renderAnimations()} disabled={isAnimating} >
             <p className=' font-belanosima'> Start Game</p>
           </button>
         </div>
@@ -508,6 +521,7 @@ const GameLayout = () => {
         <div className="text-myGreen font-belanosima text-xl text-center font-medium p-5 h-fit ">
           Opponent Warriors
         </div>
+        <p className=' text-center'> {duelData.length> 10 ? `${duelData.duel_opponent.slice(0,9)}........${duelData.duel_opponent.slice(-10)}` : "Nebula BOT" }</p>
         <p className='mb-6 text-center font-poppins'> {duelData?.opponents_strategy} </p>
         <div className='grid md:gap-6 gap-3'>
           {opponentCharacterDetails?.map((item, index) => (
