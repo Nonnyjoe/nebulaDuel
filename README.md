@@ -1,9 +1,24 @@
 # NEBULA DUEL
 ... zero player game built on Cartesi.
 
-![image](https://github.com/Nonnyjoe/nebulaDuel/assets/95226065/2b7d6a18-1df5-43ab-a521-48ed103a9509)
+![image](frontend/public/HomePage.png)
 
 Nebula duel is built for persons that love the thrills and entertainment of the gaming world. Players get to purchase their favorite warriors, create duels or join already created ones. At the end of each duel, only one winner emerges.
+
+
+## COMPONENTS OF NEBULADUEL
+#### Backend bulit with rust and deployed on Cartesi (Base network).
+#### Frontend Built with react and a complex integration with 3d models.
+#### Relayer built with nodejs and ethers.
+
+
+## User interaction flow:
+- Users basically interact with the frontend by signing a transaction with their wallets. they only need to sign this transactions hence they do not pay gas fees for that.
+- Their signed transactions are sent to out backend which verifies the signatures then relays these transactions to out smart contract on BASE Sepolia (Input box contract).
+- Information relayed to our dapp is picked up by the Cartesi Node and sent to out logic implementation on cartesi where teh execution is carried out before being sent back to the Base.
+- Information on out frontend are picked up from our subgraph made available by cartesi.
+
+![image](frontend/public/purchase_characters.png)
 
 **How to get started**
 
@@ -63,7 +78,20 @@ If you discover a bug or would like to suggest a feature, please open an issue i
 
 
 
+## OTHER IMAGES 
+
+### PURCHASE CHARACTERS
+![image](frontend/public/purchase_characters.png)
 
 
+### CREATE DUELS
+![image](frontend/public/create_duel.png)
 
+
+### VIEW AVAILABLE DUELS
+![image](frontend/public/Available_duels.png)
+
+
+### BATTLE
+![image](frontend/public/battle.png)
 

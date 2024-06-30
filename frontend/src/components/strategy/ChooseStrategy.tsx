@@ -217,6 +217,7 @@ const ChooseStrategy = () => {
                    const {Status, request_payload} = await readGameState(`duels/${duelId}`);
                     
                     if (Status) {
+                        
                             console.log("GETTING TX DATA HERE", request_payload);
                             if (duelCreator == activeAccount?.address.toLowerCase()  && request_payload.creators_strategy != "Yet_to_select") {
                                 toast.success("Transaction Successful.. Duel Created", {
@@ -235,6 +236,7 @@ const ChooseStrategy = () => {
                                     position: 'top-right'
                                 });
                                 setSubmiting(false);
+                                
                             }
                     }
                     

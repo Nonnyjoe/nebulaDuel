@@ -521,7 +521,7 @@ const GameLayout = () => {
         <div className="text-myGreen font-belanosima text-xl text-center font-medium p-5 h-fit ">
           Opponent Warriors
         </div>
-        <p className=' text-center'> {duelData.length> 10 ? `${duelData.duel_opponent.slice(0,9)}........${duelData.duel_opponent.slice(-10)}` : "Nebula BOT" }</p>
+        <p className=' text-center'> {duelData?.length> 10 ? `${duelData.duel_opponent.slice(0,9)}........${duelData.duel_opponent.slice(-10)}` : "Nebula BOT" }</p>
         <p className='mb-6 text-center font-poppins'> {duelData?.opponents_strategy} </p>
         <div className='grid md:gap-6 gap-3'>
           {opponentCharacterDetails?.map((item, index) => (
