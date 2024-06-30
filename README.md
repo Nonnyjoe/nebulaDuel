@@ -5,17 +5,23 @@
 
 Nebula duel is built for persons that love the thrills and entertainment of the gaming world. Players get to purchase their favorite warriors, create duels or join already created ones. At the end of each duel, only one winner emerges.
 
+<br/>
+<br/>
 
 ## DEMO VIDEO
 [DEMO VIDEO ON YOUTUBE ](https://youtu.be/_3c-XJvmBMo)
 
 
+<br/>
+<br/>
 
 ## COMPONENTS OF NEBULADUEL
-#### Backend bulit with rust and deployed on Cartesi (Base network).
-#### Frontend Built with react and a complex integration with 3d models.
-#### Relayer built with nodejs and ethers.
+#### - Backend bulit with rust and deployed on Cartesi (Base network).
+#### - Frontend Built with react and a complex integration with 3d models.
+#### - Relayer built with nodejs and ethers.
 
+<br/>
+<br/>
 
 ## User interaction flow:
 - Users basically interact with the frontend by signing a transaction with their wallets. they only need to sign this transactions hence they do not pay gas fees for that.
@@ -25,7 +31,10 @@ Nebula duel is built for persons that love the thrills and entertainment of the 
 
 ![image](frontend/public/purchase_characters.png)
 
-**How to get started**
+<br/>
+<br/>
+
+# How to get started
 
 ## Create profile
 
