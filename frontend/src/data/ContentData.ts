@@ -16,8 +16,12 @@ export const NavLinks: NavArray = [
     path: "/",
   },
   {
-    name: "Join Duel",
-    path: "/duels",
+    name: "Create Duel",
+    dropdown: [
+      { name: "AI Duel", path: "/aiduel" },
+      { name: "P2P Duels", path: "/duels" },
+      // { name: "Your Characters", path: "/profile/yourcharacters" },
+    ],
   },
   {
     name: "Market place",

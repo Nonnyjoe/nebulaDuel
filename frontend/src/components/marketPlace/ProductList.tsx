@@ -17,7 +17,7 @@ const ProductList = ({ data }: { data: typeof charactersdata }) => {
       <section className="w-full grid lg:grid-cols-3 md:grid-cols-2 lg:gap-8 md:gap-5 gap-8">
         {data.map((item) => (
           <Link
-            to={`/marketplace/${item.id}`}
+            to={`/marketplace`}
             className="w-full rounded-md p-5 border border-myBlack hover:border-gray-500 bg-myBlack"
             key={item.id}
           >
@@ -41,7 +41,7 @@ const ProductList = ({ data }: { data: typeof charactersdata }) => {
                     as="span"
                     className="text-myGreen font-barlow font-bold"
                   >
-                    ${item.price}
+                    {item.price} Points
                   </Text>
                 </div>
               </div>

@@ -93,8 +93,8 @@ const Footer = () => {
                 <div className="container">
                     <div className="flex flex-wrap  items-center ">
                         <div className=" text-center ">
-                            <p className=" md:text-[14px] text-xs font-semibold uppercase text-[#9f9f9f] m-0 font-Barlow">Copyright ©
-                                2023 - All Rights Reserved By <span className=" text-[#45f882]">Nebula</span></p>
+                            <p className=" md:text-[14px] text-xs font-semibold uppercase text-[#9f9f9f] m-0 font-poppins  w-[90vw]">
+                                <span className="ml-20 float-left"> Copyright © 2023 - All Rights Reserved By <span className=" text-[#45f882]">Nebula</span> </span> <span className=" text-right float-right font-poppins">  MODEL REFERNCES FROM <span className="text-[#45f882]">MAXIMO </span> </span> </p> 
                         </div>
                     </div>
                 </div>

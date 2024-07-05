@@ -1,6 +1,7 @@
 import {hexToString} from 'viem';
+// import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 
-
+// Initialize Apollo Client
 async function fetchNotices(request: string) {
     const url = 'https://nebuladuel.fly.dev/graphql';
     const query = `
@@ -79,8 +80,8 @@ function fetch_profiles(specific_tx: any) {
             highest_id = player_profiles[i].tx_id;
         }
     }
-    console.log("All Player Profiles: ", JSON.parse(highest_id?.data));
-    return JSON.parse(highest_id.data);
+    // console.log("All Player Profiles: ", JSON.parse(highest_id?.data));
+    return highest_id.data ? JSON.parse(highest_id.data) : [];
 }
 
 function fetch_characters(specific_tx: any) {
@@ -93,8 +94,8 @@ function fetch_characters(specific_tx: any) {
             highest_id = all_characters[i].tx_id;
         }
     }
-    console.log("All Player Characters: ", JSON.parse(highest_id?.data));
-    return JSON.parse(highest_id?.data);
+    // console.log("All Player Characters: ", JSON.parse(highest_id?.data));
+    return highest_id?.data ?  JSON.parse(highest_id?.data): [ ];
 }
 
 function fetch_duels(specific_tx: any) {
@@ -109,8 +110,8 @@ function fetch_duels(specific_tx: any) {
         }
     }
     // console.log("All Player Characters: ", JSON.parse(highest_id));
-    console.log("All Player Characters: ", (highest_id));
-    return JSON.parse(highest_id?.data);
+    // console.log("All Player Characters: ", (highest_id));
+    return highest_id?.data ?  JSON.parse(highest_id?.data): [ ];
 }
 
 function fetch_ai_duels(specific_tx: any) {
@@ -125,8 +126,8 @@ function fetch_ai_duels(specific_tx: any) {
         }
     }
     // console.log("All Player Characters: ", JSON.parse(highest_id));
-    console.log("All Player Characters: ", (highest_id));
-    return JSON.parse(highest_id?.data);
+    // console.log("All Player Characters: ", (highest_id));
+    return highest_id?.data ?  JSON.parse(highest_id?.data) : [];
 }
 
 function fetch_all_tx(all_tx: any) {
@@ -138,9 +139,9 @@ function fetch_all_tx(all_tx: any) {
             highest_id = all_tx[i].tx_id;
         }
     }
-    console.log("All Player Characters: ", JSON.parse(highest_id?.data));
+    // console.log("All Player Characters: ", JSON.parse(highest_id?.data));
     // console.log("All Player Characters: ", (highest_id));
-    return JSON.parse(highest_id?.data);
+    return highest_id?.data ? JSON.parse(highest_id?.data) : [];
 }
 
 
