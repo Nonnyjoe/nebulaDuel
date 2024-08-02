@@ -1,29 +1,68 @@
-# Canvas Game
+# Nebula NFT
 
 > Dynamic global game state controlled by user-owned game NFTs.
 
 ## Background
 
-Tableland makes it possible for an event-driven architecture that dynamically updates NFT metadata. In this tutorial, users are able to openly mint "pixel" NFTs that mutate a global game state table. The `Nebula NFT` contract owns a Tableland table and writes all mutating SQL statements, but the mutating SQL statement first check the caller's token ownership before changing any metadata.
+Tableland makes it possible for an event-driven architecture that dynamically updates NFT metadata. In this Project, users are able to update their game character details. The `Nebula NFT` contract owns a Tableland table and writes all mutating SQL statements, but the mutating SQL statement first check the caller's token ownership before changing any metadata.
 
-A metadata table holds data for the token ID and these coordinates, allowing for ERC721 metadata to be composed:
+A metadata table holds data for the token ID and these coordinates, allowing for each character metadata to be composed:
 
 ```sql
 SELECT
   json_object(
-    'name', 'Token #' || id,
-    'external_url', '<external_url>',
-    'attributes',
-    json_array(
+    'name', '',
+    'image', '',
+    'attributes', json_array(
       json_object(
-        'display_type', 'number',
-        'trait_type', 'x',
-        'value', x
+        'display_type', 'text',
+        'trait_type', 'owner',
+        'value', ''
       ),
       json_object(
         'display_type', 'number',
-        'trait_type', 'y',
-        'value', y
+        'trait_type', 'id',
+        'value', 0
+      ),
+      json_object(
+        'display_type', 'number',
+        'trait_type', 'price',
+        'value', 0
+      ),
+      json_object(
+        'display_type', 'number',
+        'trait_type', 'health',
+        'value', 0
+      ),
+      json_object(
+        'display_type', 'number',
+        'trait_type', 'strength',
+        'value', 0
+      ),
+      json_object(
+        'display_type', 'number',
+        'trait_type', 'attack',
+        'value', 0
+      ),
+      json_object(
+        'display_type', 'number',
+        'trait_type', 'speed',
+        'value', 0
+      ),
+      json_object(
+        'display_type', 'text',
+        'trait_type', 'superPower',
+        'value', ''
+      ),
+      json_object(
+        'display_type', 'number',
+        'trait_type', 'totalWins',
+        'value', 0
+      ),
+      json_object(
+        'display_type', 'number',
+        'trait_type', 'totalLoss',
+        'value', 0
       )
     )
   )
@@ -35,52 +74,6 @@ WHERE
 
 For a detailed walkthrough, [check out the docs](https://docs.tableland.xyz/tutorials/dynamic-nft-solidity).
 
-### Project structure
-
-If you're following along, the following outlines steps needed to recreate the structure in this repository. These steps are not needed if you simply clone or fork this repo.
-
-First, set up a Hardhat project by creating a directory, `cd` into it, and then run the following:
-
-```bash
-npx hardhat
-```
-
-You'll need the following dependencies:
-
-- `@tableland/evm`
-- `@openzeppelin/contracts-upgradeable`
-
-Do this will the following command:
-
-```bash
-npm i @tableland/evm @openzeppelin/contracts-upgradeable
-```
-
-And development dependencies of `@tableland/local`, `@tableland/hardhat`, and `dotenv`:
-
-```bash
-npm i -D @tableland/local @tableland/hardhat dotenv
-```
-
-From there, the `contracts/Lock.sol` (and the contract name) should be changed to `contracts/NebulaNFT.sol`, and four scripts should be created in the `scripts` directory:
-
-- `deploy.ts`
-- `move.ts`
-- `upgrade.ts`
-- `verify.ts`
-
-Be sure to also update the `config` object in `hardhat.config.ts` with information needed for the Tableland Hardhat plugin.
-
-```js
-// ...
-localTableland: {
-  silent: false,
-  verbose: false,
-},
-// ...
-```
-
-The linked tutorial on the docs site walks through the rest of the setup and code.
 
 ## Usage
 
@@ -90,7 +83,7 @@ If you're simply cloning this repo, first, install dependencies with `npm`:
 npm install
 ```
 
-You'll also want to ensure you `.env` variables set up—copy the `.env.example` into `.env` and update the placeholders if you plan to deploy to a live network, such as Polygon Mumbai: `POLYGON_MUMBAI_PRIVATE_KEY`, `POLYGON_MUMBAI_API_KEY`, and `POLYGONSCAN_API_KEY`.
+You'll also want to ensure you `.env` variables set up—copy the `.env.example` into `.env` and update the placeholders if you plan to deploy to a live network, such as Base Sepolia: `BASE_SEPOLIA_PRIVATE_KEY`, `BASE_SEPOLIA_API_KEY`, and `BASESCAN_API_KEY`.
 
 If you are developing locally, you'll first want to start a local Hardhat and Tableland node:
 
@@ -117,30 +110,19 @@ export const deployments: { [key: string]: string } = {
 The following scripts are also available:
 
 - `move.ts`: extensive test of all the functions.
-- `upgrade.ts`: Upgrade your contract upon code changes.
+- `upgrade.ts`: Upgrade the contract upon code changes.
 - `verify.ts`: Verify the contract on live networks.
 
-If you would like to deploy to Polygon Mumbai, as an example, simply change the `--network` flag:
+If you would like to deploy to Base Sepolia, as an example, simply change the `--network` flag:
 
 ```bash
-npx hardhat run scripts/deploy.ts --network maticmum
+npx hardhat run scripts/deploy.ts --network base-sepolia
 ```
 
-### Testing
-
-Tests use Local Tableland and can be ran with `npm run test`, which runs the following under the hood:
-
-```bash
-npx hardhat --network localhost test
-```
-
-This spins up a Tableland and Hardhat node temporarily, so be sure to close out any running instances of these nodes when running tests.
 
 ### Example output
 
-The following contract was deployed on Polygon Mumbai: [`0xd0071F2343E9Ea8993356DD491588C3B1329d131`](https://mumbai.polygonscan.com/address/0xd0071F2343E9Ea8993356DD491588C3B1329d131#writeProxyContract). An ERC721 example query of the `metadata` can be viewed [here](https://testnets.tableland.network/api/v1/query?statement=SELECT%20*%20FROM%20NebulaNFT_84532_52).
-
-
+The following contract was deployed on Base Sepolia: [`0xd0071F2343E9Ea8993356DD491588C3B1329d131`](https://mumbai.polygonscan.com/address/0xd0071F2343E9Ea8993356DD491588C3B1329d131#writeProxyContract). An ERC721 example query of the `metadata` can be viewed [here](https://testnets.tableland.network/api/v1/query?statement=SELECT%20*%20FROM%20NebulaNFT_84532_52).
 
 
 
