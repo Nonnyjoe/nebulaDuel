@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@apollo/client": "^3.10.8",
+    "@apollo/client": "^3.11.2",
     "@react-three/drei": "^9.107.0",
     "@react-three/fiber": "^8.16.8",
     "@types/axios": "^0.14.0",
