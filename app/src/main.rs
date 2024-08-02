@@ -52,6 +52,23 @@ fn remove_first_two_chars(s: &str) -> String {
 }
 
 fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
+    let base_contracts: BaseContracts = BaseContracts::new();
+    if msg_sender == base_contracts.erc20_portal {
+        handle_deposit(hex_str, msg_sender.to_string(), storage);
+        return;
+    } else if msg_sender == base_contracts.erc721_portal {
+        handle_deposit_character_as_nft(hex_str, msg_sender.to_string(), storage);
+        return;
+    }
+    // {"data": "{\"func\":\"create_player\",\"monika\":\"NonnyJoe\",\"avatar_url\":\"nonnyjoe_image1\"}", "signer": "0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8", "target": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"}
+    // ETH_RPC_URL=http://127.0.0.1:8545 ETH_FROM=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 cast send  0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB "depositERC20Tokens(address,address,uint256,bytes)" 0x92C6bcA388E99d6B304f1Af3c3Cd749Ff0b591e2 0xab7528bb862fb57e8a2bcd567a2e929a0be56a5e 1000 '0x' --from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --private-key ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    // ETH_RPC_URL=http://127.0.0.1:8545 ETH_FROM=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 cast send  0x92C6bcA388E99d6B304f1Af3c3Cd749Ff0b591e2 "approve(address,uint256)" 0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB 1000 --from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --private-key ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+    // NFT INTERACTION
+    // ETH_RPC_URL=http://127.0.0.1:8545 ETH_FROM=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 cast send  0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E "setApprovalForAll(address,bool)" 0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87 true --from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --private-key ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    // ETH_RPC_URL=http://127.0.0.1:8545 ETH_FROM=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 cast send  0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E "mint(address, uint256)" 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 1 --from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --private-key ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+    // ETH_RPC_URL=http://127.0.0.1:8545 ETH_FROM=0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 cast send  0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87 "depositERC721Token(address,address,uint256,bytes, bytes)" 0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E 0xab7528bb862fb57e8a2bcd567a2e929a0be56a5e 1 '0x' '0x' --from 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --private-key ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
     // Decode the hex string to a byte array
     let bytes = hex::decode(hex_str).expect("Failed to decode hex string");
 
@@ -59,22 +76,15 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stam
     let json_string: &str = str::from_utf8(&bytes).expect("Failed to convert bytes to string");
 
     let bc_payload: &str = json_string.clone();
-    let base_contracts: BaseContracts = BaseContracts::new();
+
     
     // Parse the JSON string to a JsonValue using the `json` crate
     let parsed_json: JsonValue = parse(json_string).expect("Failed to parse JSON");
 
-    if msg_sender == base_contracts.erc20_portal {
-        handle_deposit(bc_payload, msg_sender.to_string(), storage);
-
-    } else if msg_sender == base_contracts.dapp_relayer {
+    if msg_sender == base_contracts.dapp_relayer {
         storage.dapp_contract_address = bc_payload.to_string().to_lowercase();
-
-    } else if msg_sender == base_contracts.erc721_portal {
-        handle_deposit_character_as_nft(bc_payload, msg_sender.to_string(), storage);
-        
-    // {"data": "{\"func\":\"create_player\",\"monika\":\"NonnyJoe\",\"avatar_url\":\"nonnyjoe_image1\"}", "signer": "0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8", "target": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"}
-    } else if msg_sender == storage.relayer_addr {
+ 
+    } else if msg_sender.to_lowercase() == storage.relayer_addr {
         println!("{}", storage.relayer_addr);
         println!("RECEIVED RELAYER SPONSORED TX");
         // Destructure the JsonValue to access the fields
