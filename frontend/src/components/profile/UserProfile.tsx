@@ -11,6 +11,7 @@ import { useActiveAccount } from "thirdweb/react";
 import { useNavigate } from 'react-router-dom';
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
+import FundAccount from "../funding/deposit-token.tsx";
 // import readGameState from "../../utils/readState.tsx";
 
 
@@ -254,6 +255,7 @@ const UserProfile = () => {
                     {profileData.cartesi_token_balance || 0} $Neb
                   </Text>
                 </Text>
+                <FundAccount/>
               </div>
             </div>
           </div>
