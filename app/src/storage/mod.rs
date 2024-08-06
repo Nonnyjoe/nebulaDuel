@@ -58,8 +58,8 @@ impl Storage {
             nebula_token_address: String::from("0x92c6bca388e99d6b304f1af3c3cd749ff0b591e2"),
             nebula_nft_address: String::from("0xc6582A9b48F211Fa8c2B5b16CB615eC39bcA653B"),
             dapp_contract_address: String::from("0xNebulaNftAddress"),
-            relayer_addr: String::from("0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749").to_lowercase(), // base sepolia
-            // relayer_addr: String::from("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266").to_lowercase(),
+            // relayer_addr: String::from("0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749").to_lowercase(), // base sepolia
+            relayer_addr: String::from("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266").to_lowercase(),
             total_transactions: 0,
             all_transactions: Vec::new(),
             server_addr,
