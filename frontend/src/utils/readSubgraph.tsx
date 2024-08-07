@@ -3,7 +3,8 @@ import {hexToString} from 'viem';
 
 // Initialize Apollo Client
 async function fetchNotices(request: string) {
-    const url = 'https://nebuladuel.fly.dev/graphql';
+    // const url = 'https://nebuladuel.fly.dev/graphql';
+    const url = 'http://localhost:8080/graphql';
     const query = `
       query notices {
         notices {
@@ -72,7 +73,7 @@ async function fetchNotices(request: string) {
   
 
 function fetch_profiles(specific_tx: any) {
-    const player_profiles = specific_tx.filter((tx: any) => tx.method == "create_player");
+    const player_profiles = specific_tx.filter((tx: any) => tx.method == "deposit" || tx.method == "create_player");
     let highest_id;
     for (let i = 0; i < player_profiles.length; i++) {
         highest_id = player_profiles[i];

@@ -353,6 +353,7 @@ pub fn handle_join_duel(payload: &JsonValue, msg_sender: String, storage: &mut S
         let data = &mut storage.all_ai_duels;
         let json_data = duels_to_json(data.to_vec());
         structure_notice(String::from("join_duel"), &mut storage.total_transactions, msg_sender.clone(), json_data.clone(), &mut storage.server_addr);
+        structure_notice(String::from("create_duel"), &mut storage.total_transactions, msg_sender.clone(), json_data.clone(), &mut storage.server_addr);
         
     } else {
         panic!("Parsed JSON is not an object");
@@ -943,13 +944,18 @@ pub fn handle_withdraw(payload: &JsonValue, msg_sender: String, storage: &mut St
 pub fn handle_deposit(payload: &str, msg_sender: String, storage: &mut Storage) {
     match erc20_deposit_parse(payload) {
         Ok((token, receiver, amount)) => {
-            println!("Sender Address: {}", token);
-            println!("Receiver Address: {}", receiver);
+            println!("token Address: {}", token);
+            println!("Sender Address: {}", receiver);
             println!("Amount: {}", amount);
             let deposit_amount: f64 = amount as f64;
+            let deposit_token = "0x".to_string() + token;
+            let token_receiver = "0x".to_string() + receiver;
 
-            if token.to_string() == storage.cartesi_token_address.clone() {
-                market_place::deposit(&mut storage.all_players, receiver.to_string(), deposit_amount);
+            println!("{}", deposit_token);
+            println!("{}", storage.cartesi_token_address.clone());
+            if deposit_token.to_string() == storage.cartesi_token_address.clone() {
+                println!("PROCESSING DEPOSIT TRANSACTION!!!");
+                market_place::deposit(&mut storage.all_players, token_receiver.to_string(), deposit_amount);
                 storage.record_tx(String::from("deposit"), msg_sender.clone(), TransactionStatus::Success);
 
                 let data = &mut storage.all_players;
@@ -996,12 +1002,19 @@ pub fn handle_deposit_character_as_nft(payload: &str, msg_sender: String, storag
         Ok((token, receiver, id)) => {
             println!("Token Address: {}", token);
             println!("Receiver Address: {}", receiver);
-            println!("Amount: {}", id);
+            println!("Token Id: {}", id);
 
-            if token.to_string() == storage.nebula_nft_address.clone() {
-                market_place::deposit_character_as_nft(&mut storage.all_players, &mut storage.all_characters, receiver.to_string(), id, &mut storage.all_offchain_characters);
+            let deposit_token = "0x".to_string() + token;
+            let token_receiver = "0x".to_string() + receiver;
+
+            if deposit_token.to_string() == storage.nebula_nft_address.clone() {
+                println!("PROCESSING DEPOSIT TRANSACTION!!!");
+                market_place::deposit_character_as_nft(&mut storage.all_players, &mut storage.all_characters, token_receiver.to_string(), id, &mut storage.all_offchain_characters);
                 storage.record_tx(String::from("deposit_character_as_nft"), msg_sender.clone(), TransactionStatus::Success);
                 
+                let data = &mut storage.all_players;
+                let json_data = players_profile_to_json(data.to_vec());
+                structure_notice(String::from("deposit"), &mut storage.total_transactions, msg_sender.clone(), json_data, &mut storage.server_addr);
             }
         }
         Err(e) => {
