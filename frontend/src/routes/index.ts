@@ -14,6 +14,7 @@ const ProductDetail = lazy(() => import("../pages/ProductDetail"));
 const Duels = lazy(() => import("../pages/Duels"));
 const JoinDuel = lazy(() => import("../pages/JoinDuel"));
 const AIduel = lazy(() => import("../pages/Aiduel"));
+const UserActivity = lazy(() => import("../pages/userTx"));
 
 type Route = {
   path: string;
@@ -47,6 +48,11 @@ const coreRoutes: coreRoutes = [
     path: "/profile",
     title: "Profile",
     component: Profile,
+  },
+  {
+    path: "/profile/useractivity",
+    title: "User Transactions",
+    component: UserActivity,
   },
   {
     path: "/profile/purchasecharacter",
