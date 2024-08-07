@@ -58,7 +58,8 @@ declare global {
     async function sendTransaction(data: any) {
         console.log("forwarding transaction to relayer........")
         try {
-            const response = await axios.post('https://nebula-relayer.fly.dev/transactions', data, {
+            // const response = await axios.post('https://nebula-relayer.fly.dev/transactions', data, {
+            const response = await axios.post('http://localhost:3000/transactions', data, {
                 headers: {
                     'Content-Type': 'application/json'
                 }

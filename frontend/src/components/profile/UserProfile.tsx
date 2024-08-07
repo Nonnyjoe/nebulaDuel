@@ -252,7 +252,7 @@ const UserProfile = () => {
                     as="span"
                     className="text-myGreen/70 font-poppins"
                   >
-                    {profileData.nebula_token_balance || 0} $Neb
+                    {profileData.cartesi_token_balance || 0} $Neb
                   </Text>
                 </Text>
                 <FundAccount/>

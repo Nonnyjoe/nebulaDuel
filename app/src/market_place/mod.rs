@@ -37,6 +37,9 @@ pub fn withdraw (all_players: &mut Vec<Player>, wallet_address: String, amount: 
     }
 }
 
+
+// function entrypoint(address to, uint256 _tokenid, string memory _name, string memory _image, uint256 health, uint256 strength, uint256 attack, uint256 speed, string memory superPower, uint256 totalWins, uint256 totalLoss) external onlyOwner{}
+
 pub fn withdraw_character_as_nft(all_players: &mut Vec<Player>, all_characters: &mut Vec<Character>, wallet_address: String, character_id: u128, all_offchain_characters: &mut Vec<u128>) {
 
     match find_player(all_players, wallet_address){
