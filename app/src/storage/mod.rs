@@ -1,10 +1,10 @@
-use hyper::Method;
+use crate::ai_battle;
 use crate::battle_challenge::Duel;
 use crate::game_characters::Character;
-use crate::players_profile::{Player, UserTransaction};
 use crate::market_place::SaleDetails;
-use crate::ai_battle;
-use crate::structures::{TransactionData, TransactionStatus, emit_notice};
+use crate::players_profile::{Player, UserTransaction};
+use crate::structures::{emit_notice, TransactionData, TransactionStatus};
+use hyper::Method;
 extern crate json;
 use json::JsonValue;
 
@@ -22,8 +22,8 @@ pub struct Storage {
     pub points_rate: f64,
     pub who_plays_first: u128,
     pub profit_from_stake: f64,
-    pub profit_from_p2p_sales : f64,
-    pub profit_from_points_purchase : f64,
+    pub profit_from_p2p_sales: f64,
+    pub profit_from_points_purchase: f64,
     pub all_offchain_characters: Vec<u128>,
     pub cartesi_token_address: String,
     pub nebula_token_address: String,
@@ -33,13 +33,15 @@ pub struct Storage {
     pub all_transactions: Vec<TransactionData>,
     pub server_addr: String,
     pub relayer_addr: String,
+    pub has_relayed_address: bool,
 }
 
 impl Storage {
-    pub fn new(server_addr: String) -> Self { 
+    pub fn new(server_addr: String) -> Self {
         Self {
             total_players: 0,
-            admin_address: String::from("0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8").to_lowercase(),
+            admin_address: String::from("0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8")
+                .to_lowercase(),
             all_players: Vec::new(),
             all_characters: Vec::new(),
             listed_characters: Vec::new(),
@@ -48,7 +50,7 @@ impl Storage {
             all_ai_duels: Vec::new(),
             available_duels: Vec::new(),
             total_duels: 0,
-            points_rate : 100.00,
+            points_rate: 100.00,
             who_plays_first: 1,
             profit_from_stake: 0.0,
             profit_from_p2p_sales: 0.0,
@@ -62,6 +64,7 @@ impl Storage {
             relayer_addr: String::from("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266").to_lowercase(),
             total_transactions: 0,
             all_transactions: Vec::new(),
+            has_relayed_address: false,
             server_addr,
         }
     }
@@ -77,10 +80,10 @@ impl Storage {
         self.all_transactions.push(new_tx);
 
         let all_tx_string = transaction_to_json(&mut self.all_transactions);
-        let json_structure_string = standard_output_to_json(tx_id, method, caller, all_tx_string).dump();
+        let json_structure_string =
+            standard_output_to_json(tx_id, method, caller, all_tx_string).dump();
 
         emit_notice(&json_structure_string[..], &mut self.server_addr[..]);
-        
     }
 }
 
@@ -95,18 +98,22 @@ impl BaseContracts {
     pub fn new() -> Self {
         Self {
             erc20_portal: String::from("0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB").to_lowercase(),
-            erc721_portal: String::from("0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87").to_lowercase(),
+            erc721_portal: String::from("0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87")
+                .to_lowercase(),
             dapp_relayer: String::from("0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE").to_lowercase(),
             input_box: String::from("0x59b22D57D4f067708AB0c00552767405926dc768").to_lowercase(),
         }
     }
 }
 
-
 pub fn deployment_setup(storage: &mut Storage) {
-    ai_battle::set_up_ai(&mut storage.all_players, &mut storage.total_players, &mut storage.all_characters, &mut storage.total_characters);
+    ai_battle::set_up_ai(
+        &mut storage.all_players,
+        &mut storage.total_players,
+        &mut storage.all_characters,
+        &mut storage.total_characters,
+    );
 }
-
 
 fn transaction_to_json(transactions: &mut Vec<TransactionData>) -> String {
     let mut json_array = JsonValue::new_array();
@@ -114,10 +121,10 @@ fn transaction_to_json(transactions: &mut Vec<TransactionData>) -> String {
     for tx in transactions {
         let mut tx_json = JsonValue::new_object();
 
-        let status = match tx.status{
-            TransactionStatus::Failed => {String::from("Failed")},
-            TransactionStatus::Success => {String::from("Success")},
-            TransactionStatus::Pending => {String::from("Pending")},
+        let status = match tx.status {
+            TransactionStatus::Failed => String::from("Failed"),
+            TransactionStatus::Success => String::from("Success"),
+            TransactionStatus::Pending => String::from("Pending"),
         };
         tx_json["tx_id"] = (tx.tx_id as u64).into();
         tx_json["method"] = tx.method.clone().into();
@@ -128,17 +135,19 @@ fn transaction_to_json(transactions: &mut Vec<TransactionData>) -> String {
     json_array.dump()
 }
 
-
-fn standard_output_to_json(tx_id: u128, method: String, target: String, all_tx_data: String) -> JsonValue {
+fn standard_output_to_json(
+    tx_id: u128,
+    method: String,
+    target: String,
+    all_tx_data: String,
+) -> JsonValue {
     let mut output_json = JsonValue::new_object();
 
     output_json["method"] = method.into();
     output_json["tx_id"] = (tx_id as u64).into();
-    output_json["target"] =target.into();
+    output_json["target"] = target.into();
     output_json["data"] = all_tx_data.into();
     output_json["notice_type"] = String::from("all_tx").into();
 
     output_json
-
 }
-

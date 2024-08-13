@@ -4,27 +4,38 @@ import { Text } from "../atom/Text";
 import { Button } from "../atom/Button";
 import { MdOutlineArrowRightAlt } from "react-icons/md";
 import { FormEvent, useState, useEffect } from "react";
-import { useActiveAccount, useSendTransaction } from "thirdweb/react";
-import { getContract, prepareContractCall, toWei, createThirdwebClient } from "thirdweb";
-import { baseSepolia } from "thirdweb/chains";
+import { useActiveAccount } from "thirdweb/react";
+import { toWei } from "thirdweb";
+// import { anvil } from "thirdweb/chains";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import fetchNotices from "../../utils/readSubgraph.js";
-import { ERC20Portal } from "../../utils/tokenPortal.tsx";
+// import fetchNotices from "../../utils/readSubgraph.js";
+import readGameState from "../../utils/readState.tsx";
+import {
+  ERC20Portal,
+  DAPP,
+  CTSI,
+  ADDRESS_RELAYER,
+} from "../../utils/tokenPortal.tsx";
 import { HiOutlineArrowNarrowLeft } from "react-icons/hi";
-
-
+import { ethers } from "ethers";
+// import { useSendBatchTransaction } from "thirdweb/react";
+import signMessages from "../../utils/relayTransaction";
 
 const UserActivity = () => {
-    const { mutate: sendTransaction } = useSendTransaction();
-    const [userAddress, setUserAddress] = useState<string | any>();
-    const userAccount = useActiveAccount();
-    const navigate = useNavigate();
-    const [profileData, setProfileData] = useState<any>({});
+  //Ethers integration
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+
+  // Page Data's
+  const [userAddress, setUserAddress] = useState<string | any>();
+  const userAccount = useActiveAccount();
+  const navigate = useNavigate();
+  const [profileData, setProfileData] = useState<any>({});
 
   // deposit states
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [depositAmount, setDepositAmount] = useState< string>();
+  const [depositAmount, setDepositAmount] = useState<string>();
 
   // transfer states
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -37,19 +48,24 @@ const UserActivity = () => {
 
   // NFT transfer states
   const [isNftTransferModalOpen, setIsNftTransferModalOpen] = useState(false);
-  const [nftRecipientAddress, setNftRecipientAddress] = useState<string>("");
+  // const [nftRecipientAddress, setNftRecipientAddress] = useState<string>("");
   const [nftTokenId, setNftTokenId] = useState<number | string>();
-
 
   const fetchData = async () => {
     try {
-      let request_payload = await fetchNotices("all_profiles");
-      request_payload = request_payload.filter(
-        (player: any) => player.wallet_address === userAccount?.address.toLowerCase()
+      const { Status, request_payload } = await readGameState(
+        `profile/${userAccount?.address}`
       );
-      if (request_payload.length > 0) {
-        setProfileData(request_payload[0]);
+      if (Status) {
+        setProfileData(request_payload);
       }
+      // request_payload = request_payload.filter(
+      //   (player: any) =>
+      //     player.wallet_address === userAccount?.address.toLowerCase()
+      // );
+      // if (request_payload.length > 0) {
+      //   setProfileData(request_payload[0]);
+      // }
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -69,48 +85,95 @@ const UserActivity = () => {
 
   const handleDeposit = async (e: FormEvent) => {
     e.preventDefault();
+    console.log("Attempting to deposit transaction");
     try {
-        if (!depositAmount || isNaN(Number(depositAmount))) {
-          toast.info("Please enter a valid amount.");
-          return;
-        }
-  
-        setIsDepositModalOpen(false);
-  
-        const client = createThirdwebClient({ clientId: "300fad8a1e3799faaef5f0342246ffaf" });
-        const contract = getContract({
-          client,
-          chain: baseSepolia,
-          address: ERC20Portal,
-        });
-  
-          const transaction = await prepareContractCall({
-            contract,
-            method: "function transfer(address to, uint256 value)",
-            params: [ERC20Portal, toWei(depositAmount)],
-          });
-          await sendTransaction(transaction);
-          toast.info("Please confirm transaction in your wallet");
-      } catch (error) {
-        console.error("Error processing deposit:", error);
-        toast.error("An error occurred during the transaction.");
+      if (!depositAmount || isNaN(Number(depositAmount))) {
+        toast.info("Please enter a valid amount.");
+        return;
       }
+
+      setIsDepositModalOpen(false);
+      const abi1 = ["function approve(address receiver, uint256 amount)"];
+      const erc20 = new ethers.Contract(CTSI, abi1, signer);
+      const tx = await erc20.approve(ERC20Portal, toWei(depositAmount));
+      console.log(tx);
+      toast.info("Granting Approval please wait...");
+      await tx.wait();
+
+      toast.success("Approval granted..... Initiating deposit");
+      const abi2 = [
+        "function depositERC20Tokens(address token, address dApp, uint256 amount, bytes payload)",
+      ];
+      const portal = new ethers.Contract(ERC20Portal, abi2, signer);
+      const tx2 = await portal.depositERC20Tokens(
+        CTSI,
+        DAPP,
+        depositAmount,
+        "0x00000000"
+      );
+      console.log(tx2);
+      await tx2.wait();
+      toast.success("Deposit completed, please refreash page");
+    } catch (error) {
+      console.error("Error processing deposit:", error);
+      toast.error("An error occurred during the transaction.");
+    }
   };
 
   const handleTransfer = async (e: FormEvent) => {
     e.preventDefault();
-    //TODO
+    const payload = {
+      func: "transfer_tokens",
+      trf_amount: Number(transferAmount),
+      receiver_add: transferAddress,
+    };
+
+    toast.info("Sending Tx to relayer, please wait...");
+    await signMessages(payload);
+
+    toast.success("Transfer submitted, please refreash page");
+    setIsTransferModalOpen(false);
+    setTransferAddress("");
+    setTransferAmount("");
   };
 
   const handleWithdraw = async (e: FormEvent) => {
     e.preventDefault();
-   //TODO
+    const { Status, request_payload } = await readGameState(
+      `check_relayed_dapp_address`
+    );
+    const payload = { func: "withdraw", amount: Number(withdrawAmount) };
+
+    if (Status) {
+      console.log(request_payload);
+      if (request_payload === "rue") {
+        toast.info("Sending Tx to relayer, please wait...");
+        await signMessages(payload);
+        toast.success("Withdrawal submitted, please refreash page");
+        setIsWithdrawModalOpen(false);
+        setWithdrawAmount("");
+        return;
+      }
+    }
+
+    const abi = ["function relayDAppAddress(address _dapp) external"];
+    const addressRelayer = new ethers.Contract(ADDRESS_RELAYER, abi, signer);
+    const tx = await addressRelayer.relayDAppAddress(DAPP);
+    toast.info("Repalying Dapp address, please wait...");
+    console.log(tx);
+    await tx.wait();
+
+    toast.info("Sending Tx to relayer, please wait...");
+    await signMessages(payload);
+    toast.success("Withdrawal submitted, please refreash page");
+    setIsWithdrawModalOpen(false);
+    setWithdrawAmount("");
   };
 
   const handleNftTransfer = (e: FormEvent) => {
     e.preventDefault();
     // logic to transfer
-    setNftRecipientAddress("");
+    // setNftRecipientAddress("");
     setNftTokenId("");
   };
 
@@ -134,7 +197,11 @@ const UserActivity = () => {
               as="h4"
               className="text-gray-100 text-lg md:text-2xl font-bold font-poppins"
             >
-              {formatAddress(userAddress ? userAddress : "0x00000000000000000000000000000000000")}
+              {formatAddress(
+                userAddress
+                  ? userAddress
+                  : "0x00000000000000000000000000000000000"
+              )}
             </Text>
             <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
               {/* Deposit */}
@@ -195,9 +262,7 @@ const UserActivity = () => {
                             type="text"
                             name="amount"
                             value={depositAmount}
-                            onChange={(e) =>
-                              setDepositAmount(e.target.value)
-                            }
+                            onChange={(e) => setDepositAmount(e.target.value)}
                             placeholder="Enter amount"
                             className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-3 py-3 border border-solid border-gray-300 bg-transparent placeholder:opacity-80 focus:!border-gray-200 focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
                             required
@@ -296,9 +361,7 @@ const UserActivity = () => {
                             type="text"
                             name="amount"
                             value={transferAmount}
-                            onChange={(e) =>
-                              setTransferAmount(e.target.value)
-                            }
+                            onChange={(e) => setTransferAmount(e.target.value)}
                             placeholder="Enter amount"
                             className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-3 py-3 border border-solid border-gray-300 bg-transparent placeholder:opacity-80 focus:!border-gray-200 focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
                             required
@@ -410,7 +473,7 @@ const UserActivity = () => {
                 type="button"
                 className="bg-myGreen text-gray-900 w-full py-2 rounded-md capitalize hover:bg-myYellow flex justify-center items-center gap-1"
               >
-                NFT Transfer <MdOutlineArrowRightAlt />
+                Withdraw NFT <MdOutlineArrowRightAlt />
               </Button>
               {/* <!-- NFT Transfer modal --> */}
               <div
@@ -424,7 +487,7 @@ const UserActivity = () => {
                     {/* <!-- Modal header --> */}
                     <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        NFT Transfer
+                        Withdraw NFT
                       </h3>
                       <button
                         onClick={() => setIsNftTransferModalOpen(false)}
@@ -452,7 +515,7 @@ const UserActivity = () => {
                     {/* <!-- Modal body --> */}
                     <div className="p-4 md:p-5 space-y-4">
                       <form className="w-full " onSubmit={handleNftTransfer}>
-                        <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-gray-300 after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
+                        {/* <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-gray-300 after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                           <label
                             htmlFor="address"
                             className="text-gray-400 font-belanosima"
@@ -470,7 +533,7 @@ const UserActivity = () => {
                             className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-3 py-3 border border-solid border-gray-300 bg-transparent placeholder:opacity-80 focus:!border-gray-200 focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
                             required
                           />
-                        </div>
+                        </div> */}
 
                         <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-gray-300 after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
                           <label
@@ -516,7 +579,7 @@ const UserActivity = () => {
             as="h4"
             className="text-gray-100 text-base md:text-lg font-poppins"
           >
-            Your token detail on Nebula
+            Your CTSI token detail on Nebula
           </Text>
           <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             <div className="w-full bg-navBg py-4 px-4 flex flex-col gap-2 items-start rounded-md">
@@ -527,13 +590,13 @@ const UserActivity = () => {
                 as="h1"
                 className="text-gray-100 text-2xl md:text-5xl font-bold font-poppins"
               >
-                {profileData.nebula_token_balance || 0}
+                {profileData.cartesi_token_balance || 0}
               </Text>
             </div>
 
             <div className="w-full bg-navBg py-4 px-4 flex flex-col gap-2 items-start rounded-md">
               <Text as="h6" className="text-gray-400 text-sm">
-                Spent
+                Nebula Token Balance
               </Text>
               <Text
                 as="h1"
@@ -568,19 +631,19 @@ const UserActivity = () => {
           <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             <div className="w-full bg-navBg py-4 px-4 flex flex-col gap-2 items-start rounded-md">
               <Text as="h6" className="text-gray-400 text-sm">
-                Balance
+                In Game
               </Text>
               <Text
                 as="h1"
                 className="text-gray-100 text-2xl md:text-5xl font-bold font-poppins"
               >
-                0
+                {profileData?.characters?.split(",").length}
               </Text>
             </div>
 
             <div className="w-full bg-navBg py-4 px-4 flex flex-col gap-2 items-start rounded-md">
               <Text as="h6" className="text-gray-400 text-sm">
-                Spent
+                Onchain
               </Text>
               <Text
                 as="h1"
@@ -603,12 +666,14 @@ const UserActivity = () => {
             </div>
           </div>
         </div>
-
-
       </section>
-<Button type="button" onClick={()=> navigate(-1)} className="absolute left-4 top-4 bg-myGreen text-gray-900 px-6 py-2 rounded-md capitalize hover:bg-myYellow">
-<HiOutlineArrowNarrowLeft />
-</Button>
+      <Button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="absolute left-4 top-4 bg-myGreen text-gray-900 px-6 py-2 rounded-md capitalize hover:bg-myYellow"
+      >
+        <HiOutlineArrowNarrowLeft />
+      </Button>
     </MaxWrapper>
   );
 };
