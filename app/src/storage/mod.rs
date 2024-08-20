@@ -4,7 +4,7 @@ use crate::game_characters::Character;
 use crate::market_place::SaleDetails;
 use crate::players_profile::{Player, UserTransaction};
 use crate::structures::{emit_notice, TransactionData, TransactionStatus};
-use hyper::Method;
+use hyper::{client, Method};
 extern crate json;
 use json::JsonValue;
 
@@ -32,12 +32,13 @@ pub struct Storage {
     pub total_transactions: u128,
     pub all_transactions: Vec<TransactionData>,
     pub server_addr: String,
+    pub client: hyper::Client<hyper::client::HttpConnector>,
     pub relayer_addr: String,
     pub has_relayed_address: bool,
 }
 
 impl Storage {
-    pub fn new(server_addr: String) -> Self {
+    pub fn new(server_addr: String, client: &hyper::Client<hyper::client::HttpConnector>) -> Self {
         Self {
             total_players: 0,
             admin_address: String::from("0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8")
@@ -66,6 +67,7 @@ impl Storage {
             all_transactions: Vec::new(),
             has_relayed_address: false,
             server_addr,
+            client: client.clone(),
         }
     }
 

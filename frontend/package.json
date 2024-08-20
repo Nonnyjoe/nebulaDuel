@@ -34,7 +34,8 @@
     "thirdweb": "^5.29.6",
     "three": "^0.165.0",
     "wow.js": "^1.2.2",
-    "zustand": "^4.5.4"
+    "zustand": "^4.5.4",
+    "@cartesi/rollups": "^1.0.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.56",

@@ -6,6 +6,7 @@ import { MdOutlineArrowRightAlt } from "react-icons/md";
 import { FormEvent, useState, useEffect } from "react";
 import { useActiveAccount } from "thirdweb/react";
 import { toWei } from "thirdweb";
+// import type { Address } from "viem";
 // import { anvil } from "thirdweb/chains";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,14 @@ import { HiOutlineArrowNarrowLeft } from "react-icons/hi";
 import { ethers } from "ethers";
 // import { useSendBatchTransaction } from "thirdweb/react";
 import signMessages from "../../utils/relayTransaction";
+import { fetchVouchers, Voucher } from "../../utils/fetchVouchers";
+import { CartesiDApp__factory } from "@cartesi/rollups";
+
+type ExecuteVoucherParams = {
+  payload: string;
+  destination: string;
+  proof: any;
+};
 
 const UserActivity = () => {
   //Ethers integration
@@ -36,6 +45,7 @@ const UserActivity = () => {
   // deposit states
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>();
+  const [isGrantingApproval, setIsGrantingApproval] = useState(false);
 
   // transfer states
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -43,13 +53,53 @@ const UserActivity = () => {
   const [transferAmount, setTransferAmount] = useState<string>();
 
   // withdraw states
+  // withdraw states
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState<number | string>();
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   // NFT transfer states
   const [isNftTransferModalOpen, setIsNftTransferModalOpen] = useState(false);
   // const [nftRecipientAddress, setNftRecipientAddress] = useState<string>("");
-  const [nftTokenId, setNftTokenId] = useState<number | string>();
+  // const [nftTokenId, setNftTokenId] = useState<number | string>();
+
+  // HANDLE VOUCHERS;
+  const [vouchers, setVouchers] = useState<Voucher[] | []>([]);
+
+  useEffect(() => {
+    async function loadVouchers() {
+      const data: Voucher[] = (await fetchVouchers()) as Voucher[];
+      setVouchers(data);
+    }
+    loadVouchers();
+  }, [isNftTransferModalOpen]);
+
+  const executeVoucher = async ({
+    payload,
+    destination,
+    proof,
+  }: ExecuteVoucherParams) => {
+    if (proof) {
+      toast.info("Executing Voucher, Please wait...");
+
+      const dApp = CartesiDApp__factory.connect(DAPP, signer);
+      const voucher_execution = await dApp.executeVoucher(
+        destination,
+        payload,
+        proof
+      );
+      const receipt = voucher_execution.wait();
+      // return receipt;
+
+      console.log(receipt);
+      // await tx.wait();
+
+      toast.success("Voucher executed successfully....");
+    } else {
+      console.log(proof);
+      toast.error("Voucher not finalised yet......");
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -92,7 +142,7 @@ const UserActivity = () => {
         return;
       }
 
-      setIsDepositModalOpen(false);
+      setIsGrantingApproval(true);
       const abi1 = ["function approve(address receiver, uint256 amount)"];
       const erc20 = new ethers.Contract(CTSI, abi1, signer);
       const tx = await erc20.approve(ERC20Portal, toWei(depositAmount));
@@ -113,6 +163,8 @@ const UserActivity = () => {
       );
       console.log(tx2);
       await tx2.wait();
+      setIsGrantingApproval(false);
+      setIsDepositModalOpen(false);
       toast.success("Deposit completed, please refreash page");
     } catch (error) {
       console.error("Error processing deposit:", error);
@@ -156,6 +208,7 @@ const UserActivity = () => {
       }
     }
 
+    setIsWithdrawing(true);
     const abi = ["function relayDAppAddress(address _dapp) external"];
     const addressRelayer = new ethers.Contract(ADDRESS_RELAYER, abi, signer);
     const tx = await addressRelayer.relayDAppAddress(DAPP);
@@ -167,15 +220,17 @@ const UserActivity = () => {
     await signMessages(payload);
     toast.success("Withdrawal submitted, please refreash page");
     setIsWithdrawModalOpen(false);
+    setIsWithdrawing(false);
+
     setWithdrawAmount("");
   };
 
-  const handleNftTransfer = (e: FormEvent) => {
-    e.preventDefault();
-    // logic to transfer
-    // setNftRecipientAddress("");
-    setNftTokenId("");
-  };
+  // const handleNftTransfer = (e: FormEvent) => {
+  //   e.preventDefault();
+  //   // logic to transfer
+  //   // setNftRecipientAddress("");
+  //   setNftTokenId("");
+  // };
 
   const formatAddress = (address: string) => {
     return `${address?.slice(0, 6)}...${address?.slice(-4)}`;
@@ -227,7 +282,10 @@ const UserActivity = () => {
                         Deposit
                       </h3>
                       <button
-                        onClick={() => setIsDepositModalOpen(false)}
+                        onClick={() => {
+                          setIsDepositModalOpen(false);
+                          setIsGrantingApproval(false);
+                        }}
                         type="button"
                         className="bg-transparent text-gray-400 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center hover:bg-gray-600 hover:text-white"
                       >
@@ -273,7 +331,8 @@ const UserActivity = () => {
                         <div className="flex items-center py-4 md:py-5 border-t rounded-b border-gray-600">
                           <Button
                             type="submit"
-                            className=" text-[#0f161b] uppercase font-bold tracking-[1px] px-6 py-3 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+                            disabled={isGrantingApproval}
+                            className=" disabled:bg-green-900 text-[#0f161b] uppercase font-bold tracking-[1px] px-6 py-3 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
                           >
                             Deposit Now
                           </Button>
@@ -407,7 +466,10 @@ const UserActivity = () => {
                       </h3>
 
                       <button
-                        onClick={() => setIsWithdrawModalOpen(false)}
+                        onClick={() => {
+                          setIsWithdrawModalOpen(false);
+                          setIsWithdrawing(false);
+                        }}
                         type="button"
                         className="bg-transparent text-gray-400 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center hover:bg-gray-600 hover:text-white"
                         data-modal-hide="default-modal"
@@ -456,7 +518,8 @@ const UserActivity = () => {
                         <div className="flex items-center py-4 md:py-5 border-t rounded-b border-gray-600">
                           <Button
                             type="submit"
-                            className=" text-[#0f161b] uppercase font-bold tracking-[1px] px-6 py-3 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+                            disabled={isWithdrawing}
+                            className=" disabled:bg-green-900 text-[#0f161b] uppercase font-bold tracking-[1px] px-6 py-3 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
                           >
                             Withdraw Now
                           </Button>
@@ -473,7 +536,7 @@ const UserActivity = () => {
                 type="button"
                 className="bg-myGreen text-gray-900 w-full py-2 rounded-md capitalize hover:bg-myYellow flex justify-center items-center gap-1"
               >
-                Withdraw NFT <MdOutlineArrowRightAlt />
+                Execute Vouchers <MdOutlineArrowRightAlt />
               </Button>
               {/* <!-- NFT Transfer modal --> */}
               <div
@@ -481,13 +544,13 @@ const UserActivity = () => {
                   isNftTransferModalOpen ? "flex" : "hidden"
                 } overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full`}
               >
-                <div className="relative p-4 w-full max-w-2xl max-h-full">
+                <div className="relative p-4  max-w-fit max-h-fit  w-fit">
                   {/* <!-- Modal content --> */}
-                  <div className="relative rounded-lg shadow bg-gray-800">
+                  <div className="relative rounded-lg shadow bg-gray-800 ma">
                     {/* <!-- Modal header --> */}
                     <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        Withdraw NFT
+                        Available Vouchers
                       </h3>
                       <button
                         onClick={() => setIsNftTransferModalOpen(false)}
@@ -514,57 +577,55 @@ const UserActivity = () => {
                     </div>
                     {/* <!-- Modal body --> */}
                     <div className="p-4 md:p-5 space-y-4">
-                      <form className="w-full " onSubmit={handleNftTransfer}>
-                        {/* <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-gray-300 after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
-                          <label
-                            htmlFor="address"
-                            className="text-gray-400 font-belanosima"
-                          >
-                            Recipient Address
-                          </label>
-                          <input
-                            type="text"
-                            name="address"
-                            value={nftRecipientAddress}
-                            onChange={(e) =>
-                              setNftRecipientAddress(e.target.value)
-                            }
-                            placeholder="Enter address"
-                            className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-3 py-3 border border-solid border-gray-300 bg-transparent placeholder:opacity-80 focus:!border-gray-200 focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
-                            required
-                          />
-                        </div> */}
-
-                        <div className="relative mt-0 mb-[30px] mx-0 clip-path-polygon-[100%_0,_100%_calc(100%_-_20px),_calc(100%_-_20px)_100%,_0_100%,_0_0] after:content-[''] after:absolute after:bg-gray-300 after:w-[60px] after:h-px after:right-[-21px] after:-rotate-45 after:bottom-3">
-                          <label
-                            htmlFor="tokenId"
-                            className="text-gray-400 font-belanosima"
-                          >
-                            Token Id
-                          </label>
-                          <input
-                            type="text"
-                            name="tokenId"
-                            value={nftTokenId}
-                            onChange={(e) =>
-                              setNftTokenId(Number(e.target.value))
-                            }
-                            placeholder="Enter token id"
-                            className=" block w-full text-[#fff] transition-all duration-[0.3s] ease-[ease-out] delay-[0s] px-3 py-3 border border-solid border-gray-300 bg-transparent placeholder:opacity-80 focus:!border-gray-200 focus:!ring-0 focus:!ring-[none] focus:border-solid focus:!outline-offset-0  focus:outline-0"
-                            required
-                          />
-                        </div>
-
-                        {/* <!-- Modal footer --> */}
-                        <div className="flex items-center py-4 md:py-5 border-t rounded-b border-gray-600">
-                          <Button
-                            type="submit"
-                            className=" text-[#0f161b] uppercase font-bold tracking-[1px] px-6 py-3 border-[none] bg-[#45f882]  font-Barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
-                          >
-                            Transfer NFT Now
-                          </Button>
-                        </div>
-                      </form>
+                      {/* CHECKING FOR AVAILABLE VOUCHERS TO EXECUTE */}
+                      {/* {fetchVouchers()} */}
+                      <table className="min-w-full bg-white border border-gray-300">
+                        <thead>
+                          <tr className="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                            <th className="py-3 px-6 text-left">Index</th>
+                            <th className="py-3 px-6 text-left">Payload</th>
+                            <th className="py-3 px-6 text-left">Destination</th>
+                            <th className="py-3 px-6 text-left">Claim</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-gray-600 text-sm font-light">
+                          {vouchers.map((voucher, index) => (
+                            <tr
+                              key={index}
+                              className="border-b border-gray-200 hover:bg-gray-100"
+                            >
+                              <td className="py-3 px-6 text-left whitespace-nowrap">
+                                {voucher.index}
+                              </td>
+                              <td className="py-3 px-6 text-left whitespace-nowrap">
+                                {`${voucher.payload.slice(0, 15)} 
+                                  .....
+                                ${voucher.payload.slice(-15)}`}
+                              </td>
+                              <td className="py-3 px-6 text-left whitespace-nowrap">
+                                {`${voucher.destination.slice(0, 8)} 
+                                  .....
+                                ${voucher.destination.slice(-8)}`}
+                              </td>
+                              <td className="py-3 px-6 text-left whitespace-nowrap">
+                                <Button
+                                  onClick={() =>
+                                    executeVoucher({
+                                      payload: voucher.payload,
+                                      destination: voucher.destination,
+                                      proof: voucher.proof,
+                                    })
+                                  }
+                                  type="button"
+                                  className="bg-myGreen text-gray-900 w-full py-2 rounded-md capitalize hover:bg-myYellow flex justify-center items-center gap-1 p-5"
+                                >
+                                  Execute <MdOutlineArrowRightAlt />
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>

@@ -137,6 +137,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "uint",
  "url",
 ]
 

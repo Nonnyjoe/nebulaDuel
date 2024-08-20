@@ -43,7 +43,8 @@ pub async fn handle_advance(
         &msg_sender.to_lowercase(),
         storage,
         time_stamp,
-    );
+    )
+    .await;
 
     // let data = "new notice emitted";
     // emit_notice(data, _server_addr);
@@ -58,13 +59,13 @@ fn remove_first_two_chars(s: &str) -> String {
     }
 }
 
-fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
+async fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
     let base_contracts: BaseContracts = BaseContracts::new();
     if msg_sender == base_contracts.erc20_portal {
-        handle_deposit(hex_str, msg_sender.to_string(), storage);
+        handle_deposit(hex_str, msg_sender.to_string(), storage).await;
         return;
     } else if msg_sender == base_contracts.erc721_portal {
-        handle_deposit_character_as_nft(hex_str, msg_sender.to_string(), storage);
+        handle_deposit_character_as_nft(hex_str, msg_sender.to_string(), storage).await;
         return;
     } else if msg_sender == base_contracts.dapp_relayer {
         storage.dapp_contract_address = ("0x".to_string() + hex_str).to_lowercase();
@@ -115,7 +116,8 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stam
                     signer.to_lowercase().as_str(),
                     storage,
                     time_stamp,
-                );
+                )
+                .await;
             } else {
                 println!("Parsed newdata JSON is not an object");
             }
@@ -127,7 +129,7 @@ fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stam
         if let JsonValue::Object(obj) = parsed_json.clone() {
             if let Some(func) = obj.get("func") {
                 println!("Destructured func: {}", func);
-                router(func, &parsed_json, msg_sender, storage, time_stamp);
+                router(func, &parsed_json, msg_sender, storage, time_stamp).await;
             } else {
                 println!("Field 'func' not found in JSON object");
             }
@@ -173,7 +175,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = hyper::Client::new();
     let server_addr = env::var("ROLLUP_HTTP_SERVER_URL")?;
 
-    let mut storage: Storage = Storage::new(server_addr.clone());
+    let mut storage: Storage = Storage::new(server_addr.clone(), &client);
     deployment_setup(&mut storage);
 
     let mut status = "accept";

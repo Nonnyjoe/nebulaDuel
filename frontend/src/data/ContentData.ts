@@ -33,7 +33,7 @@ export const NavLinks: NavArray = [
       { name: "Profile", path: "/profile" },
       { name: "Purchase Character", path: "/profile/purchasecharacter" },
       { name: "Your Characters", path: "/profile/yourcharacters" },
-      {name: "User Transactions", path: "/profile/useractivity" },
+      {name: "Assets Manager", path: "/profile/useractivity" },
     ],
   },
   {

@@ -48,6 +48,8 @@ async function fetchNotices(request: string) {
       const tx = JSON.parse(
         `{${hexToString(notices[i].node.payload as `0x${string}`)}`
       );
+      console.log(tx);
+
       if (tx.notice_type == "specific_tx") {
         specific_tx.push(tx);
         // console.log(tx.method, tx.tx_id, JSON.parse(tx.data));
@@ -74,6 +76,8 @@ async function fetchNotices(request: string) {
 }
 
 function fetch_profiles(specific_tx: any) {
+  console.log("Fetching profiles 1....");
+  console.log(specific_tx);
   const player_profiles = specific_tx.filter(
     (tx: any) =>
       tx.method == "deposit" ||
@@ -89,7 +93,7 @@ function fetch_profiles(specific_tx: any) {
       highest_id = player_profiles[i].tx_id;
     }
   }
-  // console.log("All Player Profiles: ", JSON.parse(highest_id?.data));
+  console.log("All Player Profiles: ", JSON.parse(highest_id?.data));
   return highest_id.data ? JSON.parse(highest_id.data) : [];
 }
 

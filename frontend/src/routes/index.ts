@@ -51,7 +51,7 @@ const coreRoutes: coreRoutes = [
   },
   {
     path: "/profile/useractivity",
-    title: "User Transactions",
+    title: "Assets Manager",
     component: UserActivity,
   },
   {

@@ -60,8 +60,8 @@ pub fn structure_notice(
     emit_notice(&output_json.dump()[..], &mut server_addr[..]);
 }
 
-// pub fn router(route: Route, data: &StandardInput) {
-pub fn router(
+// pub async fn router(route: Route, data: &StandardInput) {
+pub async fn router(
     route: &JsonValue,
     payload: &JsonValue,
     msg_sender: &str,
@@ -75,31 +75,34 @@ pub fn router(
             match function {
                 "change_admin_address" => {
                     println!("Changing admin address!!");
-                    handle_change_admin_address(payload, msg_sender.to_string(), storage);
+                    handle_change_admin_address(payload, msg_sender.to_string(), storage).await;
                 }
                 "change_relayer_address" => {
                     println!("Changing relayer address!!");
-                    handle_change_relayer_address(payload, msg_sender.to_string(), storage);
+                    handle_change_relayer_address(payload, msg_sender.to_string(), storage).await;
                 }
                 "change_points_rate" => {
                     println!("Changing points range!!");
-                    handle_change_points_rate(payload, msg_sender.to_string(), storage);
+                    handle_change_points_rate(payload, msg_sender.to_string(), storage).await;
                 }
                 "set_cartesi_token_address" => {
                     println!("Setting CTSI address!!");
-                    handle_set_cartesi_token_address(payload, msg_sender.to_string(), storage);
+                    handle_set_cartesi_token_address(payload, msg_sender.to_string(), storage)
+                        .await;
                 }
                 "set_nebula_token_address" => {
                     println!("Setting Nebula token Address!!!");
-                    handle_set_nebula_token_address(payload, msg_sender.to_string(), storage);
+                    handle_set_nebula_token_address(payload, msg_sender.to_string(), storage).await;
                 }
                 "withdraw_profit_from_stake" => {
                     println!("Withdrawing Profit from Stake!!!");
-                    handle_withdraw_profit_from_stake(payload, msg_sender.to_string(), storage);
+                    handle_withdraw_profit_from_stake(payload, msg_sender.to_string(), storage)
+                        .await;
                 }
                 "withdraw_profit_from_p2p_sales" => {
                     println!("Withdrawing Profit from P2P sales!!!");
-                    handle_withdraw_profit_from_p2p_sales(payload, msg_sender.to_string(), storage);
+                    handle_withdraw_profit_from_p2p_sales(payload, msg_sender.to_string(), storage)
+                        .await;
                 }
                 "withdraw_profit_from_points_purchase" => {
                     println!("Withdrawing Profit from Points Purchase!!!");
@@ -111,76 +114,80 @@ pub fn router(
                 }
                 "withdraw_character_as_nft" => {
                     println!("Withdrawing character as NFT!!!");
-                    handle_withdraw_character_as_nft(payload, msg_sender.to_string(), storage);
+                    handle_withdraw_character_as_nft(payload, msg_sender.to_string(), storage)
+                        .await;
                 }
                 "withdraw" => {
                     println!("Withdrawing CTSI Token!!!");
-                    handle_withdraw(payload, msg_sender.to_string(), storage);
+                    handle_withdraw(payload, msg_sender.to_string(), storage).await;
                 }
                 "create_ai_duel" => {
                     println!("Creating AI Duel!!!");
-                    handle_create_ai_duel(payload, msg_sender.to_string(), storage, time_stamp);
+                    handle_create_ai_duel(payload, msg_sender.to_string(), storage, time_stamp)
+                        .await;
                 }
                 "select_ai_battle_strategy" => {
                     println!("Creating AI Duel!!!");
-                    handle_select_ai_battle_strategy(payload, msg_sender.to_string(), storage);
+                    handle_select_ai_battle_strategy(payload, msg_sender.to_string(), storage)
+                        .await;
                 }
                 "create_duel" => {
                     println!("Creating Duel!!!");
-                    handle_create_duel(payload, msg_sender.to_string(), storage, time_stamp);
+                    handle_create_duel(payload, msg_sender.to_string(), storage, time_stamp).await;
                 }
                 "join_duel" => {
                     println!("Joining Duel!!!");
-                    handle_join_duel(payload, msg_sender.to_string(), storage);
+                    handle_join_duel(payload, msg_sender.to_string(), storage).await;
                 }
                 "set_strategy" => {
                     println!("Setting Strategy!!!");
-                    handle_set_strategy(payload, msg_sender.to_string(), storage);
+                    handle_set_strategy(payload, msg_sender.to_string(), storage).await;
                 }
                 "fight" => {
                     println!("Starting Battle!!!");
-                    handle_fight(payload, msg_sender.to_string(), storage);
+                    handle_fight(payload, msg_sender.to_string(), storage).await;
                 }
                 "purchase_team" => {
                     println!("Purchasing Team!!!");
-                    handle_purchase_team(payload, msg_sender.to_string(), storage);
+                    handle_purchase_team(payload, msg_sender.to_string(), storage).await;
                 }
                 // "get_characters" => {},
                 "transfer_tokens" => {
                     println!("Transfering Tokens!!!");
-                    handle_transfer_tokens(payload, msg_sender.to_string(), storage);
+                    handle_transfer_tokens(payload, msg_sender.to_string(), storage).await;
                 }
                 "purchase_single_character" => {
                     println!("Purchasing Single Character!!!");
-                    handle_purchase_single_character(payload, msg_sender.to_string(), storage);
+                    handle_purchase_single_character(payload, msg_sender.to_string(), storage)
+                        .await;
                 }
                 "list_character" => {
                     println!("Listing Character!!!");
-                    handle_listing_character(payload, msg_sender.to_string(), storage);
+                    handle_listing_character(payload, msg_sender.to_string(), storage).await;
                 }
                 "buy_character" => {
                     println!("Buying Character!!!");
-                    handle_buy_character(payload, msg_sender.to_string(), storage);
+                    handle_buy_character(payload, msg_sender.to_string(), storage).await;
                 }
                 "purchase_points" => {
                     println!("Purchasing Points!!!");
-                    handle_purchase_points(payload, msg_sender.to_string(), storage);
+                    handle_purchase_points(payload, msg_sender.to_string(), storage).await;
                 }
                 "modify_list_price" => {
                     println!("Modifying List Price!!!");
-                    handle_modify_list_price(payload, msg_sender.to_string(), storage);
+                    handle_modify_list_price(payload, msg_sender.to_string(), storage).await;
                 }
                 "create_player" => {
                     println!("Create player function selected");
-                    handle_create_player(payload, msg_sender.to_string(), storage);
+                    handle_create_player(payload, msg_sender.to_string(), storage).await;
                 }
                 "modify_monika" => {
                     println!("Create player function selected");
-                    handle_modify_monika(payload, msg_sender.to_string(), storage);
+                    handle_modify_monika(payload, msg_sender.to_string(), storage).await;
                 }
                 "modify_avatar" => {
                     println!("Create player function selected");
-                    handle_modify_avatar(payload, msg_sender.to_string(), storage);
+                    handle_modify_avatar(payload, msg_sender.to_string(), storage).await;
                 }
 
                 _ => {
@@ -209,7 +216,7 @@ pub fn router(
 // {"func": "create_player", "monika": "NonnyJoe", "avatar_url": "nonnyjoe_image1"}
 // {"func": "create_player", "monika": "Evans", "avatar_url": "evans_image1"}
 // {"func": "create_player", "monika": "Black_Adam", "avatar_url": "Black_image1"}
-pub fn handle_create_player(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_create_player(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut user_monika = String::from("new_player");
         let mut avatar_url = String::from("default_url");
@@ -264,7 +271,7 @@ pub fn handle_create_player(payload: &JsonValue, msg_sender: String, storage: &m
 }
 
 // {"func": "purchase_team", "char_id1": 2, "char_id2": 3, "char_id3": 6}
-pub fn handle_purchase_team(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_purchase_team(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut char_id1: u128 = 0;
         let mut char_id2: u128 = 0;
@@ -327,7 +334,7 @@ pub fn handle_purchase_team(payload: &JsonValue, msg_sender: String, storage: &m
 }
 
 // {"func": "create_duel", "char_id1": 9, "char_id2": 10, "char_id3": 11, "has_staked": false, "stake_amount": 0.0}
-pub fn handle_create_duel(
+pub async fn handle_create_duel(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -401,7 +408,7 @@ pub fn handle_create_duel(
 }
 
 // {"func": "join_duel", "char_id1": 12, "char_id2": 13, "char_id3": 14, "duel_id": 1}
-pub fn handle_join_duel(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_join_duel(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut char_ids: Vec<u128> = Vec::new();
         let mut duel_id: u128 = 0;
@@ -467,7 +474,7 @@ pub fn handle_join_duel(payload: &JsonValue, msg_sender: String, storage: &mut S
 
 // {"func": "set_strategy", "strategy_id": 1, "duel_id": 1}
 // {"func": "set_strategy", "strategy_id": 3, "duel_id": 1}
-pub fn handle_set_strategy(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_set_strategy(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut duel_id: u128 = 0;
         let mut strategy_id: u128 = 0;
@@ -520,7 +527,7 @@ pub fn handle_set_strategy(payload: &JsonValue, msg_sender: String, storage: &mu
 }
 
 // {"func": "fight", "duel_id": 1}
-pub fn handle_fight(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_fight(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut duel_id: u128 = 0;
 
@@ -559,7 +566,7 @@ pub fn handle_fight(payload: &JsonValue, msg_sender: String, storage: &mut Stora
 }
 
 // {"func": "create_ai_duel", "char_id1": 14, "char_id2": 15, "char_id3": 16, "difficulty_id": 1}
-pub fn handle_create_ai_duel(
+pub async fn handle_create_ai_duel(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -633,7 +640,7 @@ pub fn handle_create_ai_duel(
 
 // {"func": "select_ai_battle_strategy", "strategy_id": 1, "duel_id": 1}
 // {"func": "select_ai_battle_strategy", "strategy_id": 1, "duel_id": 2}
-pub fn handle_select_ai_battle_strategy(
+pub async fn handle_select_ai_battle_strategy(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -692,7 +699,7 @@ pub fn handle_select_ai_battle_strategy(
     }
 }
 
-pub fn handle_set_cartesi_token_address(
+pub async fn handle_set_cartesi_token_address(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -731,7 +738,7 @@ pub fn handle_set_cartesi_token_address(
     }
 }
 
-pub fn handle_set_nebula_token_address(
+pub async fn handle_set_nebula_token_address(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -769,7 +776,11 @@ pub fn handle_set_nebula_token_address(
     }
 }
 
-pub fn handle_change_admin_address(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_change_admin_address(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut new_admin_address: String = String::from(" ");
 
@@ -806,7 +817,7 @@ pub fn handle_change_admin_address(payload: &JsonValue, msg_sender: String, stor
 }
 
 // {"func": "change_relayer_address", "new_relayer_address": "0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749"}
-pub fn handle_change_relayer_address(
+pub async fn handle_change_relayer_address(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -849,7 +860,11 @@ pub fn handle_change_relayer_address(
 }
 
 // {"func": "transfer_tokens", "trf_amount": 200, "receiver_add": "0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749"};
-pub fn handle_transfer_tokens(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_transfer_tokens(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut receiver_add: String = String::from(" ");
         let mut trf_amount: f64 = 0.0;
@@ -896,7 +911,7 @@ pub fn handle_transfer_tokens(payload: &JsonValue, msg_sender: String, storage: 
 }
 
 // {"func": "purchase_single_character", "character_id": 1}
-pub fn handle_purchase_single_character(
+pub async fn handle_purchase_single_character(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -937,7 +952,11 @@ pub fn handle_purchase_single_character(
 }
 
 // {"func": "list_character", "character_id": 1, "price": 10.0}
-pub fn handle_listing_character(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_listing_character(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut character_id: u128 = 0;
         let mut price: f64 = 0.0;
@@ -983,7 +1002,7 @@ pub fn handle_listing_character(payload: &JsonValue, msg_sender: String, storage
 }
 
 // {"func": "buy_character", "character_id": 10}
-pub fn handle_buy_character(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_buy_character(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut character_id: u128 = 0;
 
@@ -1022,7 +1041,11 @@ pub fn handle_buy_character(payload: &JsonValue, msg_sender: String, storage: &m
 }
 
 // {"func": "purchase_points", "amount": 10.0}
-pub fn handle_purchase_points(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_purchase_points(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut amount: f64 = 0.0;
 
@@ -1061,7 +1084,11 @@ pub fn handle_purchase_points(payload: &JsonValue, msg_sender: String, storage: 
 }
 
 // {"func": "modify_list_price", "character_id": 1, "price": 10.0}
-pub fn handle_modify_list_price(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_modify_list_price(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut character_id: u128 = 0;
         let mut price: f64 = 0.0;
@@ -1105,7 +1132,11 @@ pub fn handle_modify_list_price(payload: &JsonValue, msg_sender: String, storage
 }
 
 // {"func": "change_points_rate", "point_rate": 5.0}
-pub fn handle_change_points_rate(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_change_points_rate(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut new_point_rate: f64 = 0.0;
 
@@ -1141,7 +1172,7 @@ pub fn handle_change_points_rate(payload: &JsonValue, msg_sender: String, storag
 }
 
 // {"func": "modify_monika", "new_monika": "NonnyJoe"}
-pub fn handle_modify_monika(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_modify_monika(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut new_monika = String::from("new_player");
 
@@ -1173,7 +1204,7 @@ pub fn handle_modify_monika(payload: &JsonValue, msg_sender: String, storage: &m
 }
 
 // {"func": "modify_avatar", "new_avatar_uri": "NonnyJoe_image_uri"}
-pub fn handle_modify_avatar(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_modify_avatar(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
     if let JsonValue::Object(obj) = payload.clone() {
         let mut new_avatar_uri = String::from("new_player");
 
@@ -1209,7 +1240,7 @@ pub fn handle_modify_avatar(payload: &JsonValue, msg_sender: String, storage: &m
 }
 
 // {"func": "withdraw_profit_from_stake", "amount": 10.0}
-pub fn handle_withdraw_profit_from_stake(
+pub async fn handle_withdraw_profit_from_stake(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -1249,7 +1280,7 @@ pub fn handle_withdraw_profit_from_stake(
 }
 
 // {"func": "withdraw_profit_from_p2p_sales", "amount": 10.0}
-pub fn handle_withdraw_profit_from_p2p_sales(
+pub async fn handle_withdraw_profit_from_p2p_sales(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -1288,7 +1319,7 @@ pub fn handle_withdraw_profit_from_p2p_sales(
 }
 
 // {"func": "withdraw_profit_from_points_purchase", "amount": 10.0}
-pub fn handle_withdraw_profit_from_points_purchase(
+pub async fn handle_withdraw_profit_from_points_purchase(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -1327,7 +1358,7 @@ pub fn handle_withdraw_profit_from_points_purchase(
 }
 
 // {"func": "withdraw_character_as_nft", "character_id": 10}
-pub fn handle_withdraw_character_as_nft(
+pub async fn handle_withdraw_character_as_nft(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
@@ -1370,7 +1401,8 @@ pub fn handle_withdraw_character_as_nft(
 }
 
 // {"func": "withdraw", "amount": 10.0}
-pub fn handle_withdraw(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_withdraw(payload: &JsonValue, msg_sender: String, storage: &mut Storage) {
+    println!("handling withdrawal function: {:?}", msg_sender);
     if let JsonValue::Object(obj) = payload.clone() {
         let mut amount: f64 = 0.0;
 
@@ -1380,13 +1412,14 @@ pub fn handle_withdraw(payload: &JsonValue, msg_sender: String, storage: &mut St
             panic!("Please pass in a valid withdrawal amount");
         }
 
-        market_place::withdraw(&mut storage.all_players, msg_sender.clone(), amount);
-        storage.record_tx(
-            String::from("withdraw"),
-            msg_sender.clone(),
-            TransactionStatus::Success,
-        );
-
+        market_place::withdraw(storage, msg_sender.clone(), amount)
+            .await
+            .record_tx(
+                String::from("withdraw"),
+                msg_sender.clone(),
+                TransactionStatus::Success,
+            );
+        println!("Voucher for this withdrawal emmited......");
         let data = &mut storage.all_players;
 
         let json_data = players_profile_to_json(data.to_vec());
@@ -1402,7 +1435,7 @@ pub fn handle_withdraw(payload: &JsonValue, msg_sender: String, storage: &mut St
     }
 }
 
-pub fn handle_deposit(payload: &str, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_deposit(payload: &str, msg_sender: String, storage: &mut Storage) {
     match erc20_deposit_parse(payload) {
         Ok((token, receiver, amount)) => {
             println!("token Address: {}", token);
@@ -1470,7 +1503,11 @@ pub fn erc20_deposit_parse(payload: &str) -> Result<(&str, &str, u128), String> 
     Ok((token_address, receiver_address, amount))
 }
 
-pub fn handle_deposit_character_as_nft(payload: &str, msg_sender: String, storage: &mut Storage) {
+pub async fn handle_deposit_character_as_nft(
+    payload: &str,
+    msg_sender: String,
+    storage: &mut Storage,
+) {
     match erc721_deposit_parse(payload) {
         Ok((token, receiver, id)) => {
             println!("Token Address: {}", token);
