@@ -24,6 +24,8 @@ Nebula duel is built for persons that love the thrills and entertainment of the 
 
 #### - Relayer built with nodejs and ethers.
 
+![image](frontend/public/NebulaDuel_Architechture.png)
+
 <br/>
 <br/>
 
@@ -93,24 +95,6 @@ At the end of each duel, one player wins. The winning characters add to their ex
 Bugs reports and suggestions:
 If you discover a bug or would like to suggest a feature, please open an issue in the repository.
 
-## OTHER IMAGES
-
-### PURCHASE CHARACTERS
-
-![image](frontend/public/purchase_characters.png)
-
-### CREATE DUELS
-
-![image](frontend/public/create_duel.png)
-
-### VIEW AVAILABLE DUELS
-
-![image](frontend/public/Available_duels.png)
-
-### BATTLE
-
-![image](frontend/public/battle.png)
-
 <br>
 <br>
 
@@ -153,6 +137,7 @@ This guide provides instructions for setting up and running the backend, relayer
 2. **Install Dependencies**
 
    - Run the following command:
+
      ```bash
      npm install
      ```
@@ -160,16 +145,20 @@ This guide provides instructions for setting up and running the backend, relayer
 3. **Set Up Environment Variables**
 
    - Create a `.env` file with the following details:
+
      ```
      PRIVATE_KEY=<your_private_key>
      INPUTBOX_ADDRESS=<input_box_address>
      RPC_URL=<rpc_url>
      DAPP_ADDRESS=<dapp_address>
      ```
+
    - **Note:** The `PRIVATE_KEY` should be the private key copied from the backend setup.
 
 4. **Start the Relayer Backend**
+
    - Run the following command:
+
      ```bash
      npm run watch
      ```
@@ -183,6 +172,7 @@ This guide provides instructions for setting up and running the backend, relayer
 2. **Install Dependencies**
 
    - Run the following command:
+
      ```bash
      npm install
      ```
@@ -190,6 +180,7 @@ This guide provides instructions for setting up and running the backend, relayer
 3. **Set Up Environment Variables**
 
    - Create a `.env.local` file with the following details:
+
      ```
      VITE_PINATA_API_KEY=98c7260dbce5e3062dee
      VITE_PINATA_SECRET_API_KEY=06effff539f4f5c2be1780bdbc57d97b72306ba931ec29cd8a9468ce2b1e6386
@@ -200,7 +191,9 @@ This guide provides instructions for setting up and running the backend, relayer
    - Navigate to `src/utils` and open `relayTransaction.tsx`.
      - Change the URL link in the `sendTransaction` function (line 61) to `http://localhost:3000/transactions`.
    - Open `readState.tsx` in the same folder.
+
      - Replace the `const response` in lines 7-8 with:
+
        ```javascript
        const response = await axios.get(
          `http://localhost:8080/inspect/${data}`,
@@ -209,14 +202,19 @@ This guide provides instructions for setting up and running the backend, relayer
          }
        );
        ```
+
    - Open `readSubgraph.tsx` in the same folder.
+
      - Replace the `const url` of the `fetchNotice` function with:
+
        ```javascript
        const url = "http://localhost:8080/graphql";
        ```
 
 5. **Start the Frontend**
+
    - Run the following command:
+
      ```bash
      npm run dev
      ```
@@ -230,6 +228,7 @@ This guide provides instructions for setting up and running the backend, relayer
 2. **Install Dependencies**
 
    - Run the following command:
+
      ```bash
      npm install
      ```
@@ -237,6 +236,7 @@ This guide provides instructions for setting up and running the backend, relayer
 3. **Set Up Environment Variables**
 
    - Create a `.env` file with the following details:
+
      ```
      BASE_SEPOLIA_PRIVATE_KEY=<your_base_sepolia_private_key>
      BASE_SEPOLIA_API_KEY=<your_base_sepolia_api_key>
@@ -246,22 +246,51 @@ This guide provides instructions for setting up and running the backend, relayer
 4. **Deploy Locally**
 
    - Start a local node by running:
+
      ```bash
      npx hardhat node --network local-tableland
      ```
+
    - Deploy the contract locally and run the scripts:
+
      ```bash
      npx hardhat run scripts/newdeploy.ts --network localhost
      ```
+
    - You should get an output similar to:
+
      ```
      https://testnets.tableland.network/api/v1/query?statement=SELECT%20*%20FROM%20NebulaNFT_84532_52
      ```
+
      Copy and paste this URL into your browser.
 
 5. **Deploy to a Live Network**
+
    - Ensure the necessary `.env` requirements are provided for the specific network.
    - Deploy the contract to a live network (e.g., base-sepolia) by running:
+
      ```bash
      npx hardhat run scripts/newdeploy.ts --network base-sepolia
      ```
+
+<br>
+<br>
+
+## OTHER IMAGES
+
+### PURCHASE CHARACTERS
+
+![image](frontend/public/purchase_characters.png)
+
+### CREATE DUELS
+
+![image](frontend/public/create_duel.png)
+
+### VIEW AVAILABLE DUELS
+
+![image](frontend/public/Available_duels.png)
+
+### BATTLE
+
+![image](frontend/public/battle.png)

@@ -48,7 +48,7 @@ async function fetchNotices(request: string) {
       const tx = JSON.parse(
         `{${hexToString(notices[i].node.payload as `0x${string}`)}`
       );
-      console.log(tx);
+      // console.log(tx);
 
       if (tx.notice_type == "specific_tx") {
         specific_tx.push(tx);
@@ -77,7 +77,7 @@ async function fetchNotices(request: string) {
 
 function fetch_profiles(specific_tx: any) {
   console.log("Fetching profiles 1....");
-  console.log(specific_tx);
+  // console.log(specific_tx);
   const player_profiles = specific_tx.filter(
     (tx: any) =>
       tx.method == "deposit" ||
@@ -93,7 +93,7 @@ function fetch_profiles(specific_tx: any) {
       highest_id = player_profiles[i].tx_id;
     }
   }
-  console.log("All Player Profiles: ", JSON.parse(highest_id?.data));
+  // console.log("All Player Profiles: ", JSON.parse(highest_id?.data));
   return highest_id.data ? JSON.parse(highest_id.data) : [];
 }
 
@@ -114,9 +114,9 @@ function fetch_characters(specific_tx: any) {
 }
 
 function fetch_duels(specific_tx: any) {
-  console.log(specific_tx);
+  // console.log(specific_tx);
   const all_duels = specific_tx.filter((tx: any) => tx.method == "create_duel");
-  console.log("all duels are:", all_duels);
+  // console.log("all duels are:", all_duels);
   let highest_id;
   for (let i = 0; i < all_duels.length; i++) {
     highest_id = all_duels[i];
@@ -134,7 +134,13 @@ function fetch_ai_duels(specific_tx: any) {
   const all_duels = specific_tx.filter(
     (tx: any) => tx.method == "create_ai_duel"
   );
-  console.log("all duels are:", all_duels);
+  const all_ai_duels = [];
+  for (let i = 0; i < all_duels.length; i++) {
+    // console.log("testing", JSON.parse(all_duels[i].data)[0]);
+    all_ai_duels.push(JSON.parse(all_duels[i].data)[0]);
+  }
+
+  // console.log("all duels are:", all_ai_duels);
   let highest_id;
   for (let i = 0; i < all_duels.length; i++) {
     highest_id = all_duels[i];
@@ -143,8 +149,9 @@ function fetch_ai_duels(specific_tx: any) {
     }
   }
   // console.log("All Player Characters: ", JSON.parse(highest_id));
-  // console.log("All Player Characters: ", (highest_id));
-  return highest_id?.data ? JSON.parse(highest_id?.data) : [];
+  console.log("All Player Characters: ", JSON.parse(highest_id?.data));
+  // return highest_id?.data ? JSON.parse(highest_id?.data) : [];
+  return all_ai_duels;
 }
 
 function fetch_all_tx(all_tx: any) {
