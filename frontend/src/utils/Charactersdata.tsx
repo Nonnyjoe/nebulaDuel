@@ -1,4 +1,4 @@
-//import nebulaCharactersImg from "../../public/characters/nebulaCharactersImg.js"; 
+//import nebulaCharactersImg from "../../public/characters/nebulaCharactersImg.js";
 import nebulaCharactersImg from "../../public/nebula-characters/nebulaCharactersImg.js";
 
 type DataType = {
@@ -11,7 +11,7 @@ type DataType = {
   super_power: string;
   price: number;
   img: string;
-  model: string
+  model: string;
 };
 
 const charactersdata: DataType[] = [
@@ -25,7 +25,7 @@ const charactersdata: DataType[] = [
     super_power: "Thunderbolt",
     price: 317,
     img: nebulaCharactersImg.mystic,
-    model: "/models/mystic.gltf"
+    model: "/models/mystic.gltf",
   },
   {
     id: 2,
@@ -37,7 +37,7 @@ const charactersdata: DataType[] = [
     super_power: "Flamethrower",
     price: 385,
     img: nebulaCharactersImg.zylar,
-    model: "/models/zylar.gltf"
+    model: "/models/zylar.gltf",
   },
   {
     id: 3,
@@ -49,7 +49,7 @@ const charactersdata: DataType[] = [
     super_power: "VineWhip",
     price: 307,
     img: nebulaCharactersImg.sStrike,
-    model: "/models/s-strike.gltf"
+    model: "/models/s-strike.gltf",
   },
   {
     id: 4,
@@ -61,7 +61,7 @@ const charactersdata: DataType[] = [
     super_power: "WaterGun",
     price: 350,
     img: nebulaCharactersImg.cValor,
-    model: "/models/c-valor.gltf"
+    model: "/models/c-valor.gltf",
   },
   {
     id: 5,
@@ -73,11 +73,11 @@ const charactersdata: DataType[] = [
     super_power: "SleepSong",
     price: 362,
     img: nebulaCharactersImg.sElara,
-    model: "/models/s-elara.gltf"
+    model: "/models/s-elara.gltf",
   },
   {
     id: 6,
-    name: "Ghoul King",
+    name: "Goul King",
     health: 92,
     strength: 11,
     attack: 14,
@@ -85,7 +85,7 @@ const charactersdata: DataType[] = [
     super_power: "Psychic",
     price: 415,
     img: nebulaCharactersImg.ghoul,
-    model: "/models/ghoul.gltf"
+    model: "/models/ghoul.gltf",
   },
   {
     id: 7,
@@ -97,7 +97,7 @@ const charactersdata: DataType[] = [
     super_power: "HeadCrush",
     price: 320,
     img: nebulaCharactersImg.eSwiftstrike,
-    model: "/models/e-swiftstrike.gltf"
+    model: "/models/e-swiftstrike.gltf",
   },
   {
     id: 8,
@@ -109,7 +109,7 @@ const charactersdata: DataType[] = [
     super_power: "ShadowBall",
     price: 300,
     img: nebulaCharactersImg.ravager,
-    model: "/models/ravager.gltf"
+    model: "/models/ravager.gltf",
   },
   {
     id: 9,
@@ -121,7 +121,7 @@ const charactersdata: DataType[] = [
     super_power: "Adaptability",
     price: 440,
     img: nebulaCharactersImg.bCollector,
-    model: "/models/b-collector.gltf"
+    model: "/models/b-collector.gltf",
   },
   {
     id: 10,
@@ -133,7 +133,7 @@ const charactersdata: DataType[] = [
     super_power: "SonicKick",
     price: 370,
     img: nebulaCharactersImg.vortex,
-    model: "/models/vortex.gltf"
+    model: "/models/vortex.gltf",
   },
   {
     id: 11,
@@ -145,7 +145,7 @@ const charactersdata: DataType[] = [
     super_power: "TelekineticHit",
     price: 397,
     img: nebulaCharactersImg.dWolf,
-    model: "/models/d-wolf.gltf"
+    model: "/models/d-wolf.gltf",
   },
   {
     id: 12,
@@ -157,7 +157,7 @@ const charactersdata: DataType[] = [
     super_power: "InvisibleClaws",
     price: 357,
     img: nebulaCharactersImg.luna,
-    model: "/models/luna.gltf"
+    model: "/models/luna.gltf",
   },
   {
     id: 13,
@@ -169,7 +169,7 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 338,
     img: nebulaCharactersImg.blaze,
-    model: "/models/blaze.gltf"
+    model: "/models/blaze.gltf",
   },
   {
     id: 14,
@@ -181,7 +181,7 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 430,
     img: nebulaCharactersImg.techno,
-    model: "/models/techno.gltf"
+    model: "/models/techno.gltf",
   },
   {
     id: 15,
@@ -193,7 +193,7 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 480,
     img: nebulaCharactersImg.berzerker,
-    model: "/models/berzerker.gltf"
+    model: "/models/berzerker.gltf",
   },
   {
     id: 16,
@@ -205,7 +205,7 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 405,
     img: nebulaCharactersImg.gorgon,
-    model: "/models/gorgon.gltf"
+    model: "/models/gorgon.gltf",
   },
   {
     id: 17,
@@ -217,7 +217,7 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 440,
     img: nebulaCharactersImg.troll,
-    model: "/models/troll.gltf"
+    model: "/models/troll.gltf",
   },
   {
     id: 18,
@@ -229,7 +229,7 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 380,
     img: nebulaCharactersImg.drake,
-    model: "/models/drake.gltf"
+    model: "/models/drake.gltf",
   },
   {
     id: 19,
@@ -241,7 +241,7 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 400,
     img: nebulaCharactersImg.sGolem,
-    model: "/models/s-golem.gltf"
+    model: "/models/s-golem.gltf",
   },
   {
     id: 20,
@@ -253,9 +253,8 @@ const charactersdata: DataType[] = [
     super_power: "DodgeNdTailLash",
     price: 365,
     img: nebulaCharactersImg.sHawk,
-    model: "/models/s-hawk.gltf"
+    model: "/models/s-hawk.gltf",
   },
-
 ];
 
 export default charactersdata;
