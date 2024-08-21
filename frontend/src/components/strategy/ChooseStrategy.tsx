@@ -84,7 +84,7 @@ const ChooseStrategy = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      delay(3000);
+      delay(4000);
       let dPayload = await fetchNotices("all_duels");
       console.log(dPayload);
       dPayload = dPayload.filter(
@@ -242,29 +242,35 @@ const ChooseStrategy = () => {
         if (txhash.message === "Transaction added successfully") {
           // if (true) {
 
-          delay(2000);
+          delay(4000);
+
+          toast.success("Transaction Successful..", {
+            position: "top-right",
+          });
+          setSubmiting(false);
+          navigate(`/duels/${duelId}`);
 
           //   const { Status, request_payload } = await readGameState(
           //     `duels/${duelId}`
           //   );
 
-          let Status = false;
-          let request_payload = await fetchNotices("all_duels");
-          request_payload = request_payload.filter(
-            (Payload: any) => Number(Payload.duel_id) == Number(duelId)
-          )[0];
-          if (request_payload.length == 0) {
-            Status = false;
-            return;
-          } else {
-            Status = true;
-          }
-          delay(2000);
+          //   let Status = false;
+          //   let request_payload = await fetchNotices("all_duels");
+          //   request_payload = request_payload.filter(
+          //     (Payload: any) => Number(Payload.duel_id) == Number(duelId)
+          //   )[0];
+          //   if (request_payload.length == 0) {
+          //     Status = false;
+          //     return;
+          //   } else {
+          //     Status = true;
+          //   }
+          //   delay(2000);
 
-          if (Status) {
-            setSubmiting(false);
-            navigate(`/duels/${duelId}`);
-          }
+          //   if (Status) {
+          //     setSubmiting(false);
+          //     navigate(`/duels/${duelId}`);
+          //   }
 
           //   if (Status) {
           //     console.log("GETTING TX DATA HERE", request_payload);

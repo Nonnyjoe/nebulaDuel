@@ -24,6 +24,7 @@ import { ethers } from "ethers";
 import signMessages from "../../utils/relayTransaction";
 import { fetchVouchers, Voucher } from "../../utils/fetchVouchers";
 import { CartesiDApp__factory } from "@cartesi/rollups";
+import fetchNotices from "../../utils/readSubgraph.tsx";
 
 type ExecuteVoucherParams = {
   payload: string;
@@ -103,19 +104,27 @@ const UserActivity = () => {
 
   const fetchData = async () => {
     try {
-      const { Status, request_payload } = await readGameState(
-        `profile/${userAccount?.address}`
-      );
-      if (Status) {
-        setProfileData(request_payload);
-      }
-      // request_payload = request_payload.filter(
-      //   (player: any) =>
-      //     player.wallet_address === userAccount?.address.toLowerCase()
+      // const { Status, request_payload } = await readGameState(
+      //   `profile/${userAccount?.address}`
       // );
-      // if (request_payload.length > 0) {
-      //   setProfileData(request_payload[0]);
+      // if (Status) {
+      //   setProfileData(request_payload);
       // }
+
+      let request_payload = await fetchNotices("all_profiles");
+      request_payload = request_payload.filter(
+        (player: any) =>
+          player.wallet_address == userAccount?.address.toLowerCase()
+      );
+      if (request_payload.length > 0) {
+        setProfileData(request_payload[0]);
+        console.log(request_payload[0], "user profile data");
+        // setProfileData(request_payload[0]);
+        // setCreatedProfile(true);
+      } else {
+        // setCreatedProfile(false);
+        console.log("ERROR FETCHING USER PROFILE DATA");
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
     }

@@ -703,7 +703,7 @@ pub async fn handle_select_ai_battle_strategy(
             TransactionStatus::Success,
         );
 
-        let data = &mut storage.all_ai_duels;
+        let data = &mut storage.all_duels;
         let json_data = duels_to_json(data.to_vec());
         structure_notice(
             String::from("select_ai_battle_strategy"),

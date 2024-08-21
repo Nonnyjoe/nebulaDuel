@@ -119,7 +119,9 @@ function fetch_duels(specific_tx: any) {
     (tx: any) =>
       tx.method == "create_duel" ||
       tx.method == "set_strategy" ||
-      tx.method == "fight"
+      tx.method == "fight" ||
+      tx.method == "create_ai_duel" ||
+      tx.method == "select_ai_battle_strategy"
   );
   console.log("all duels are:", all_duels);
   let highest_id = all_duels[0];
@@ -150,18 +152,19 @@ function fetch_ai_duels(specific_tx: any) {
     all_ai_duels.push(JSON.parse(all_duels[i].data)[0]);
   }
 
-  // console.log("all duels are:", all_ai_duels);
-  let highest_id;
+  console.log("all AI duels are:", all_ai_duels[0]);
+  let highest_id = all_duels[0];
+  // console.log("CHECK all AI duels are:", JSON.parse(highest_id.data));
+
   for (let i = 0; i < all_duels.length; i++) {
-    highest_id = all_duels[i];
-    if (all_duels[i].tx_id > highest_id) {
-      highest_id = all_duels[i].tx_id;
+    if (all_duels[i].tx_id > highest_id.tx_id) {
+      highest_id = all_duels[i];
     }
   }
-  // console.log("All Player Characters: ", JSON.parse(highest_id));
+  // console.log("All Player Characters: ", highest_id);
   console.log("All Player Characters: ", JSON.parse(highest_id?.data));
   // return highest_id?.data ? JSON.parse(highest_id?.data) : [];
-  return all_ai_duels;
+  return JSON.parse(highest_id?.data);
 }
 
 function fetch_all_tx(all_tx: any) {

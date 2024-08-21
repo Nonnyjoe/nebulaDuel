@@ -85,7 +85,7 @@ impl Storage {
         let json_structure_string =
             standard_output_to_json(tx_id, method, caller, all_tx_string).dump();
 
-        emit_notice(&json_structure_string[..], &mut self.server_addr[..]);
+        // emit_notice(&json_structure_string[..], &mut self.server_addr[..]);
     }
 }
 

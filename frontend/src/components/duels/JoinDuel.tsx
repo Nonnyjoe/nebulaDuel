@@ -210,36 +210,41 @@ const JoinDuelComp = () => {
     const txhash = await signMessages(dataObject);
 
     if (txhash) {
-      await delay(2000);
-      // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-      let request_payload = await fetchNotices("all_tx");
-      request_payload = request_payload.filter(
-        (tx: any) => tx.caller == activeAccount?.address.toLowerCase()
-      );
-      let Highest_tx;
-      for (let i = 0; i < request_payload.length; i++) {
-        Highest_tx = request_payload[i];
-        if (request_payload[i].tx_id > Highest_tx.tx_id) {
-          Highest_tx = request_payload[i];
-        }
-      }
+      toast.success("Transaction Successful.. Duel Created", {
+        position: "top-right",
+      });
+      await delay(4000);
+      navigate(`/strategy/${duelId}`);
 
-      if (Highest_tx.method == "join_duel") {
-        toast.success("Transaction Successful.. Duel Created", {
-          position: "top-right",
-        });
-        setTotalCharacterPrice(0);
-        setSelectedCharacters([]);
-        setSelectedCharactersId([]);
-        // const duels = await fetchNotices("all_duels");
-        // const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
-        navigate(`/strategy/${duelId}`);
-      } else {
-        toast.error("Transaction Failed.. Try again later.", {
-          position: "top-right",
-        });
-        setSubmiting(false);
-      }
+      // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
+      //   let request_payload = await fetchNotices("all_tx");
+      //   request_payload = request_payload.filter(
+      //     (tx: any) => tx.caller == activeAccount?.address.toLowerCase()
+      //   );
+      //   let Highest_tx;
+      //   for (let i = 0; i < request_payload.length; i++) {
+      //     Highest_tx = request_payload[i];
+      //     if (request_payload[i].tx_id > Highest_tx.tx_id) {
+      //       Highest_tx = request_payload[i];
+      //     }
+      //   }
+
+      //   if (Highest_tx.method == "join_duel") {
+      //     toast.success("Transaction Successful.. Duel Created", {
+      //       position: "top-right",
+      //     });
+      //     setTotalCharacterPrice(0);
+      //     setSelectedCharacters([]);
+      //     setSelectedCharactersId([]);
+      //     // const duels = await fetchNotices("all_duels");
+      //     // const userDuels = findHighestIdDuel(duels, activeAccount?.address as string);
+      //     navigate(`/strategy/${duelId}`);
+      //   } else {
+      //     toast.error("Transaction Failed.. Try again later.", {
+      //       position: "top-right",
+      //     });
+      //     setSubmiting(false);
+      //   }
     }
     setSubmiting(false);
   };
