@@ -115,18 +115,19 @@ This guide provides instructions for setting up and running the backend, relayer
 
    - Open your terminal and `cd` into the `app` folder.
 
-2. **Build and Run the Application**
+2. **Configure the Storage Implementation**
+
+   - Navigate to `src/storage/mod/`.
+   - In the new function of the Storage Implementation, change the `relayer_addr` variable to the wallet address your relayer will use to send transactions to the backend.
+   - Copy the private key for this address for use in the next section.
+
+3. **Build and Run the Application**
 
    - Run the following commands:
      ```bash
      cartesi build
      cartesi run
      ```
-
-3. **Configure the Storage Implementation**
-   - Navigate to `src/storage/mod/`.
-   - In the new function of the Storage Implementation, change the `relayer_addr` variable to the wallet address your relayer will use to send transactions to the backend.
-   - Copy the private key for this address for use in the next section.
 
 ## Running the Relayer
 

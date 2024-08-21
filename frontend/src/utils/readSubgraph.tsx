@@ -114,18 +114,28 @@ function fetch_characters(specific_tx: any) {
 }
 
 function fetch_duels(specific_tx: any) {
-  // console.log(specific_tx);
-  const all_duels = specific_tx.filter((tx: any) => tx.method == "create_duel");
-  // console.log("all duels are:", all_duels);
-  let highest_id;
+  console.log(specific_tx);
+  const all_duels = specific_tx.filter(
+    (tx: any) =>
+      tx.method == "create_duel" ||
+      tx.method == "set_strategy" ||
+      tx.method == "fight"
+  );
+  console.log("all duels are:", all_duels);
+  let highest_id = all_duels[0];
+
   for (let i = 0; i < all_duels.length; i++) {
-    highest_id = all_duels[i];
-    if (all_duels[i].tx_id > highest_id) {
-      highest_id = all_duels[i].tx_id;
+    // highest_id = all_duels[i];
+    console.log(JSON.parse(all_duels[i].data)[i]);
+    if (all_duels[i].tx_id > highest_id.tx_id) {
+      console.log("yessss");
+      highest_id = all_duels[i];
+    } else {
+      console.log("no");
     }
   }
   // console.log("All Player Characters: ", JSON.parse(highest_id));
-  // console.log("All Player Characters: ", (highest_id));
+  console.log("All Player Characters: ", JSON.parse(highest_id.data));
   return highest_id?.data ? JSON.parse(highest_id?.data) : [];
 }
 

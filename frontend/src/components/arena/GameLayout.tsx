@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef, useMemo, Suspense } from "react";
 // import { useActiveAccount } from 'thirdweb/react';
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
-import readGameState from "../../utils/readState";
+// import readGameState from "../../utils/readState";
 import { Canvas } from "@react-three/fiber";
 // import { Suspense } from 'react';
 // import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -17,6 +17,10 @@ import { SkeletonUtils } from "three/examples/jsm/Addons.js";
 import { ImageWrap } from "../atom/ImageWrap";
 // import charactersdata from '../../utils/Charactersdata';
 import Popup from "./Popup";
+import { toast } from "sonner";
+import signMessages from "../../utils/relayTransaction";
+import fetchNotices from "../../utils/readSubgraph";
+
 // import { useFrame } from '@react-three/fiber';
 
 type BattleLogStep = [number, number];
@@ -165,10 +169,24 @@ const GameLayout = () => {
     };
 
   const getAllCharacters = async () => {
-    const { Status, request_payload: dPayload } = await readGameState(
-      `duels/${duelId}`
-    );
+    // const { Status, request_payload: dPayload } = await readGameState(
+    //   `duels/${duelId}`
+    // );
+    let Status = false;
+    let dPayload = await fetchNotices("all_duels");
+    dPayload = dPayload.filter(
+      (Payload: any) => Number(Payload.duel_id) == Number(duelId)
+    )[0];
+    if (dPayload.length == 0) {
+      Status = false;
+      return;
+    } else {
+      Status = true;
+    }
+    console.log("new dPayload", dPayload);
+
     console.log(dPayload, "DUEL PAYLOAD IS.......");
+    console.log(dPayload.duel_opponent, "DUEL OPPONENT IS.......");
     const creatorPlaceholder = [];
     const opponentPlaceholder = [];
     // let dPayload = await fetchNotices("all_duels");
@@ -182,8 +200,23 @@ const GameLayout = () => {
         navigate(`/strategy/${duelId}`);
       }
       if (!hasCharacters) {
-        const { Status, request_payload } = await readGameState("characters");
-        // const request_payload = await fetchNotices("all_characters");
+        // const { Status, request_payload } = await readGameState("characters");
+
+        // let dPayload = await fetchNotices("all_duels");
+        let Status = false;
+        const request_payload = await fetchNotices("all_characters");
+        // console.log("all characters: " + request_payload);
+        // request_payload = request_payload.filter(
+        //   (Payload: any) => Number(Payload.duel_id) == Number(duelId)
+        // )[0];
+        if (request_payload.length == 0) {
+          Status = false;
+          return;
+        } else {
+          Status = true;
+        }
+        console.log("new characters dPayload", request_payload);
+
         if (Status) {
           const cPayload = request_payload?.filter(
             (character: CharacterDetails) =>
@@ -265,7 +298,7 @@ const GameLayout = () => {
         }
       );
       setBattleLog(newDemoLog);
-      // console.log("Battle entire struct.......: " + dPayload);
+      console.log("Battle entire struct.......: " + dPayload);
       setDuelData(dPayload);
       const creatorWarriors = JSON.parse(dPayload?.creator_warriors);
       const opponentWarriors = JSON.parse(dPayload?.opponent_warriors);
@@ -470,14 +503,53 @@ const GameLayout = () => {
     }
   };
 
-  const renderAnimations = () => {
-    if (!isAnimating) {
-      setCurrentStep(0);
-      // setCreatorCharacterDetails(creatorCharacterDetailsB);
-      // setOpponetCharacterDetails(opponentCharacterDetailsB);
-      animateStep(0);
-      setIsAnimating(false);
-      setCurrentStep(0);
+  const renderAnimations = async () => {
+    if (
+      duelData.creators_strategy === "Yet_to_select" ||
+      duelData.opponents_strategy === "Yet_to_select"
+    ) {
+      // console.log("battle logs", JSON.parse(duelData.battle_log));
+      toast.error(
+        "Waiting for opponent to select strategy.. Refreash and again later....",
+        {
+          position: "top-right",
+        }
+      );
+      //  setSubmiting(false);
+    } else {
+      if (JSON.parse(duelData.battle_log).length < 1) {
+        // console.log("yes ooooooo");
+        const dataObject1 = {
+          func: "fight",
+          duel_id: Number(+(duelId as string)),
+        };
+        const txhash = await signMessages(dataObject1);
+        console.log("txhash:", txhash);
+        setTimeout(() => {
+          getAllCharacters();
+        }, 2000);
+
+        if (txhash) {
+          if (!isAnimating) {
+            setIsAnimating(false);
+            setCurrentStep(0);
+            // setCreatorCharacterDetails(creatorCharacterDetailsB);
+            // setOpponetCharacterDetails(opponentCharacterDetailsB);
+            animateStep(0);
+            setCurrentStep(0);
+            setIsAnimating(false);
+          }
+        }
+      } else {
+        if (!isAnimating) {
+          setCurrentStep(0);
+          // setCreatorCharacterDetails(creatorCharacterDetailsB);
+          // setOpponetCharacterDetails(opponentCharacterDetailsB);
+          animateStep(0);
+          setIsAnimating(false);
+          setCurrentStep(0);
+        }
+      }
     }
   };
 
@@ -504,7 +576,7 @@ const GameLayout = () => {
         </p>
         <p className="mb-6 text-center font-poppins">
           {" "}
-          {duelData?.opponents_strategy}{" "}
+          {duelData?.creators_strategy}{" "}
         </p>
         <div className="grid md:gap-6 gap-3">
           {creatorCharacterDetails?.map((item, index) => (
@@ -637,7 +709,7 @@ const GameLayout = () => {
         </div>
         <p className=" text-center">
           {" "}
-          {duelData?.length > 10
+          {duelData
             ? `${duelData.duel_opponent.slice(
                 0,
                 9

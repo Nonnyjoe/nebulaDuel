@@ -451,7 +451,7 @@ pub async fn handle_join_duel(payload: &JsonValue, msg_sender: String, storage: 
             TransactionStatus::Success,
         );
 
-        let data = &mut storage.all_ai_duels;
+        let data = &mut storage.all_duels;
         let json_data = duels_to_json(data.to_vec());
         structure_notice(
             String::from("join_duel"),
@@ -498,19 +498,39 @@ pub async fn handle_set_strategy(payload: &JsonValue, msg_sender: String, storag
             panic!("invalid strategy Id");
         }
 
-        battle_challenge::set_strategy(
+        let status = battle_challenge::set_strategy(
             &mut storage.all_duels,
             duel_id,
             msg_sender.clone(),
             strategy,
         );
+        if status {
+            battle_challenge::fight(
+                &mut storage.all_duels,
+                &mut storage.all_characters,
+                duel_id,
+                &mut storage.all_players,
+                &mut storage.available_duels,
+                &mut storage.profit_from_stake,
+            );
+
+            let data = &mut storage.all_duels;
+            let json_data = duels_to_json(data.to_vec());
+            structure_notice(
+                String::from("fight"),
+                &mut storage.total_transactions,
+                msg_sender.clone(),
+                json_data.clone(),
+                &mut storage.server_addr,
+            );
+        }
         storage.record_tx(
             String::from("set_strategy"),
             msg_sender.clone(),
             TransactionStatus::Success,
         );
 
-        let data = &mut storage.all_ai_duels;
+        let data = &mut storage.all_duels;
         let json_data = duels_to_json(data.to_vec());
         structure_notice(
             String::from("set_strategy"),
@@ -551,7 +571,7 @@ pub async fn handle_fight(payload: &JsonValue, msg_sender: String, storage: &mut
             TransactionStatus::Success,
         );
 
-        let data = &mut storage.all_ai_duels;
+        let data = &mut storage.all_duels;
         let json_data = duels_to_json(data.to_vec());
         structure_notice(
             String::from("fight"),
@@ -885,7 +905,7 @@ pub async fn handle_transfer_tokens(
             market_place::transfer_tokens(
                 &mut storage.all_players,
                 msg_sender.clone(),
-                receiver_add,
+                receiver_add.to_lowercase(),
                 trf_amount,
             );
             storage.record_tx(
