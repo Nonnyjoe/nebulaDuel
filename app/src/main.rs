@@ -33,7 +33,7 @@ pub async fn handle_advance(
     let time_stamp: u128 = (request["data"]["metadata"]["timestamp"])
         .to_string()
         .parse::<u128>()
-        .unwrap();
+        .expect("Invalid timestamp");
 
     let modified_string = remove_first_two_chars(&_payload);
     println!("payload without unnecesary content is: {}", modified_string);
@@ -100,15 +100,23 @@ async fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, tim
         if let JsonValue::Object(obj) = parsed_json.clone() {
             println!("parsed json: {:?}", obj);
 
-            let new_data = obj.get("data").unwrap().as_str().unwrap();
+            let new_data = obj
+                .get("data")
+                .expect("error getting data")
+                .as_str()
+                .expect("error fetching new data");
             println!("New data is {:?}", new_data);
-            let signer = obj.get("signer").unwrap().to_string().to_lowercase();
+            let signer = obj
+                .get("signer")
+                .expect("Error fetching signer")
+                .to_string()
+                .to_lowercase();
 
             println!("Signer is {}", signer);
 
             let parsed_json: JsonValue = parse(new_data).expect("Failed to parse JSON");
             if let JsonValue::Object(obj) = parsed_json.clone() {
-                let func = obj.get("func").unwrap();
+                let func = obj.get("func").expect("Error getting function");
                 println!("Destructured func: {}", func);
                 router(
                     func,
@@ -165,7 +173,7 @@ pub async fn handle_inspect(
 
     match hex_to_string(&payload) {
         Ok(payload) => inspect_router(&payload, storage),
-        Err(_) => panic!("Failed to decode hex payload"),
+        Err(_) => println!("Failed to decode hex payload"),
     };
     Ok("accept")
 }

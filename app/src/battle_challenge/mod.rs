@@ -1,4 +1,3 @@
-use core::panic;
 use std::option;
 
 use crate::game_characters::{
@@ -79,7 +78,7 @@ impl TurnsTracker {
     }
 
     fn check_turn(&self) -> usize {
-        return self.turn_number.try_into().unwrap();
+        return self.turn_number.try_into().expect("ERROR CHECKING TURN");
     }
 
     fn sync(&mut self) {
@@ -107,10 +106,10 @@ pub fn create_duel(
     time_stamp: u128,
 ) {
     if creators_warriors.len() < 3 {
-        panic!("Player must present at least 3 characters for each battle!!");
+        println!("Player must present at least 3 characters for each battle!!");
     };
     if has_stake == false && stake_amount > 0.0 {
-        panic!("Stake amount must be 0 if stake is deactivated");
+        println!("Stake amount must be 0 if stake is deactivated");
     }
 
     let creators_warriors = select_fighters(
@@ -155,14 +154,14 @@ fn enforce_stake(all_players: &mut Vec<Player>, user_address: String, stake_amou
         if player.wallet_address == user_address {
             found = true;
             if player.cartesi_token_balance < stake_amount {
-                panic!("You do not have enough balance to stake");
+                println!("You do not have enough balance to stake");
             } else {
                 player.reduce_cartesi_token_balance(stake_amount);
             };
         }
     }
     if !found {
-        panic!("player not found");
+        println!("player not found");
     }
 }
 
@@ -173,18 +172,22 @@ pub fn join_duel(
     duel_id: u128,
     opponent_address: String,
     opponent_warriors: Vec<u128>,
-) -> Vec<Vec<u128>> {
+) -> Option<Vec<Vec<u128>>> {
     let selected_duel = find_duel(all_duels, duel_id);
     match selected_duel {
         Some(duel) => {
             if duel.is_active {
-                panic!("duel already active");
+                println!("duel already active");
+                return None;
             } else if duel.is_completed {
-                panic!("duel already completed");
+                println!("duel already completed");
+                return None;
             } else if opponent_warriors.len() < 3 || opponent_warriors.len() > 3 {
-                panic!("Player must present exactly 3 characters for each battle!!");
+                println!("Player must present exactly 3 characters for each battle!!");
+                return None;
             } else if duel.duel_creator == opponent_address.clone() {
-                panic!("You cannot join your own duel");
+                println!("You cannot join your own duel");
+                return None;
             } else {
                 if duel.has_stake {
                     enforce_stake(all_players, opponent_address.clone(), duel.stake_amount);
@@ -202,11 +205,13 @@ pub fn join_duel(
                 duel.opponents_strategy = AllStrategies::YetToSelect;
                 duel.is_active = true;
             }
-            let both_warriors: Vec<Vec<u128>> = reveal_both_warriors(all_duels, duel_id);
-            return both_warriors;
+            let both_warriors: Vec<Vec<u128>> =
+                reveal_both_warriors(all_duels, duel_id).expect("DUEL ID NOT FOUND");
+            return Some(both_warriors);
         }
         None => {
-            panic!("Duel with id {} not found", duel_id);
+            println!("Duel with id {} not found", duel_id);
+            return None;
         }
     }
 }
@@ -216,36 +221,41 @@ pub fn set_strategy(
     duel_id: u128,
     wallet_address: String,
     strategy: AllStrategies,
-) -> bool {
+) -> Option<bool> {
     let selected_duel = find_duel(all_duels, duel_id);
     match selected_duel {
         Some(duel) => {
             if !duel.is_active {
-                panic!("duel not active");
+                println!("duel not active");
+                return None;
             } else if duel.is_completed {
-                panic!("duel already completed");
+                println!("duel already completed");
+                return None;
             } else if duel.duel_opponent == String::from("") {
-                panic!("You can only set strategies when you have an opponent!");
+                println!("You can only set strategies when you have an opponent!");
+                return None;
             } else if duel.duel_creator == wallet_address {
                 duel.creators_strategy = strategy;
                 if duel.opponents_strategy != AllStrategies::YetToSelect {
-                    return true;
+                    return Some(true);
                 } else {
-                    return false;
+                    return Some(false);
                 }
             } else if duel.duel_opponent == wallet_address {
                 duel.opponents_strategy = strategy;
                 if duel.creators_strategy != AllStrategies::YetToSelect {
-                    return true;
+                    return Some(true);
                 } else {
-                    return false;
+                    return Some(false);
                 }
             } else {
-                panic!("You are not the creator or opponent of this duel");
+                println!("You are not the creator or opponent of this duel");
+                return None;
             }
         }
         None => {
-            panic!("Duel with id {} not found", duel_id);
+            println!("Duel with id {} not found", duel_id);
+            return None;
         }
     }
 }
@@ -257,7 +267,7 @@ pub fn fight(
     all_players: &mut Vec<Player>,
     available_duels: &mut Vec<Duel>,
     profit_from_stake: &mut f64,
-) -> Duel {
+) -> Option<Duel> {
     let mut creator_turn_tracker = TurnsTracker::new();
     let mut opponent_turn_tracker = TurnsTracker::new();
 
@@ -270,13 +280,13 @@ pub fn fight(
             let opponent_warriors: &mut Vec<Character> =
                 &mut get_warriors_clone(all_characters, &duel.opponent_warriors);
             if !duel.is_active {
-                panic!("duel not active");
+                println!("duel not active");
             } else if duel.is_completed {
-                return duel.clone();
+                return Some(duel.clone());
             } else if duel.creators_strategy == AllStrategies::YetToSelect
                 || duel.opponents_strategy == AllStrategies::YetToSelect
             {
-                panic!("Strategy not selected");
+                println!("Strategy not selected");
             } else {
                 loop {
                     if creators_warriors.len() == 0 {
@@ -322,9 +332,10 @@ pub fn fight(
                         creator_turn_tracker.sync();
                         let mut attacker: &mut Character = creators_warriors
                             .get_mut(creator_turn_tracker.check_turn())
-                            .unwrap();
+                            .expect("ERROR GETTING WARRIORS");
                         let mut opponent: &mut Character =
-                            decicde_victim(creators_strategy, opponent_warriors);
+                            decicde_victim(creators_strategy, opponent_warriors)
+                                .expect("INVALID STRATEGY");
                         single_duel(&mut attacker, &mut opponent);
                         duel.battle_log.push(new_vec(attacker, opponent));
 
@@ -335,12 +346,13 @@ pub fn fight(
                             println!("character at creator index:{:?} dead", opponent_index);
                             match opponent_index {
                                 Some(index) => {
-                                    opponent_warriors.remove(index.try_into().unwrap());
+                                    opponent_warriors
+                                        .remove(index.try_into().expect("ERROR REMOVING OPPONENT"));
                                     println!("New oponent length is: {}", opponent_warriors.len());
                                     opponent_turn_tracker.reduce_max_turn();
                                 }
                                 None => {
-                                    panic!("character not found in opponents warriors");
+                                    println!("character not found in opponents warriors");
                                 }
                             }
                         }
@@ -382,8 +394,9 @@ pub fn fight(
                         );
                         attacker = opponent_warriors
                             .get_mut(opponent_turn_tracker.check_turn())
-                            .unwrap();
-                        opponent = decicde_victim(opponents_strategy, creators_warriors);
+                            .expect("error getting attacker");
+                        opponent = decicde_victim(opponents_strategy, creators_warriors)
+                            .expect("INVALID STRATEGY");
                         single_duel(attacker, opponent);
                         duel.battle_log.push(new_vec(attacker, opponent));
 
@@ -395,17 +408,21 @@ pub fn fight(
 
                             let opponent_index =
                                 find_index_in_vec(opponent.id, creators_warriors.clone());
-                            println!("index of character is: {}", opponent_index.unwrap());
+                            println!(
+                                "index of character is: {}",
+                                opponent_index.expect("ERROR FINDING INDEX")
+                            );
                             match opponent_index {
                                 Some(index) => {
-                                    creators_warriors.remove(index.try_into().unwrap());
+                                    creators_warriors
+                                        .remove(index.try_into().expect("ERROR REMOVING WARRRIOR"));
                                     creator_turn_tracker.reduce_max_turn();
                                     println!("New oponent length is: {}", opponent_warriors.len());
                                     // println!("character at opponent index:{:?} dead", opponent_warriors[index as usize]);
                                     println!("Opponent warriors is: {:?}", opponent_warriors);
                                 }
                                 None => {
-                                    panic!("character not found in opponents warriors");
+                                    println!("character not found in opponents warriors");
                                 }
                             }
                         }
@@ -417,13 +434,14 @@ pub fn fight(
             };
             for (index, duel) in available_duels.clone().iter().enumerate() {
                 if duel.duel_id == duel_id {
-                    available_duels.remove(index.try_into().unwrap());
+                    available_duels.remove(index.try_into().expect("ERROR REMOVING DUEL"));
                 }
             }
-            return duel.clone();
+            return Some(duel.clone());
         }
         None => {
-            panic!("Duel with id {} not found", duel_id);
+            println!("Duel with id {} not found", duel_id);
+            return None;
         }
     }
 }
@@ -446,7 +464,7 @@ fn register_battle_details(
                 winner.register_win(all_characters);
             }
             None => {
-                panic!("winner not found");
+                println!("winner not found");
             }
         }
     }
@@ -457,14 +475,14 @@ fn register_battle_details(
                 looser.register_loss(all_characters);
             }
             None => {
-                panic!("looser not found");
+                println!("looser not found");
             }
         }
     }
     {
         if duel.has_stake {
             println!("=== RELEASING STAKE TO WINNER ===");
-            let winner = get_profile(all_players, duel_winner).unwrap();
+            let winner = get_profile(all_players, duel_winner).expect("ERROR FETCHING WINNERS");
             winner.increase_cartesi_token_balance((duel.stake_amount * 2.0) * 0.90);
             *profit_from_stake += (duel.stake_amount * 2.0) * 0.10;
         }
@@ -523,7 +541,7 @@ fn get_warriors_clone(
     selected_characters: &Vec<u128>,
 ) -> Vec<Character> {
     if selected_characters.len() < 3 {
-        panic!("Player must present at least 3 characters for each battle!!");
+        println!("Player must present at least 3 characters for each battle!!");
     }
     let mut creators_warriors: Vec<Character> = Vec::new();
 
@@ -540,24 +558,25 @@ fn get_warriors_clone(
                 creators_warriors.push(character.clone());
             }
             None => {
-                panic!("Character with id {} not found", character_id);
+                println!("Character with id {} not found", character_id);
             }
         }
     }
     return creators_warriors;
 }
 
-pub fn reveal_both_warriors(all_duels: &mut Vec<Duel>, duel_id: u128) -> Vec<Vec<u128>> {
+pub fn reveal_both_warriors(all_duels: &mut Vec<Duel>, duel_id: u128) -> Option<Vec<Vec<u128>>> {
     let selected_duel = find_duel(all_duels, duel_id);
     match selected_duel {
         Some(duel) => {
             let mut both_warriors = Vec::new();
             both_warriors.push(duel.creator_warriors.clone());
             both_warriors.push(duel.opponent_warriors.clone());
-            return both_warriors;
+            return Some(both_warriors);
         }
         None => {
-            panic!("Duel with id {} not found", duel_id);
+            println!("Duel with id {} not found", duel_id);
+            return None;
         }
     }
 }

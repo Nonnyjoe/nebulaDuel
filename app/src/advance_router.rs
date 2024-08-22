@@ -196,7 +196,7 @@ pub async fn router(
             }
         }
         None => {
-            panic!("error decoding func");
+            println!("error decoding func");
         }
     };
 
@@ -205,10 +205,10 @@ pub async fn router(
         Some(player) => player.register_transaction(
             &mut storage.all_characters,
             (storage.total_transactions).clone(),
-            route.as_str().unwrap().to_string(),
+            route.as_str().expect("INVALID ROUTE CODE").to_string(),
         ),
         None => {
-            panic!("Player Not registered, Please Register");
+            println!("Player Not registered, Please Register");
         }
     }
 }
@@ -222,15 +222,15 @@ pub async fn handle_create_player(payload: &JsonValue, msg_sender: String, stora
         let mut avatar_url = String::from("default_url");
 
         if let Some(monika) = obj.get("monika") {
-            user_monika = monika.as_str().unwrap().to_string();
+            user_monika = monika.as_str().expect("INVALID MONIKA").to_string();
         } else {
-            panic!("Please pass your monika");
+            println!("Please pass your monika");
         }
 
         if let Some(avatar) = obj.get("avatar_url") {
-            avatar_url = avatar.as_str().unwrap().to_string();
+            avatar_url = avatar.as_str().expect("INVALID AVATAR URI").to_string();
         } else {
-            panic!("Please pass your avatar_url");
+            println!("Please pass your avatar_url");
         }
 
         players_profile::create_player(
@@ -266,7 +266,7 @@ pub async fn handle_create_player(payload: &JsonValue, msg_sender: String, stora
 
         println!("Total players now is: {}", storage.total_players);
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -278,21 +278,21 @@ pub async fn handle_purchase_team(payload: &JsonValue, msg_sender: String, stora
         let mut char_id3: u128 = 0;
 
         if let Some(charid1) = obj.get("char_id1") {
-            char_id1 = charid1.as_u64().unwrap().into();
+            char_id1 = charid1.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id 1");
+            println!("invalid character id 1");
         }
 
         if let Some(charid2) = obj.get("char_id2") {
-            char_id2 = charid2.as_u64().unwrap().into();
+            char_id2 = charid2.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id 2");
+            println!("invalid character id 2");
         }
 
         if let Some(charid3) = obj.get("char_id3") {
-            char_id3 = charid3.as_u64().unwrap().into();
+            char_id3 = charid3.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id 3");
+            println!("invalid character id 3");
         }
         game_characters::purchase_team(
             &mut storage.all_players,
@@ -329,7 +329,7 @@ pub async fn handle_purchase_team(payload: &JsonValue, msg_sender: String, stora
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -346,33 +346,33 @@ pub async fn handle_create_duel(
         let mut char_ids: Vec<u128> = Vec::new();
 
         if let Some(charid1) = obj.get("char_id1") {
-            char_ids.push(charid1.as_u64().unwrap().into());
+            char_ids.push(charid1.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 1");
+            println!("invalid character id 1");
         }
 
         if let Some(charid2) = obj.get("char_id2") {
-            char_ids.push(charid2.as_u64().unwrap().into());
+            char_ids.push(charid2.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 2");
+            println!("invalid character id 2");
         }
 
         if let Some(charid3) = obj.get("char_id3") {
-            char_ids.push(charid3.as_u64().unwrap().into());
+            char_ids.push(charid3.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 3");
+            println!("invalid character id 3");
         }
 
         if let Some(will_staked) = obj.get("has_staked") {
-            has_staked = will_staked.as_bool().unwrap();
+            has_staked = will_staked.as_bool().expect("INVALID STAKE BOOLEAN");
         } else {
-            panic!("invalid argument has_staked");
+            println!("invalid argument has_staked");
         }
 
         if let Some(amt_staked) = obj.get("stake_amount") {
-            stake_amount = amt_staked.as_f64().unwrap();
+            stake_amount = amt_staked.as_f64().expect("INVALID STAKE AMOUNT");
         } else {
-            panic!("invalid stake amount");
+            println!("invalid stake amount");
         }
 
         battle_challenge::create_duel(
@@ -403,7 +403,7 @@ pub async fn handle_create_duel(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -414,27 +414,27 @@ pub async fn handle_join_duel(payload: &JsonValue, msg_sender: String, storage: 
         let mut duel_id: u128 = 0;
 
         if let Some(charid1) = obj.get("char_id1") {
-            char_ids.push(charid1.as_u64().unwrap().into());
+            char_ids.push(charid1.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 1");
+            println!("invalid character id 1");
         }
 
         if let Some(charid2) = obj.get("char_id2") {
-            char_ids.push(charid2.as_u64().unwrap().into());
+            char_ids.push(charid2.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 2");
+            println!("invalid character id 2");
         }
 
         if let Some(charid3) = obj.get("char_id3") {
-            char_ids.push(charid3.as_u64().unwrap().into());
+            char_ids.push(charid3.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 3");
+            println!("invalid character id 3");
         }
 
         if let Some(id) = obj.get("duel_id") {
-            duel_id = id.as_u64().unwrap().into();
+            duel_id = id.as_u64().expect("INVALID DUEL ID").into();
         } else {
-            panic!("invalid duel id");
+            println!("invalid duel id");
         }
 
         battle_challenge::join_duel(
@@ -468,7 +468,7 @@ pub async fn handle_join_duel(payload: &JsonValue, msg_sender: String, storage: 
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -481,21 +481,21 @@ pub async fn handle_set_strategy(payload: &JsonValue, msg_sender: String, storag
         let mut strategy: AllStrategies = AllStrategies::YetToSelect;
 
         if let Some(id) = obj.get("strategy_id") {
-            strategy_id = id.as_u64().unwrap().into();
+            strategy_id = id.as_u64().expect("INVALID STRATEGY ID").into();
         } else {
-            panic!("invalid strategy id");
+            println!("invalid strategy id");
         }
 
         if let Some(id) = obj.get("duel_id") {
-            duel_id = id.as_u64().unwrap().into();
+            duel_id = id.as_u64().expect("INVALID DUEL ID").into();
         } else {
-            panic!("invalid duel id");
+            println!("invalid duel id");
         }
 
         if strategy_id != 0 {
-            strategy = strategy_simulation::decode_strategy(strategy_id).unwrap();
+            strategy = strategy_simulation::decode_strategy(strategy_id).expect("INVALID STRATEGY");
         } else {
-            panic!("invalid strategy Id");
+            println!("invalid strategy Id");
         }
 
         let status = battle_challenge::set_strategy(
@@ -503,7 +503,8 @@ pub async fn handle_set_strategy(payload: &JsonValue, msg_sender: String, storag
             duel_id,
             msg_sender.clone(),
             strategy,
-        );
+        )
+        .expect("ERROR SETTING STRATEGY");
         if status {
             battle_challenge::fight(
                 &mut storage.all_duels,
@@ -542,7 +543,7 @@ pub async fn handle_set_strategy(payload: &JsonValue, msg_sender: String, storag
 
         println!("Strategy set succesfully!!");
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -552,9 +553,9 @@ pub async fn handle_fight(payload: &JsonValue, msg_sender: String, storage: &mut
         let mut duel_id: u128 = 0;
 
         if let Some(id) = obj.get("duel_id") {
-            duel_id = id.as_u64().unwrap().into();
+            duel_id = id.as_u64().expect("INVALID DUEL ID").into();
         } else {
-            panic!("invalid duel id");
+            println!("invalid duel id");
         }
 
         battle_challenge::fight(
@@ -581,7 +582,7 @@ pub async fn handle_fight(payload: &JsonValue, msg_sender: String, storage: &mut
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -598,33 +599,34 @@ pub async fn handle_create_ai_duel(
         let mut difficulty: Difficulty = Difficulty::P2P;
 
         if let Some(charid1) = obj.get("char_id1") {
-            char_ids.push(charid1.as_u64().unwrap().into());
+            char_ids.push(charid1.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 1");
+            println!("invalid character id 1");
         }
 
         if let Some(charid2) = obj.get("char_id2") {
-            char_ids.push(charid2.as_u64().unwrap().into());
+            char_ids.push(charid2.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 2");
+            println!("invalid character id 2");
         }
 
         if let Some(charid3) = obj.get("char_id3") {
-            char_ids.push(charid3.as_u64().unwrap().into());
+            char_ids.push(charid3.as_u64().expect("INVALID CHAR ID").into());
         } else {
-            panic!("invalid character id 3");
+            println!("invalid character id 3");
         }
 
         if let Some(id) = obj.get("difficulty_id") {
-            difficulty_id = id.as_u64().unwrap().into();
+            difficulty_id = id.as_u64().expect("INVALID DIFFICULTY ID").into();
         } else {
-            panic!("invalid strategy id");
+            println!("invalid strategy id");
         }
 
         if difficulty_id != 0 {
-            difficulty = ai_battle::decode_difficulty(difficulty_id).unwrap();
+            difficulty =
+                ai_battle::decode_difficulty(difficulty_id).expect("INVALID DIFFICULTY ID");
         } else {
-            panic!("invalid strategy Id");
+            println!("invalid strategy Id");
         }
 
         ai_battle::create_ai_duel(
@@ -654,7 +656,7 @@ pub async fn handle_create_ai_duel(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -671,21 +673,22 @@ pub async fn handle_select_ai_battle_strategy(
         let mut strategy: AllStrategies = AllStrategies::YetToSelect;
 
         if let Some(id) = obj.get("strategy_id") {
-            strategy_id = id.as_u64().unwrap().into();
+            strategy_id = id.as_u64().expect("INVALID STRATEGY ID").into();
         } else {
-            panic!("invalid strategy id");
+            println!("invalid strategy id");
         }
 
         if let Some(id) = obj.get("duel_id") {
-            duel_id = id.as_u64().unwrap().into();
+            duel_id = id.as_u64().expect("INVALID DUEL ID").into();
         } else {
-            panic!("invalid duel id");
+            println!("invalid duel id");
         }
 
         if strategy_id != 0 {
-            strategy = strategy_simulation::decode_strategy(strategy_id).unwrap();
+            strategy =
+                strategy_simulation::decode_strategy(strategy_id).expect("INVALID STRATEGY ID");
         } else {
-            panic!("invalid strategy Id");
+            println!("invalid strategy Id");
         }
 
         ai_battle::select_ai_battle_strategy(
@@ -715,7 +718,7 @@ pub async fn handle_select_ai_battle_strategy(
 
         println!("Strategy set succesfully!!");
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -728,9 +731,9 @@ pub async fn handle_set_cartesi_token_address(
         let mut ctsi_token: String = String::from(" ");
 
         if let Some(token_add) = obj.get("ctsi_token") {
-            ctsi_token = token_add.as_str().unwrap().to_string();
+            ctsi_token = token_add.as_str().expect("INVALID ADDRESS").to_string();
         } else {
-            panic!("Please pass in a valid token address");
+            println!("Please pass in a valid token address");
         }
 
         admin_functions::set_cartesi_token_address(
@@ -754,7 +757,7 @@ pub async fn handle_set_cartesi_token_address(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -767,9 +770,9 @@ pub async fn handle_set_nebula_token_address(
         let mut nebula_token: String = String::from(" ");
 
         if let Some(token_add) = obj.get("nebula_token") {
-            nebula_token = token_add.as_str().unwrap().to_string();
+            nebula_token = token_add.as_str().expect("INVALID ADDRESS").to_string();
         } else {
-            panic!("Please pass in a valid token address");
+            println!("Please pass in a valid token address");
         }
         admin_functions::set_nebula_token_address(
             &mut storage.admin_address,
@@ -792,7 +795,7 @@ pub async fn handle_set_nebula_token_address(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -805,9 +808,9 @@ pub async fn handle_change_admin_address(
         let mut new_admin_address: String = String::from(" ");
 
         if let Some(admin_address) = obj.get("new_admin_address") {
-            new_admin_address = admin_address.as_str().unwrap().to_string();
+            new_admin_address = admin_address.as_str().expect("INVALID ADDRESS").to_string();
         } else {
-            panic!("Please pass in a valid admin address");
+            println!("Please pass in a valid admin address");
         }
 
         if new_admin_address != String::from(" ") {
@@ -832,7 +835,7 @@ pub async fn handle_change_admin_address(
             );
         }
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -846,9 +849,13 @@ pub async fn handle_change_relayer_address(
         let mut new_relayer_address: String = String::from(" ");
 
         if let Some(relayer_address) = obj.get("new_relayer_address") {
-            new_relayer_address = relayer_address.as_str().unwrap().to_string().to_lowercase();
+            new_relayer_address = relayer_address
+                .as_str()
+                .expect("INVALID RELAYER")
+                .to_string()
+                .to_lowercase();
         } else {
-            panic!("Please pass in a valid relayer address");
+            println!("Please pass in a valid relayer address");
         }
 
         if new_relayer_address != String::from(" ") {
@@ -875,7 +882,7 @@ pub async fn handle_change_relayer_address(
         }
         println!("New relayer is: {}", storage.relayer_addr.clone());
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -890,15 +897,18 @@ pub async fn handle_transfer_tokens(
         let mut trf_amount: f64 = 0.0;
 
         if let Some(amount) = obj.get("trf_amount") {
-            trf_amount = amount.as_f64().unwrap();
+            trf_amount = amount.as_f64().expect("INVALID TRANSFER AMOUNT");
         } else {
-            panic!("invalid transfer amount");
+            println!("invalid transfer amount");
         }
 
         if let Some(address) = obj.get("receiver_add") {
-            receiver_add = address.as_str().unwrap().to_string();
+            receiver_add = address
+                .as_str()
+                .expect("INVALID RECEIVER ADDRESS")
+                .to_string();
         } else {
-            panic!("Please pass in a valid receiver address");
+            println!("Please pass in a valid receiver address");
         }
 
         if receiver_add != String::from(" ") {
@@ -926,7 +936,7 @@ pub async fn handle_transfer_tokens(
             );
         }
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -940,9 +950,9 @@ pub async fn handle_purchase_single_character(
         let mut character_id: u128 = 0;
 
         if let Some(id) = obj.get("character_id") {
-            character_id = id.as_u64().unwrap().into();
+            character_id = id.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id");
+            println!("invalid character id");
         }
         game_characters::purchase_single_character(
             &mut storage.all_players,
@@ -967,7 +977,7 @@ pub async fn handle_purchase_single_character(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -982,15 +992,15 @@ pub async fn handle_listing_character(
         let mut price: f64 = 0.0;
 
         if let Some(id) = obj.get("character_id") {
-            character_id = id.as_u64().unwrap().into();
+            character_id = id.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id");
+            println!("invalid character id");
         }
 
         if let Some(price_a) = obj.get("price") {
-            price = price_a.as_f64().unwrap();
+            price = price_a.as_f64().expect("INVALID PRICE");
         } else {
-            panic!("invalid stake amount");
+            println!("invalid stake amount");
         }
 
         market_place::list_character(
@@ -1017,7 +1027,7 @@ pub async fn handle_listing_character(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1027,9 +1037,9 @@ pub async fn handle_buy_character(payload: &JsonValue, msg_sender: String, stora
         let mut character_id: u128 = 0;
 
         if let Some(id) = obj.get("character_id") {
-            character_id = id.as_u64().unwrap().into();
+            character_id = id.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id");
+            println!("invalid character id");
         }
 
         market_place::buy_character(
@@ -1056,7 +1066,7 @@ pub async fn handle_buy_character(payload: &JsonValue, msg_sender: String, stora
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1070,9 +1080,9 @@ pub async fn handle_purchase_points(
         let mut amount: f64 = 0.0;
 
         if let Some(amt) = obj.get("amount") {
-            amount = amt.as_f64().unwrap();
+            amount = amt.as_f64().expect("INVALID AMOUNT");
         } else {
-            panic!("invalid purchase amount");
+            println!("invalid purchase amount");
         }
 
         market_place::purchase_points(
@@ -1099,7 +1109,7 @@ pub async fn handle_purchase_points(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1114,15 +1124,15 @@ pub async fn handle_modify_list_price(
         let mut price: f64 = 0.0;
 
         if let Some(id) = obj.get("character_id") {
-            character_id = id.as_u64().unwrap().into();
+            character_id = id.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id");
+            println!("invalid character id");
         }
 
         if let Some(price_a) = obj.get("price") {
-            price = price_a.as_f64().unwrap();
+            price = price_a.as_f64().expect("INVALID PRICE");
         } else {
-            panic!("invalid stake amount");
+            println!("invalid stake amount");
         }
 
         market_place::modify_list_price(
@@ -1147,7 +1157,7 @@ pub async fn handle_modify_list_price(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1161,9 +1171,9 @@ pub async fn handle_change_points_rate(
         let mut new_point_rate: f64 = 0.0;
 
         if let Some(point_rate) = obj.get("new_point_rate") {
-            new_point_rate = point_rate.as_f64().unwrap();
+            new_point_rate = point_rate.as_f64().expect("INVALID POINT RATE");
         } else {
-            panic!("invalid point rate");
+            println!("invalid point rate");
         }
 
         admin_functions::change_points_rate(
@@ -1187,7 +1197,7 @@ pub async fn handle_change_points_rate(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1197,9 +1207,9 @@ pub async fn handle_modify_monika(payload: &JsonValue, msg_sender: String, stora
         let mut new_monika = String::from("new_player");
 
         if let Some(monika) = obj.get("new_monika") {
-            new_monika = monika.as_str().unwrap().to_string();
+            new_monika = monika.as_str().expect("INVALID MONIKA").to_string();
         } else {
-            panic!("Please pass valid monika");
+            println!("Please pass valid monika");
         }
         players_profile::modify_monika(&mut storage.all_players, msg_sender.clone(), new_monika);
         storage.record_tx(
@@ -1219,7 +1229,7 @@ pub async fn handle_modify_monika(payload: &JsonValue, msg_sender: String, stora
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1229,9 +1239,9 @@ pub async fn handle_modify_avatar(payload: &JsonValue, msg_sender: String, stora
         let mut new_avatar_uri = String::from("new_player");
 
         if let Some(avatar_uri) = obj.get("new_avatar_uri") {
-            new_avatar_uri = avatar_uri.as_str().unwrap().to_string();
+            new_avatar_uri = avatar_uri.as_str().expect("INVALID AVATAR URI").to_string();
         } else {
-            panic!("Please pass valid avatar");
+            println!("Please pass valid avatar");
         }
         players_profile::modify_avatar(
             &mut storage.all_players,
@@ -1255,7 +1265,7 @@ pub async fn handle_modify_avatar(payload: &JsonValue, msg_sender: String, stora
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1269,9 +1279,9 @@ pub async fn handle_withdraw_profit_from_stake(
         let mut amount: f64 = 0.0;
 
         if let Some(amt) = obj.get("amount") {
-            amount = amt.as_f64().unwrap();
+            amount = amt.as_f64().expect("INVALID AMOUNT");
         } else {
-            panic!("Please pass in a valid withdrawal amount");
+            println!("Please pass in a valid withdrawal amount");
         }
 
         admin_functions::withdraw_profit_from_stake(
@@ -1295,7 +1305,7 @@ pub async fn handle_withdraw_profit_from_stake(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1309,9 +1319,9 @@ pub async fn handle_withdraw_profit_from_p2p_sales(
         let mut amount: f64 = 0.0;
 
         if let Some(amt) = obj.get("amount") {
-            amount = amt.as_f64().unwrap();
+            amount = amt.as_f64().expect("INVALID AMOUNT");
         } else {
-            panic!("Please pass in a valid withdrawal amount");
+            println!("Please pass in a valid withdrawal amount");
         }
         admin_functions::withdraw_profit_from_p2p_sales(
             &mut storage.admin_address,
@@ -1334,7 +1344,7 @@ pub async fn handle_withdraw_profit_from_p2p_sales(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1348,9 +1358,9 @@ pub async fn handle_withdraw_profit_from_points_purchase(
         let mut amount: f64 = 0.0;
 
         if let Some(amt) = obj.get("amount") {
-            amount = amt.as_f64().unwrap();
+            amount = amt.as_f64().expect("INVALID AMOUNT");
         } else {
-            panic!("Please pass in a valid withdrawal amount");
+            println!("Please pass in a valid withdrawal amount");
         }
         admin_functions::withdraw_profit_from_points_purchase(
             &mut storage.admin_address,
@@ -1373,7 +1383,7 @@ pub async fn handle_withdraw_profit_from_points_purchase(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1387,9 +1397,9 @@ pub async fn handle_withdraw_character_as_nft(
         let mut character_id: u128 = 0;
 
         if let Some(id) = obj.get("character_id") {
-            character_id = id.as_u64().unwrap().into();
+            character_id = id.as_u64().expect("INVALID CHAR ID").into();
         } else {
-            panic!("invalid character id");
+            println!("invalid character id");
         }
 
         market_place::withdraw_character_as_nft(
@@ -1416,7 +1426,7 @@ pub async fn handle_withdraw_character_as_nft(
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 
@@ -1427,13 +1437,14 @@ pub async fn handle_withdraw(payload: &JsonValue, msg_sender: String, storage: &
         let mut amount: f64 = 0.0;
 
         if let Some(amt) = obj.get("amount") {
-            amount = amt.as_f64().unwrap();
+            amount = amt.as_f64().expect("INVALID AMOUNT");
         } else {
-            panic!("Please pass in a valid withdrawal amount");
+            println!("Please pass in a valid withdrawal amount");
         }
 
         market_place::withdraw(storage, msg_sender.clone(), amount)
             .await
+            .expect("ERROR INTIATING WITHDRAWAL")
             .record_tx(
                 String::from("withdraw"),
                 msg_sender.clone(),
@@ -1451,7 +1462,7 @@ pub async fn handle_withdraw(payload: &JsonValue, msg_sender: String, storage: &
             &mut storage.server_addr,
         );
     } else {
-        panic!("Parsed JSON is not an object");
+        println!("Parsed JSON is not an object");
     }
 }
 

@@ -1,5 +1,7 @@
-use crate::game_characters::{SuperPower, Character, purchase_team, get_characters, select_fighters, confirm_ownership, get_character_details};
-
+use crate::game_characters::{
+    confirm_ownership, get_character_details, get_characters, purchase_team, select_fighters,
+    Character, SuperPower,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Player {
@@ -18,10 +20,7 @@ pub struct Player {
     pub ai_battles_won: u128,
     pub ai_battles_losses: u128,
     pub transaction_history: Vec<UserTransaction>,
-
 }
-
-
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UserTransaction {
@@ -36,7 +35,7 @@ impl Player {
         if self.cartesi_token_balance >= amount {
             self.cartesi_token_balance -= amount;
         } else {
-            panic!("Insufficient nebula balance");
+            println!("Insufficient nebula balance");
         }
     }
 
@@ -45,12 +44,12 @@ impl Player {
     }
 
     pub fn remove_character(&mut self, character_id: u128) {
-        match find_index(&self.characters, &character_id) { 
+        match find_index(&self.characters, &character_id) {
             Some(index) => {
                 self.characters.remove(index);
-            },
+            }
             None => {
-                panic!("Character not found");
+                println!("Character not found");
             }
         }
     }
@@ -81,7 +80,12 @@ impl Player {
         return self;
     }
 
-    pub fn register_transaction(&mut self, all_characters: &mut Vec<Character>, tx_id: u128, method_called: String) {
+    pub fn register_transaction(
+        &mut self,
+        all_characters: &mut Vec<Character>,
+        tx_id: u128,
+        method_called: String,
+    ) {
         let new_tx = UserTransaction {
             transaction_id: tx_id,
             method_called,
@@ -90,16 +94,22 @@ impl Player {
     }
 }
 
-pub fn find_player (all_players: &mut Vec<Player>, wallet_address: String) -> Option<&mut Player> {
-   for player in all_players {
+pub fn find_player(all_players: &mut Vec<Player>, wallet_address: String) -> Option<&mut Player> {
+    for player in all_players {
         if (player.wallet_address).to_lowercase() == wallet_address.to_lowercase() {
             return Some(player);
         }
-   }
-   return None;
+    }
+    return None;
 }
 
-pub fn create_player(monika: String, wallet_address: String, avatar_url: String, all_players: &mut Vec<Player>, total_players: &mut u128) -> Option<Player> {
+pub fn create_player(
+    monika: String,
+    wallet_address: String,
+    avatar_url: String,
+    all_players: &mut Vec<Player>,
+    total_players: &mut u128,
+) -> Option<Player> {
     match find_player(all_players, wallet_address.clone()) {
         Some(_player) => {
             println!("Address already Exists!");
@@ -128,23 +138,24 @@ pub fn create_player(monika: String, wallet_address: String, avatar_url: String,
             if player.wallet_address == String::from("0xnebula") {
                 player.points = 10000;
             }
-        
+
             all_players.push(player.clone());
-        
+
             println!("New Player Created!!");
             return Some(player);
         }
     }
-
-
 }
 
 pub fn get_profile(all_players: &mut Vec<Player>, wallet_address: String) -> Option<&mut Player> {
     return find_player(all_players, wallet_address);
 }
 
-
-pub fn modify_avatar(all_players: &mut Vec<Player>, wallet_address: String, new_avatar_uri: String) -> bool {
+pub fn modify_avatar(
+    all_players: &mut Vec<Player>,
+    wallet_address: String,
+    new_avatar_uri: String,
+) -> bool {
     if let Some(player) = find_player(all_players, wallet_address) {
         player.avatar_url = new_avatar_uri;
         true
@@ -153,7 +164,11 @@ pub fn modify_avatar(all_players: &mut Vec<Player>, wallet_address: String, new_
     }
 }
 
-pub fn modify_monika(all_players: &mut Vec<Player>, wallet_address: String, new_monika: String) -> bool {
+pub fn modify_monika(
+    all_players: &mut Vec<Player>,
+    wallet_address: String,
+    new_monika: String,
+) -> bool {
     if let Some(player) = find_player(all_players, wallet_address) {
         player.monika = new_monika;
         true
@@ -170,18 +185,23 @@ pub fn add_character(all_players: &mut Vec<Player>, wallet_address: String, char
     match find_player(all_players, wallet_address.clone()) {
         Some(player) => {
             player.characters.push(character_id);
-        },
+        }
         None => {
-            panic!("Couldn't find player, please register!!")
+            println!("Couldn't find player, please register!!")
         }
     }
 }
 
-pub fn remove_character(player: &mut Player, all_characters: &mut Vec<Character>, new_owner: String, character_id: u128) {
+pub fn remove_character(
+    player: &mut Player,
+    all_characters: &mut Vec<Character>,
+    new_owner: String,
+    character_id: u128,
+) {
     match find_index(&player.characters, &character_id) {
         Some(index) => {
             player.characters.remove(index);
-            
+
             let mut selected_character: Option<&mut Character> = None;
             for character in all_characters {
                 if character.id == character_id {
@@ -190,12 +210,11 @@ pub fn remove_character(player: &mut Player, all_characters: &mut Vec<Character>
                 }
             }
             if selected_character.is_none() {
-                panic!("Character with id {} not found", character_id);
+                println!("Character with id {} not found", character_id);
             }
-
-        },
+        }
         None => {
-            panic!("User not owner of said character!!!");
+            println!("User not owner of said character!!!");
         }
     }
 }

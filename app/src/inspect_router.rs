@@ -86,7 +86,9 @@ fn handle_fetch_characters(new_payload: Vec<&str>, storage: &mut Storage) {
         let characters_string = single_character_to_json(
             get_character_details(
                 &mut storage.all_characters,
-                new_payload[1].parse::<u128>().unwrap(),
+                new_payload[1]
+                    .parse::<u128>()
+                    .expect("ERROR FETCHING CHARACTER DETAILS"),
             )
             .clone(),
         );
@@ -103,9 +105,11 @@ fn handle_fetch_duels(new_payload: Vec<&str>, storage: &mut Storage) {
         println!("Fetching duels with id:{}", new_payload[1]);
         let duel = get_duel(
             &mut storage.all_duels,
-            new_payload[1].parse::<u128>().unwrap(),
+            new_payload[1]
+                .parse::<u128>()
+                .expect("ERROR FETCHING DUELS"),
         )
-        .unwrap();
+        .expect("ERROR FETCHING DUELS");
         let duels_string = single_duel_to_json(duel.clone());
         emit_report(&duels_string, &storage.server_addr);
     } else {
@@ -187,9 +191,9 @@ fn handle_get_characters_in_duel(new_payload: Vec<&str>, storage: &mut Storage) 
         println!("Fetching all duel characters for user: {}", new_payload[2]);
         let duel = get_duel(
             &mut storage.all_duels,
-            new_payload[1].parse::<u128>().unwrap(),
+            new_payload[1].parse::<u128>().expect("ERROR..."),
         )
-        .unwrap();
+        .expect("Error getting duel details");
         if new_payload[2].to_string().to_lowercase() == duel.duel_creator.clone() {
             let characters = duel.creator_warriors.clone();
             for character in characters {

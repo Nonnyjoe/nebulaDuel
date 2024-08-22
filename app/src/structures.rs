@@ -207,7 +207,7 @@ pub fn duels_to_json(all_duels: Vec<Duel>) -> String {
         tx_json["duel_loser"] = duel.duel_loser.into();
         tx_json["creation_time"] = (duel.creation_time as u64).into();
 
-        json_array.push(tx_json).unwrap();
+        json_array.push(tx_json).expect("JSON ERROR");
     }
 
     json_array.dump()
@@ -256,9 +256,9 @@ pub fn decode_battle_log_json(battle_log: Vec<Vec<MinimalCharacter>>) -> String 
             tx_json["attack"] = (round.attack as u64).into();
             tx_json["owner"] = (round.owner).into();
 
-            json_array1.push(tx_json).unwrap();
+            json_array1.push(tx_json).expect("JSON ERROR2");
         }
-        json_array.push(json_array1).unwrap();
+        json_array.push(json_array1).expect("JSON ERROR3");
     }
 
     json_array.dump()
@@ -283,7 +283,7 @@ pub fn listed_character_json(listed_characters: Vec<SaleDetails>) -> String {
         tx_json["character_id"] = (character.character_id as u64).into();
         tx_json["price"] = (character.price).into();
         tx_json["seller"] = (character.seller).into();
-        json_array.push(tx_json).unwrap();
+        json_array.push(tx_json).expect("JSON ERROR5");
     }
 
     json_array.dump()
@@ -307,7 +307,7 @@ pub fn character_to_json(all_characters: Vec<Character>) -> String {
         tx_json["total_losses"] = (character.total_losses as u64).into();
         tx_json["price"] = (character.price as u64).into();
         tx_json["owner"] = (character.owner).into();
-        json_array.push(tx_json).unwrap();
+        json_array.push(tx_json).expect("JSON ERROR4");
     }
 
     json_array.dump()
@@ -372,7 +372,7 @@ pub fn players_profile_to_json(all_players: Vec<Player>) -> String {
         tx_json["ai_battles_losses"] = (player.ai_battles_losses as u64).into();
         tx_json["transaction_history"] =
             (player_transactions_to_json(player.transaction_history).into());
-        json_array.push(tx_json).unwrap();
+        json_array.push(tx_json).expect("JSON ERROR6");
     }
 
     json_array.dump()
@@ -384,7 +384,7 @@ pub fn vec_of_id_to_json(all_ids: Vec<u128>) -> String {
     for id in all_ids {
         let mut tx_json = JsonValue::new_object();
         tx_json["char_id"] = (id as u64).into();
-        json_array.push(tx_json).unwrap();
+        json_array.push(tx_json).expect("JSON ERROR7");
     }
 
     json_array.dump()
@@ -398,7 +398,7 @@ pub fn player_transactions_to_json(transactions: Vec<UserTransaction>) -> String
         tx_json["transaction_id"] = (transaction.transaction_id as u64).into();
         tx_json["method_called"] = (transaction.method_called).into();
 
-        json_array.push(tx_json).unwrap();
+        json_array.push(tx_json).expect("JSON ERROR8");
     }
 
     json_array.dump()

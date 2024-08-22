@@ -27,7 +27,8 @@ pub fn deposit(
             return Some(player);
         }
         None => {
-            panic!("Couldn't find player, please register!!")
+            println!("Couldn't find player, please register!!");
+            return None;
         }
     }
 }
@@ -36,22 +37,22 @@ pub async fn withdraw<'a>(
     storage: &mut Storage,
     wallet_address: String,
     amount: f64,
-) -> &mut Storage {
+) -> Option<&mut Storage> {
     match find_player(&mut storage.all_players, wallet_address.clone()) {
         Some(player) => {
             if player.cartesi_token_balance < amount {
-                panic!("Insufficient token balance");
+                println!("Insufficient token balance");
+                return None;
             } else {
                 player.cartesi_token_balance -= amount;
                 // Emit a voucher to pay the user.
-                return transfer_token(storage, wallet_address.clone(), amount)
-                    .await
-                    .unwrap();
+                return transfer_token(storage, wallet_address.clone(), amount).await;
             }
             // return storage;
         }
         None => {
-            panic!("Couldn't find player, please register!!")
+            println!("Couldn't find player, please register!!");
+            return None;
         }
     }
 }
@@ -78,7 +79,7 @@ pub fn withdraw_character_as_nft(
             // Emit a voucher to transfer an nft with the if of the character id to the user;
         }
         None => {
-            panic!("Couldn't find player, please register!!")
+            println!("Couldn't find player, please register!!")
         }
     }
 }
@@ -106,7 +107,7 @@ pub fn deposit_character_as_nft(
             }
         }
         None => {
-            panic!("Couldn't find player, please register!!")
+            println!("Couldn't find player, please register!!")
         }
     }
 }
@@ -142,19 +143,19 @@ pub fn transfer_tokens(
                             sender.cartesi_token_balance -= amount;
                             receiver.cartesi_token_balance += amount;
                         } else {
-                            panic!("Sender has insufficient balance")
+                            println!("Sender has insufficient balance")
                         }
                     } else {
-                        panic!("Sender and receiver cannot be the same")
+                        println!("Sender and receiver cannot be the same")
                     }
                 }
                 None => {
-                    panic!("Receiver address could not be found, please register!!")
+                    println!("Receiver address could not be found, please register!!")
                 }
             }
         }
         None => {
-            panic!("Couldn't find sender address, please register!!")
+            println!("Couldn't find sender address, please register!!")
         }
     }
 }
@@ -162,7 +163,7 @@ pub fn transfer_tokens(
 fn assert_not_listed(character_id: u128, listed_characters: &mut Vec<SaleDetails>) {
     for character in listed_characters {
         if character.character_id == character_id {
-            panic!("Character already listed");
+            println!("Character already listed");
         }
     }
 }
@@ -195,22 +196,23 @@ pub fn modify_list_price(
     wallet_address: String,
     character_id: u128,
     price: f64,
-) -> &mut Vec<SaleDetails> {
+) -> Option<&mut Vec<SaleDetails>> {
     let mut found_character: bool = false;
     for character in listed_characters.iter_mut() {
         if character.character_id == character_id {
             if character.seller == wallet_address {
                 character.price = price;
             } else {
-                panic!("Not initial Lister");
+                println!("Not initial Lister");
             }
             found_character = true;
         }
     }
     if found_character {
-        return listed_characters;
+        return Some(listed_characters);
     } else {
-        panic!("Character not Listed");
+        println!("Character not Listed");
+        return None;
     }
 }
 
@@ -243,7 +245,7 @@ pub fn buy_character<'a>(
                     list_index = Some(index.clone());
                 }
                 None => {
-                    panic!("Couldn't find seller, please register!!")
+                    println!("Couldn't find seller, please register!!")
                 }
             }
         }
@@ -254,11 +256,11 @@ pub fn buy_character<'a>(
                 listed_characters.remove(index);
             }
             None => {
-                panic!("Character not listed");
+                println!("Character not listed");
             }
         }
     } else {
-        panic!("Character not Listed");
+        println!("Character not Listed");
     }
 }
 
@@ -277,11 +279,11 @@ pub fn purchase_points(
                 player.points += obtained_points;
                 *profit_from_points_purchase += amount;
             } else {
-                panic!("Insufficient cartesi tokeen balance, please deposit!!")
+                println!("Insufficient cartesi tokeen balance, please deposit!!")
             }
         }
         None => {
-            panic!("Couldn't find player, please register!!")
+            println!("Couldn't find player, please register!!")
         }
     }
 }
@@ -308,10 +310,10 @@ fn extract_traders<'a>(
     }
 
     if buyer_profile.is_none() || seller_profile.is_none() {
-        panic!("Couldn't find complete traders, please register!!")
+        println!("Couldn't find complete traders, please register!!")
     }
-    traders.push(buyer_profile.unwrap());
-    traders.push(seller_profile.unwrap());
+    traders.push(buyer_profile.expect("ERROR WITH BUYER PROFILE"));
+    traders.push(seller_profile.expect("ERROR WITH SELLER PROFILE"));
     return traders;
 }
 

@@ -132,7 +132,7 @@ fn transaction_to_json(transactions: &mut Vec<TransactionData>) -> String {
         tx_json["method"] = tx.method.clone().into();
         tx_json["caller"] = tx.caller.clone().into();
         tx_json["status"] = status.to_string().into();
-        json_array.push(tx_json).unwrap();
+        json_array.push(tx_json).expect("JOSN ERROR8");
     }
     json_array.dump()
 }
