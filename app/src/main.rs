@@ -180,8 +180,12 @@ pub async fn handle_inspect(
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Starting dapp backend logic...");
     let client = hyper::Client::new();
-    let server_addr = env::var("ROLLUP_HTTP_SERVER_URL")?;
+    let server_addr = env::var("ROLLUP_HTTP_SERVER_URL").unwrap_or_else(|_| {
+        println!("Using default value for ROLLUP_HTTP_SERVER_URL: http://localhost:5004");
+        return "http://localhost:5004".to_string();
+    });
 
     let mut storage: Storage = Storage::new(server_addr.clone(), &client);
     deployment_setup(&mut storage);
