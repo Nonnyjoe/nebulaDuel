@@ -5,6 +5,7 @@ import { animateScroll } from "react-scroll";
 import { ScrollToTopOptions } from "../utils/ScrollToTop";
 import ProductItem from "../components/marketPlace/productId/ProductItem";
 import Related from "../components/marketPlace/productId/Related";
+import MaxWrapper from "../components/shared/MaxWrapper";
 
 const ProductDetail = () => {
 
@@ -20,8 +21,10 @@ const ProductDetail = () => {
     return (
         <main className="w-full flex flex-col">
             <Banner />
-            <ProductItem />
-            <Related />
+            <MaxWrapper className="w-full px-4 md:px-6 lg:px-8">
+                <ProductItem />
+                <Related />
+            </MaxWrapper>
         </main>
     )
 }

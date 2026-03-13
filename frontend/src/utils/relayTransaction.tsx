@@ -1,75 +1,63 @@
-import {ethers} from 'ethers';
-import axios from 'axios';
-// import https from 'https';
+import { ethers } from "ethers";
 
 declare global {
-    interface Window {
-        ethereum: any;
-    }
+  interface Window {
+    ethereum: any;
+  }
 }
 
-    async function signMessages(message: any) {
-          try {
-            const {address, signature} = await signMessage({data: message});
-            const finalPayload = await createMessage(message, "dappAddress", address, signature);
-            const realSigner = await ethers.utils.verifyMessage(finalPayload.message, finalPayload.signature);
-            console.log(`Realsigner is: ${realSigner}`);
-            console.log("final payload", finalPayload);
-            const txhash = await sendTransaction(finalPayload);
-            return txhash;
-          } catch (err: any) {
-            console.log(err.message);
-          }
-    }
+const INPUTBOX_ADDRESS = import.meta.env.VITE_INPUTBOX_ADDRESS as string;
+const DAPP_ADDRESS = import.meta.env.VITE_DAPP_ADDRESS as string;
 
+const INPUT_BOX_ABI = [
+  {
+    inputs: [
+      { internalType: "address", name: "_dapp", type: "address" },
+      { internalType: "bytes", name: "_input", type: "bytes" },
+    ],
+    name: "addInput",
+    outputs: [{ internalType: "bytes32", name: "", type: "bytes32" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+];
 
-    async function signMessage(message: any): Promise<{ address: string, signature: string }> {
-        try {
-            console.log(JSON.stringify(message));
-            if (!window?.ethereum)
-                throw new Error("No crypto wallet found. Please install it.");
-        
-            await window.ethereum.send("eth_requestAccounts");
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const signature = await signer.signMessage(JSON.stringify(message));
-            const address = await signer.getAddress();
-            return {address, signature};
-            } catch (err: any) {
+async function sendInputToCartesi(message: any) {
+  if (!window?.ethereum) {
+    throw new Error("No crypto wallet found. Please install it.");
+  }
+  if (!INPUTBOX_ADDRESS || !DAPP_ADDRESS) {
+    throw new Error(
+      "VITE_INPUTBOX_ADDRESS or VITE_DAPP_ADDRESS is not configured",
+    );
+  }
 
-            console.log(err.message);
-            throw err;
-        }
-    }
+  await window.ethereum.request({ method: "eth_requestAccounts" });
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
 
-    async function createMessage(new_data: any, target: any, signer: any, signature: any) {
-        console.log(target);
-        // Stringify the message object
-        const messageString = JSON.stringify({data: new_data});
-        // Construct the final JSON object
-        const finalObject = {
-            message: messageString,
-            signer: signer,
-            signature: signature
-        };
-        return finalObject;
-    }
+  const inputBox = new ethers.Contract(
+    INPUTBOX_ADDRESS,
+    INPUT_BOX_ABI,
+    signer,
+  );
 
-    async function sendTransaction(data: any) {
-        console.log("forwarding transaction to relayer........")
-        try {
-            // const response = await axios.post('https://nebula-relayer.fly.dev/transactions', data, {
-            const response = await axios.post('http://localhost:3000/transactions', data, {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            console.log('Transaction successful:', response.data);
-            return response.data;
-        } catch (error: any) {
-            console.error('Error sending transaction:', error.response ? error.response.data : error.message);
-        }
-    }
-    
+  const payload = ethers.utils.toUtf8Bytes(JSON.stringify({ data: message }));
 
-export default signMessages;
+  const tx = await inputBox.addInput(DAPP_ADDRESS, payload);
+  const receipt = await tx.wait();
+
+  return receipt?.transactionHash ?? tx.hash;
+}
+
+// Kept name for compatibility with existing imports
+export default async function signMessages(message: any) {
+  try {
+    const hash = await sendInputToCartesi(message);
+    console.log("Input sent to Cartesi InputBox. Tx hash:", hash);
+    return hash;
+  } catch (err: any) {
+    console.log(err.message);
+    throw err;
+  }
+}

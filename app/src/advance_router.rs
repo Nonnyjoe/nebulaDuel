@@ -1509,22 +1509,22 @@ pub async fn handle_deposit(payload: &str, msg_sender: String, storage: &mut Sto
 }
 
 pub fn erc20_deposit_parse(payload: &str) -> Result<(&str, &str, u128), String> {
-    if payload.len() < 146 {
+    // In Cartesi Rollups node v2, the ERC-20 portal only accepts successful
+    // transfers and no longer prefixes the payload with a 1-byte success flag.
+    // The payload is now encoded as:
+    //   token (20 bytes) | receiver (20 bytes) | amount (32 bytes)
+    // all represented as hex (40 + 40 + 64 = 144 chars).
+    if payload.len() < 144 {
         return Err("Payload length is incorrect".to_string());
     }
 
-    let bytes = match hex::decode(payload) {
-        Ok(bytes) => bytes,
-        Err(_) => return Err("Failed to decode hex payload".to_string()),
-    };
-
-    if bytes[0] != 1 {
-        return Err("ERC20 deposit unsuccessful".to_string());
+    if hex::decode(payload).is_err() {
+        return Err("Failed to decode hex payload".to_string());
     }
 
-    let token_address = &payload[2..42];
-    let receiver_address = &payload[42..82];
-    let amount_str = &payload[82..146];
+    let token_address = &payload[0..40];
+    let receiver_address = &payload[40..80];
+    let amount_str = &payload[80..144];
 
     let amount = match u128::from_str_radix(amount_str, 16) {
         Ok(amount) => amount,

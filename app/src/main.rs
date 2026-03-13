@@ -30,15 +30,38 @@ pub async fn handle_advance(
         .ok_or("Missing caller")?;
 
     println!("caller is {}", msg_sender);
-    let time_stamp: u128 = (request["data"]["metadata"]["timestamp"])
-        .to_string()
-        .parse::<u128>()
-        .expect("Invalid timestamp");
+    // Node v1 used a `timestamp` field, while node v2 uses `block_timestamp`.
+    // Support both, preferring the v2 field when present.
+    let time_stamp: u128 = if let Some(ts) = request["data"]["metadata"]["block_timestamp"].as_u64()
+    {
+        ts as u128
+    } else if let Some(ts) = request["data"]["metadata"]["timestamp"].as_u64() {
+        ts as u128
+    } else {
+        println!("Warning: no block_timestamp or timestamp in metadata, defaulting to 0");
+        0
+    };
+
+    // In node v2, every advance_state request carries the application
+    // contract address in metadata.app_contract. Store it once if it
+    // hasn't been recorded yet.
+    if !storage.has_relayed_address {
+        if let Some(app_contract) = request["data"]["metadata"]["app_contract"].as_str() {
+            storage.dapp_contract_address = app_contract.to_lowercase();
+            storage.has_relayed_address = true;
+            println!(
+                "Stored application contract address: {}",
+                storage.dapp_contract_address
+            );
+        } else {
+            println!("advance metadata is missing app_contract field");
+        }
+    }
 
     let modified_string = remove_first_two_chars(&_payload);
     println!("payload without unnecesary content is: {}", modified_string);
     // let request_payload = hex::decode(modified_string).expect("Every payload has to be hex encoded");
-    hex_to_json(
+    handle_request(
         &modified_string,
         &msg_sender.to_lowercase(),
         storage,
@@ -59,18 +82,13 @@ fn remove_first_two_chars(s: &str) -> String {
     }
 }
 
-async fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
+async fn handle_request(hex_str: &str, msg_sender: &str, storage: &mut Storage, time_stamp: u128) {
     let base_contracts: BaseContracts = BaseContracts::new();
     if msg_sender == base_contracts.erc20_portal {
         handle_deposit(hex_str, msg_sender.to_string(), storage).await;
         return;
     } else if msg_sender == base_contracts.erc721_portal {
         handle_deposit_character_as_nft(hex_str, msg_sender.to_string(), storage).await;
-        return;
-    } else if msg_sender == base_contracts.dapp_relayer {
-        storage.dapp_contract_address = ("0x".to_string() + hex_str).to_lowercase();
-        storage.has_relayed_address = true;
-        println!("RECEIVED DAPP ADDRESS: {:?}", storage.dapp_contract_address);
         return;
     }
     // {"data": "{\"func\":\"create_player\",\"monika\":\"NonnyJoe\",\"avatar_url\":\"nonnyjoe_image1\"}", "signer": "0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8", "target": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"}
@@ -88,63 +106,35 @@ async fn hex_to_json(hex_str: &str, msg_sender: &str, storage: &mut Storage, tim
     // Convert the byte array to a string
     let json_string: &str = str::from_utf8(&bytes).expect("Failed to convert bytes to string");
 
-    let bc_payload: &str = json_string.clone();
-
     // Parse the JSON string to a JsonValue using the `json` crate
     let parsed_json: JsonValue = parse(json_string).expect("Failed to parse JSON");
 
-    if msg_sender.to_lowercase() == storage.relayer_addr {
-        println!("{}", storage.relayer_addr);
-        println!("RECEIVED RELAYER SPONSORED TX");
-        // Destructure the JsonValue to access the fields
-        if let JsonValue::Object(obj) = parsed_json.clone() {
-            println!("parsed json: {:?}", obj);
-
-            let new_data = obj
-                .get("data")
-                .expect("error getting data")
-                .as_str()
-                .expect("error fetching new data");
-            println!("New data is {:?}", new_data);
-            let signer = obj
-                .get("signer")
-                .expect("Error fetching signer")
-                .to_string()
-                .to_lowercase();
-
-            println!("Signer is {}", signer);
-
-            let parsed_json: JsonValue = parse(new_data).expect("Failed to parse JSON");
-            if let JsonValue::Object(obj) = parsed_json.clone() {
-                let func = obj.get("func").expect("Error getting function");
-                println!("Destructured func: {}", func);
-                router(
-                    func,
-                    &parsed_json,
-                    signer.to_lowercase().as_str(),
-                    storage,
-                    time_stamp,
-                )
-                .await;
+    // Frontend encodes inputs as `{ data: <payload-object> }`. Support both:
+    // - `{ "func": "...", ... }`
+    // - `{ "data": { "func": "...", ... } }`
+    let (func_value, payload_json) = if let JsonValue::Object(obj) = parsed_json.clone() {
+        if let Some(inner) = obj.get("data") {
+            // Shape: { data: { func, ... } }
+            if let JsonValue::Object(inner_obj) = inner.clone() {
+                let func = inner_obj
+                    .get("func")
+                    .expect("Error getting function from inner data");
+                (func.clone(), inner.clone())
             } else {
-                println!("Parsed newdata JSON is not an object");
+                panic!("Field 'data' is not an object");
             }
+        } else if let Some(func) = obj.get("func") {
+            // Shape: { func, ... }
+            (func.clone(), parsed_json.clone())
         } else {
-            println!("Parsed JSON is not an object");
+            panic!("Field 'func' not found in JSON object");
         }
     } else {
-        // Destructure the JsonValue to access the fields
-        if let JsonValue::Object(obj) = parsed_json.clone() {
-            if let Some(func) = obj.get("func") {
-                println!("Destructured func: {}", func);
-                router(func, &parsed_json, msg_sender, storage, time_stamp).await;
-            } else {
-                println!("Field 'func' not found in JSON object");
-            }
-        } else {
-            println!("Parsed JSON is not an object");
-        }
-    }
+        panic!("Parsed JSON is not an object");
+    };
+
+    println!("Destructured func: {}", func_value);
+    router(&func_value, &payload_json, msg_sender, storage, time_stamp).await;
     println!("JSON: {:?}", json_string);
 }
 
@@ -228,14 +218,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-// emitNotice = async (data) => {
-//     const hexresult = stringToHex(data);
-//     advance_req = await fetch(rollup_server + "/notice", {
-//       method: "POST",
-//       headers: {
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify({ payload: hexresult }),
-//     });
-//     return advance_req;
-//   }

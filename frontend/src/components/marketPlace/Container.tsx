@@ -39,7 +39,7 @@ const Container = () => {
   const filterP2pProducts = async () => {
     try {
       const { Status, request_payload } = await readGameState(
-        "inspect/listed_characters"
+        "listed_characters"
       );
       if (Status) {
         setData(request_payload);

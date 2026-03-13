@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
 import { useProfileContext } from "../contexts/ProfileContext.js";
-import fetchNotices from "../../utils/readSubgraph.tsx";
+import readGameState from "../../utils/readState.tsx";
 
 // interface Character {
 //     id: number;
@@ -22,11 +22,11 @@ import fetchNotices from "../../utils/readSubgraph.tsx";
 //     img: string;
 //     price: number;
 // }
-interface Duel {
-  duel_id: number;
-  duel_creator: string;
-  // duel_data: string;
-}
+// interface Duel {
+//   duel_id: number;
+//   duel_creator: string;
+//   // duel_data: string;
+// }
 
 interface CharacterDetails {
   id: number;
@@ -66,16 +66,14 @@ const SelectWarriors = () => {
     []
   );
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>(
-    []
-  );
-  const [, setPlayersCharacters] = useState<CharacterDetails[]>([]);
+  const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>([]);
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
   const [acceptStake, setAcceptStake] = useState(false);
   const [stakeAmount, setStakeAmount] = useState<number>(0.0);
   const [submiting, setSubmiting] = useState<boolean>(false);
-  const { profile, setProfile } = useProfileContext();
+  const { setProfile } = useProfileContext();
+  const [initialised, setInitialised] = useState<boolean>(false);
 
   function shuffleArray(array: CharacterDetails[]) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -86,96 +84,89 @@ const SelectWarriors = () => {
   }
 
   useEffect(() => {
+    console.log("Selecting warriors!!!!!!!!!!!!!!!!!!!!!!!!!");
     async function rigPage() {
-      let myCharacters: CharacterDetails[] = [];
-
-      if (
-        activeAccount?.address?.toLowerCase() !=
-        profile?.wallet_address?.toLowerCase()
-      ) {
-        try {
-          let request_payload = await fetchNotices("all_profiles");
-          request_payload = request_payload.filter(
-            (player: any) =>
-              player.wallet_address == activeAccount?.address.toLowerCase()
-          );
-          if (request_payload.length > 0) {
-            setProfile(request_payload[0]);
-          } else {
-            navigate("/profile");
-          }
-        } catch (e) {
-          navigate("/profile");
-          console.log(e);
-        }
-      } else {
-        setProfileData(profile);
-        let request_payload = await fetchNotices("all_characters");
-        request_payload = request_payload.filter(
-          (character: CharacterDetails) =>
-            character.owner == activeAccount?.address.toLowerCase()
-        );
-        console.log("Players characters: " + request_payload);
-        setPlayersCharacters(request_payload);
-        myCharacters = request_payload;
-
-        if (request_payload.length == 0) {
-          navigate("/profile/purchasecharacter");
-        }
+      if (initialised) return;
+      if (!activeAccount?.address) {
+        navigate("/profile");
+        return;
       }
 
-      if (profile && profile.characters) {
-        const characters = JSON.parse(profile.characters.replace(/\\/g, ""));
+      const wallet = activeAccount.address.toLowerCase();
 
-        console.log(characters, "characters");
-
-        const charIds = characters.map((character: any) => character.char_id);
-
-        console.log(charIds, "charIds");
-
-        const newArray: CharacterDetails[] = [];
-        for (let i = 0; i < myCharacters.length; i++) {
-          const characterData = charactersdata.find(
-            (character) => character.name === myCharacters[i].name
-          );
-          console.log(characterData, "characterData");
-          console.log(myCharacters, "myCharacters");
-
-          const details = {
-            ...myCharacters[i],
-            img: characterData ? characterData.img : undefined,
-          };
-          console.log(details);
-          newArray.push(details);
-        }
-        console.log(newArray);
-        setCharacterDetails(newArray);
+      // Use inspect has_profile to validate profile exists
+      const hasProfileResp = await readGameState(`has_profile/${wallet}`);
+      if (!hasProfileResp.Status || hasProfileResp.request_payload !== true) {
+        navigate("/profile");
+        return;
       }
-    }
-    rigPage();
-  }, [location]);
 
-  function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
-    // Filter duels by the given duel_creator
-    const filteredDuels = duels.filter(
-      (duel) => duel.duel_creator.toLowerCase() === creator.toLowerCase()
-    );
-
-    if (filteredDuels.length === 0) {
-      return null; // Return null if no duels are found for the given creator
-    }
-    console.log("see them", filteredDuels);
-    // Find the duel with the highest id
-    let highestIdDuel = filteredDuels[0];
-
-    for (let i = 0; i < filteredDuels.length; i++) {
-      if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
-        highestIdDuel = filteredDuels[i];
+      // Fetch full profile details
+      const { Status, request_payload: profilePayload } = await readGameState(
+        `profile/${wallet}`,
+      );
+      if (!Status || !profilePayload) {
+        return;
       }
-    }
 
-    return highestIdDuel;
-  }
+      setProfile(profilePayload);
+      setProfileData(profilePayload);
+
+      // Fetch the player's characters directly via inspect (players_characters/<wallet>)
+      const charsResp = await readGameState(`players_characters/${wallet}`);
+      if (!charsResp.Status || !charsResp.request_payload) {
+        // No characters yet; keep the UI fallback below
+        return;
+      }
+
+      const payload = charsResp.request_payload;
+      const rawCharacters: CharacterDetails[] = Array.isArray(payload)
+        ? payload
+        : typeof payload === "string"
+          ? (() => {
+              try {
+                return JSON.parse(payload.startsWith("[") ? payload : `[${payload}]`);
+              } catch {
+                return [];
+              }
+            })()
+          : [];
+      console.log("Players characters from inspect:", rawCharacters);
+
+      const enriched: CharacterDetails[] = rawCharacters.map((ch) => {
+        const meta = charactersdata.find((c) => c.name === ch.name);
+        return {
+          ...ch,
+          img: meta ? meta.img : undefined,
+        };
+      });
+
+      setCharacterDetails(enriched);
+    }
+      rigPage().finally(() => setInitialised(true));
+    }, [location, activeAccount?.address, navigate, setProfile, initialised]);
+
+  // function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
+  //   // Filter duels by the given duel_creator
+  //   const filteredDuels = duels.filter(
+  //     (duel) => duel.duel_creator.toLowerCase() === creator.toLowerCase()
+  //   );
+
+  //   if (filteredDuels.length === 0) {
+  //     return null; // Return null if no duels are found for the given creator
+  //   }
+  //   console.log("see them", filteredDuels);
+  //   // Find the duel with the highest id
+  //   let highestIdDuel = filteredDuels[0];
+
+  //   for (let i = 0; i < filteredDuels.length; i++) {
+  //     if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
+  //       highestIdDuel = filteredDuels[i];
+  //     }
+  //   }
+
+  //   return highestIdDuel;
+  // }
 
   if (!profileData) {
     navigate("/profile");
@@ -249,13 +240,7 @@ const SelectWarriors = () => {
 
     if (txhash) {
       await delay(4000);
-
-      const duels = await fetchNotices("all_duels");
-      const userDuels = findHighestIdDuel(
-        duels,
-        activeAccount?.address as string
-      );
-      navigate(`/strategy/${userDuels?.duel_id}`);
+      // TODO: fetch latest duel via JSON-RPC or inspect and route accordingly.
       // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
       //   try {
       //     let request_payload = await fetchNotices("all_tx");

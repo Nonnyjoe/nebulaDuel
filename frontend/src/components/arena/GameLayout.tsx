@@ -20,6 +20,7 @@ import Popup from "./Popup";
 import { toast } from "sonner";
 import signMessages from "../../utils/relayTransaction";
 import fetchNotices from "../../utils/readSubgraph";
+import readGameState from "../../utils/readState";
 
 // import { useFrame } from '@react-three/fiber';
 
@@ -122,6 +123,9 @@ const GameLayout = () => {
   // const [creatorWarriors, setCreatorWarriors] = useState<Warrior[]>();
   // const [opponentWarriors, setOpponentWarriors]= useState<Warrior[]>();
   const [battleLog, setBattleLog] = useState<BattleLogStep[]>([]);
+  const [lastHitId, setLastHitId] = useState<number | null>(null);
+  const [creatorName, setCreatorName] = useState<string>("");
+  const [opponentName, setOpponentName] = useState<string>("");
   const charIdMapping = new Map<string, number>();
   const detailsMapping = new Map<number, (typeof charactersdata)[0]>();
 
@@ -364,6 +368,55 @@ const GameLayout = () => {
     detailsMapping.get(1 as number)
   );
 
+  const shortAddress = (addr?: string) => {
+    if (!addr) return "";
+    if (addr.length <= 12) return addr;
+    return `${addr.slice(0, 8)}…${addr.slice(-6)}`;
+  };
+
+  useEffect(() => {
+    const loadParticipantNames = async () => {
+      if (!duelData) return;
+      try {
+        const creatorAddr: string | undefined = duelData.duel_creator;
+        if (creatorAddr) {
+          const { Status, request_payload } = await readGameState(
+            `profile/${creatorAddr.toLowerCase()}`,
+          );
+          if (Status && request_payload?.monika) {
+            setCreatorName(request_payload.monika);
+          } else {
+            setCreatorName(shortAddress(creatorAddr));
+          }
+        }
+
+        const opponentAddr: string | undefined = duelData.duel_opponent;
+        if (opponentAddr && opponentAddr.toLowerCase() !== "0xnebula") {
+          const { Status, request_payload } = await readGameState(
+            `profile/${opponentAddr.toLowerCase()}`,
+          );
+          if (Status && request_payload?.monika) {
+            setOpponentName(request_payload.monika);
+          } else {
+            setOpponentName(shortAddress(opponentAddr));
+          }
+        } else if (opponentAddr && opponentAddr.toLowerCase() === "0xnebula") {
+          setOpponentName("Nebula AI");
+        }
+      } catch (e) {
+        // fall back to shortened addresses on error
+        if (duelData?.duel_creator) {
+          setCreatorName((prev) => prev || shortAddress(duelData.duel_creator));
+        }
+        if (duelData?.duel_opponent) {
+          setOpponentName((prev) => prev || shortAddress(duelData.duel_opponent));
+        }
+      }
+    };
+
+    loadParticipantNames();
+  }, [duelData]);
+
   const animateStep = (step: number) => {
     if (step >= battleLog.length) {
       setIsAnimating(false);
@@ -403,6 +456,9 @@ const GameLayout = () => {
 
       fromElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
       fromElement.style.transition = "transform 1s";
+
+      // mark target as recently hit for card animation
+      setLastHitId(toCharId);
 
       setCreatorCharacterDetails((prevDetails) =>
         prevDetails.map((character) =>
@@ -492,6 +548,11 @@ const GameLayout = () => {
           console.log("OPPONENT DUEL MODOFIED.........");
         }
 
+        // clear hit highlight after a short delay
+        setTimeout(() => {
+          setLastHitId(null);
+        }, 400);
+
         setTimeout(() => {
           setCurrentStep(step + 1);
           animateStep(step + 1);
@@ -560,38 +621,60 @@ const GameLayout = () => {
   };
 
   return (
-    <section className="flex overflow-hidden gap-10">
-      <main className=" w-3/12  mt-12 ml-10">
-        <div className="text-myGreen font-belanosima text-xl text-center font-medium p-5 h-fit ">
-          Creator Warriors
+    <section className="w-full min-h-screen bg-bodyBg">
+      <main className="w-full flex flex-col lg:flex-row gap-6 lg:gap-10 px-4 md:px-6 lg:px-10 py-8 md:py-10 lg:py-12 max-w-[1368px] mx-auto">
+      <div className="w-full lg:w-3/12 mt-4 lg:mt-12 lg:ml-2 xl:ml-6">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="h-0.5 w-8 bg-myGreen rounded" />
+          <div className="text-myGreen font-belanosima text-lg sm:text-xl font-medium">
+            Creator warriors
+          </div>
         </div>
-        <p className=" text-center">
-          {" "}
-          {duelData
-            ? `${duelData.duel_creator.slice(
-                0,
-                9
-              )}........${duelData.duel_creator.slice(-10)}`
-            : "0x00"}
-        </p>
-        <p className="mb-6 text-center font-poppins">
-          {" "}
-          {duelData?.creators_strategy}{" "}
-        </p>
-        <div className="grid md:gap-6 gap-3">
+        <div className="mb-6 rounded-xl border border-gray-700 bg-myBlack/80 px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-belanosima text-[11px] uppercase tracking-wide text-gray-400">
+              Name
+            </p>
+            <p className="font-belanosima text-sm sm:text-base text-white text-right truncate max-w-[60%]">
+              {creatorName || shortAddress(duelData?.duel_creator)}
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-belanosima text-[11px] uppercase tracking-wide text-gray-400">
+              Address
+            </p>
+            <p className="font-poppins text-[11px] text-gray-400 text-right truncate max-w-[60%]">
+              {shortAddress(duelData?.duel_creator)}
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-belanosima text-[11px] uppercase tracking-wide text-gray-400">
+              Strategy
+            </p>
+            <p className="font-poppins text-[11px] text-myGreen text-right truncate max-w-[60%]">
+              {duelData?.creators_strategy &&
+              duelData.creators_strategy !== "Yet_to_select"
+                ? duelData.creators_strategy
+                : "Not selected"}
+            </p>
+          </div>
+        </div>
+        <div className="grid md:gap-4 gap-3">
           {creatorCharacterDetails?.map((item, index) => (
             <div
-              className={`w-[80%] grid grid-cols-2 gap-2 border bg-myBlack p-4 h-40 rounded-md ${
+              className={`w-full md:w-[90%] grid grid-cols-2 gap-3 rounded-xl border-2 bg-myBlack/90 p-3 md:p-4 transition-all duration-300 ${
                 item.health === 0
-                  ? "border-red-700 border-spacing-5"
-                  : "border-green-400"
+                  ? "border-red-700 opacity-60 grayscale"
+                  : item.id === lastHitId
+                    ? "border-myYellow animate-pulse scale-[1.02] shadow-lg shadow-myYellow/20"
+                    : "border-myGreen/60 hover:border-myGreen"
               }`}
               key={index}
             >
               <ImageWrap
                 image={item.img}
                 alt={detailsMapping.get(item.id)?.name as string}
-                className=" w-32 h-32"
+                className="w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32"
                 objectStatus="object-cover"
               />
               <div className="flex flex-col items-center justify-center">
@@ -614,17 +697,17 @@ const GameLayout = () => {
             </div>
           ))}
         </div>
-      </main>
+      </div>
 
-      <div className=" mb-20 flex-row w-6/12 mt-10 mr-8">
-        <div className="w-fit mx-auto">
-          <div className="flex justify-between items-center p-8 border-8 border-green-800 w-[50vw] bg-[url('/nebulaDuelArena9.webp')] bg-cover bg-center py-20 min-h-[60vh] h-fit">
-            <div className="flex flex-col h-fit overflow-visible ">
+      <div className="w-full lg:w-6/12 mt-8 lg:mt-10 lg:mr-4 xl:mr-8 mb-10 lg:mb-20">
+        <div className="w-full max-w-[960px] mx-auto">
+          <div className="relative flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 p-4 md:p-6 lg:p-8 border-4 md:border-8 border-green-800 w-full bg-[url('/nebulaDuelArena9.webp')] bg-cover bg-center py-8 md:py-12 lg:py-20 min-h-[320px] sm:min-h-[420px] md:min-h-[480px] rounded-xl overflow-hidden">
+            <div className="flex flex-row sm:flex-col h-fit overflow-visible gap-2 sm:gap-4">
               {creatorCharacterDetails.map((warrior) => (
                 <div
                   key={warrior.id}
                   id={warrior.id.toString()}
-                  className="w-52 h-52  flex text-2xl text-white overflow-visible mt-[-40px] "
+                  className="w-28 h-28 md:w-40 md:h-40 lg:w-52 lg:h-52 flex text-2xl text-white overflow-visible -mt-6 sm:mt-[-40px]"
                 >
                   <Canvas
                     linear
@@ -656,12 +739,12 @@ const GameLayout = () => {
                 </div>
               ))}
             </div>
-            <div className="flex flex-col h-fit overflow-visible mt-[]">
+            <div className="flex flex-row sm:flex-col h-fit overflow-visible gap-2 sm:gap-4">
               {opponentCharacterDetails.map((warrior) => (
                 <div
                   key={warrior.id}
                   id={warrior.id.toString()}
-                  className=" w-52 h-52  flex text-2xl text-white overflow-visible mt-[-40px]"
+                  className="w-28 h-28 md:w-40 md:h-40 lg:w-52 lg:h-52 flex text-2xl text-white overflow-visible -mt-6 sm:mt-[-40px]"
                 >
                   <Canvas
                     linear
@@ -692,48 +775,69 @@ const GameLayout = () => {
             </div>
           </div>
         </div>
-        <div className="w-[100%] flex mt-10">
+        <div className="w-full flex mt-6 md:mt-8 lg:mt-10">
           <button
-            className=" mx-auto flex border px-12 rounded-md py-4 cursor-pointer hover:bg-green-800 hover:border-white disabled:bg-red-600"
+            className="mx-auto inline-flex items-center justify-center rounded-xl bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase tracking-wide px-10 py-3.5 md:px-14 md:py-4 text-sm md:text-base shadow-[0_0_20px_rgba(69,248,130,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={() => renderAnimations()}
             disabled={isAnimating}
           >
-            <p className=" font-belanosima"> Start Game</p>
+            <span>{isAnimating ? "Battling..." : "Start battle"}</span>
           </button>
         </div>
       </div>
 
-      <main className=" w-3/12  mt-12 mr-2 ">
-        <div className="text-myGreen font-belanosima text-xl text-center font-medium p-5 h-fit ">
-          Opponent Warriors
+      <div className="w-full lg:w-3/12 mt-8 lg:mt-12 lg:mr-2">
+        <div className="flex items-center gap-2 mb-3 justify-start lg:justify-end">
+          <div className="text-myGreen font-belanosima text-lg sm:text-xl font-medium">
+            Opponent warriors
+          </div>
+          <span className="h-0.5 w-8 bg-myGreen rounded" />
         </div>
-        <p className=" text-center">
-          {" "}
-          {duelData
-            ? `${duelData.duel_opponent.slice(
-                0,
-                9
-              )}........${duelData.duel_opponent.slice(-10)}`
-            : "Nebula BOT"}
-        </p>
-        <p className="mb-6 text-center font-poppins">
-          {" "}
-          {duelData?.opponents_strategy}{" "}
-        </p>
-        <div className="grid md:gap-6 gap-3">
+        <div className="mb-6 rounded-xl border border-gray-700 bg-myBlack/80 px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-belanosima text-[11px] uppercase tracking-wide text-gray-400">
+              Name
+            </p>
+            <p className="font-belanosima text-sm sm:text-base text-white text-right truncate max-w-[60%]">
+              {opponentName || shortAddress(duelData?.duel_opponent) || "Nebula AI"}
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-belanosima text-[11px] uppercase tracking-wide text-gray-400">
+              Address
+            </p>
+            <p className="font-poppins text-[11px] text-gray-400 text-right truncate max-w-[60%]">
+              {duelData?.duel_opponent ? shortAddress(duelData.duel_opponent) : "AI"}
+            </p>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-belanosima text-[11px] uppercase tracking-wide text-gray-400">
+              Strategy
+            </p>
+            <p className="font-poppins text-[11px] text-myGreen text-right truncate max-w-[60%]">
+              {duelData?.opponents_strategy &&
+              duelData.opponents_strategy !== "Yet_to_select"
+                ? duelData.opponents_strategy
+                : "Not selected"}
+            </p>
+          </div>
+        </div>
+        <div className="grid md:gap-4 gap-3">
           {opponentCharacterDetails?.map((item, index) => (
             <div
-              className={`w-[80%] grid grid-cols-2 gap-2 border bg-myBlack p-4 h-40 rounded-md ${
+              className={`w-full md:w-[90%] grid grid-cols-2 gap-3 rounded-xl border-2 bg-myBlack/90 p-3 md:p-4 transition-all duration-300 ${
                 item.health === 0
-                  ? "border-red-700 border-spacing-5"
-                  : "border-green-400"
+                  ? "border-red-700 opacity-60 grayscale"
+                  : item.id === lastHitId
+                    ? "border-myYellow animate-pulse scale-[1.02] shadow-lg shadow-myYellow/20"
+                    : "border-myGreen/60 hover:border-myGreen"
               }`}
               key={index}
             >
               <ImageWrap
                 image={item.img}
                 alt={detailsMapping.get(item.id)?.name as string}
-                className=" w-32 h-32"
+                className="w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32"
                 objectStatus="object-cover"
               />
               <div className="flex flex-col items-center justify-center">
@@ -756,8 +860,9 @@ const GameLayout = () => {
             </div>
           ))}
         </div>
-      </main>
+      </div>
       {showPopup && <Popup winnerAddress={duelWinner} onClose={closePopup} />}
+      </main>
     </section>
   );
 };

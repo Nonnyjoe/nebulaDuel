@@ -161,7 +161,8 @@ const HeroSection = () => {
       />
       {/* Start Shape */}
 
-      <main className="w-full h-full absolute top-0 inset-x-0 bg-gradient-to-b from-[#0f161b]/60 z-[10] flex md:flex-row flex-col-reverse lg:px-20 md:px-6 px-4">
+      <main className="w-full h-full absolute top-0 inset-x-0 bg-gradient-to-b from-[#0f161b]/60 z-[10]">
+        <div className="w-full h-full max-w-[1368px] mx-auto flex md:flex-row flex-col-reverse items-center lg:px-20 md:px-6 px-4">
         <aside className="flex-1 flex flex-col -mt-10 md:mt-0 justify-center md:items-start items-center lg:gap-6 gap-4">
           <Text
             as="h3"
@@ -252,13 +253,14 @@ const HeroSection = () => {
             </div>
           )}
         </aside>
-        <aside className="flex-1 flex flex-col justify-end items-center">
+        <aside className="flex-1 flex flex-col justify-end items-center mt-8 md:mt-0">
           <ImageWrap
             image={SliderImg}
             className="w-[75%] md:w-[80%] lg:w-[75%] xxl:w-[60%] 2xl:w-[60%]"
             alt="Game-Avatar"
           />
         </aside>
+        </div>
       </main>
     </section>
   );

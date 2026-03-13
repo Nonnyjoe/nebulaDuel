@@ -64,13 +64,19 @@ const ListDuels = () => {
   // console.log("All Duels", allDuels);
 
   const fetchAllPlayers = async () => {
-    try{
+    try {
       const request_payload = await fetchNotices("all_profiles");
-      setAllPlayers(request_payload);
-    } catch(error) {
+      const list = Array.isArray(request_payload)
+        ? request_payload
+        : request_payload != null && typeof request_payload === "object"
+          ? [request_payload]
+          : [];
+      setAllPlayers(list);
+    } catch (error) {
       console.log("error", error);
+      setAllPlayers([]);
     }
-  }
+  };
 
   const routeToCreateDuel = async () => {
     navigate(`/selectWarriors`)
@@ -80,17 +86,29 @@ const ListDuels = () => {
       await fetchAllPlayers();
       try {
           const resDuels = await fetchNotices("all_duels");
-          // setDuels(resDuels);
           console.log(resDuels, "all the total duels");
-          const allAvailavleDuels = resDuels.filter((duel:Duel) => duel.is_completed == false && duel.duel_opponent == "")
-          setAvailableDuels(allAvailavleDuels);
 
-          setAllDuels(resDuels);
-          console.log(allAvailavleDuels, "all available duels");
+          // Treat only non-AI duels (difficulty === 'P2P') as P2P duels
+          const p2pDuels: Duel[] = (resDuels || []).filter((duel: Duel) =>
+            duel.difficulty &&
+            typeof duel.difficulty === "string" &&
+            duel.difficulty.toLowerCase() === "p2p"
+          );
+
+          const allAvailableP2P = p2pDuels.filter(
+            (duel: Duel) =>
+              duel.is_completed === false &&
+              (duel.duel_opponent == null || duel.duel_opponent === "")
+          );
+
+          setAvailableDuels(allAvailableP2P);
+          setAllDuels(p2pDuels);
+          console.log(allAvailableP2P, "all available P2P duels");
 
           const aiDuelsRes = await fetchNotices("ai_duels");
-          setAIDuels(aiDuelsRes);
-          setDuels(allAvailavleDuels);
+          console.log(aiDuelsRes, "ai duels");
+          setAIDuels(aiDuelsRes || []);
+          setDuels(allAvailableP2P);
       } catch (e: any) {
         console.log("error:", e);
       }
@@ -107,10 +125,10 @@ const ListDuels = () => {
     } else if (activeTab === "ai") {
       setDuels(aiDuels);
     } else {
-      // getDuels();
+      // P2P duels (allDuels holds only P2P after filtering in getDuels)
       setDuels(allDuels);
     }
-  }, [activeTab]);
+  }, [activeTab, availableDuels, aiDuels, allDuels]);
 
   // console.log("Fetching open duels", duels);
 
@@ -178,7 +196,7 @@ const ListDuels = () => {
       </div>
 
       <section className="breadcrumb-area-02 w-full pb-[120px] pt-10 bg-center bg-cover mt-10">
-        <div className=" p-10">
+        <div className="p-4 sm:p-8 max-w-5xl mx-auto">
           <div className="flex justify-center mb-4">
           <button
               onClick={() => setActiveTab("open")}
@@ -205,10 +223,28 @@ const ListDuels = () => {
               AI Duels
             </button>
           </div>
-          <div className=" p-6">
-            {duels?.length > 0 ? duels?.map((duel) => 
-            (<DuelCard duel_id={duel.duel_id} duel_creator={duel.duel_creator} creation_time={duel.creation_time} stake_amount={duel.stake_amount} allPlayers={allPlayers} duel_opponent={duel.duel_opponent} creators_strategy={duel.creators_strategy} opponent_strategy={duel.opponents_strategy} is_completed={duel.is_completed} difficulty={duel.difficulty} />)
-            ) : <div className=" mt-14 text-center text-white font-belanosima text-xl h-60 py-28"> Awaiting Duel Data...... </div>}
+          <div className="mt-4 sm:mt-14 space-y-3 sm:space-y-4">
+            {duels?.length > 0 ? (
+              duels.map((duel) => (
+                <DuelCard
+                  key={duel.duel_id ?? `${duel.duel_creator}-${duel.creation_time}`}
+                  duel_id={duel.duel_id}
+                  duel_creator={duel.duel_creator}
+                  creation_time={duel.creation_time}
+                  stake_amount={duel.stake_amount}
+                  allPlayers={allPlayers}
+                  duel_opponent={duel.duel_opponent}
+                  creators_strategy={duel.creators_strategy}
+                  opponent_strategy={duel.opponents_strategy}
+                  is_completed={duel.is_completed}
+                  difficulty={duel.difficulty}
+                />
+              ))
+            ) : (
+              <div className=" mt-14 text-center text-white font-belanosima text-xl h-60 py-28">
+                Awaiting Duel Data......
+              </div>
+            )}
           </div>
         </div>
       </section>

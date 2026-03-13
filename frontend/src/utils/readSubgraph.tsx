@@ -1,36 +1,33 @@
 import { hexToString } from "viem";
-// import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 
-// Initialize Apollo Client
+const JSON_RPC_URL = "http://127.0.0.1:6751/rpc";
+const APPLICATION_ADDRESS = import.meta.env.VITE_DAPP_ADDRESS;
+
+type CartesiOutput = {
+  decoded_data?: {
+    type: "Notice" | "Voucher";
+    payload?: string;
+    [key: string]: any;
+  };
+  [key: string]: any;
+};
+
 async function fetchNotices(request: string) {
-  // const url = 'https://nebuladuel.fly.dev/graphql';
-  const url = "http://localhost:8080/graphql";
-  const query = `
-      query notices {
-        notices {
-          edges {
-            node {
-              index
-              input {
-                index
-              }
-              payload
-            }
-          }
-        }
-      }
-    `;
-
+  console.log("Fetching notices for request: ", request, APPLICATION_ADDRESS);
   try {
-    const response = await fetch(url, {
+    console.log("Fetching notices from JSON-RPC URL: ", JSON_RPC_URL);
+    const response = await fetch(JSON_RPC_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        query: query,
-        variables: {},
+        jsonrpc: "2.0",
+        method: "cartesi_listOutputs",
+        params: {
+          application: APPLICATION_ADDRESS,
+          limit: 1000,
+          offset: 0,
+        },
+        id: 1,
       }),
     });
 
@@ -38,46 +35,49 @@ async function fetchNotices(request: string) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const responseData = await response.json();
-    const notices = responseData?.data.notices.edges;
+    const result = await response.json();
+    const outputs: CartesiOutput[] = result?.result?.data ?? [];
 
-    const specific_tx = [];
-    const all_tx = [];
+    const specific_tx: any[] = [];
+    const all_tx: any[] = [];
 
-    for (let i = 0; i < notices.length; i++) {
-      const tx = JSON.parse(
-        `{${hexToString(notices[i].node.payload as `0x${string}`)}`
-      );
-      // console.log(tx);
-
-      if (tx.notice_type == "specific_tx") {
+    for (const output of outputs) {
+      const decoded = output.decoded_data;
+      if (!decoded || decoded.type !== "Notice" || !decoded.payload) continue;
+      console.log("Decoded payload: ", decoded.payload);
+      const tx = JSON.parse(hexToString(decoded.payload as `0x${string}`));
+      console.log("Tx: ", tx);
+      if (tx.notice_type === "specific_tx") {
         specific_tx.push(tx);
-        // console.log(tx.method, tx.tx_id, JSON.parse(tx.data));
       } else {
         all_tx.push(tx);
-        // console.log(tx.method, tx.tx_id, JSON.parse(tx.data));
       }
     }
 
-    if (request == "all_profiles") {
+    if (request === "all_profiles") {
       return fetch_profiles(specific_tx);
-    } else if (request == "all_characters") {
+    } else if (request === "all_characters") {
       return fetch_characters(specific_tx);
-    } else if (request == "all_duels") {
+    } else if (request === "all_duels") {
       return fetch_duels(specific_tx);
-    } else if (request == "all_tx") {
+    } else if (request === "all_tx") {
       return fetch_all_tx(all_tx);
-    } else if (request == "ai_duels") {
+    } else if (request === "ai_duels") {
       return fetch_ai_duels(specific_tx);
     }
+    return [];
   } catch (error) {
-    console.error("Error fetching notices:", error);
+    console.error("Error fetching notices via JSON-RPC:", error);
+    return [];
   }
 }
 
 function fetch_profiles(specific_tx: any) {
   console.log("Fetching profiles 1....");
-  // console.log(specific_tx);
+  if (!specific_tx || specific_tx.length === 0) {
+    return [];
+  }
+
   const player_profiles = specific_tx.filter(
     (tx: any) =>
       tx.method == "deposit" ||
@@ -86,11 +86,14 @@ function fetch_profiles(specific_tx: any) {
       tx.method == "transfer_tokens" ||
       tx.method == "purchase_team"
   );
-  let highest_id;
+  if (player_profiles.length === 0) {
+    return [];
+  }
+
+  let highest_id = player_profiles[0];
   for (let i = 0; i < player_profiles.length; i++) {
-    highest_id = player_profiles[i];
-    if (player_profiles[i].tx_id > highest_id) {
-      highest_id = player_profiles[i].tx_id;
+    if (player_profiles[i].tx_id > highest_id.tx_id) {
+      highest_id = player_profiles[i];
     }
   }
   // console.log("All Player Profiles: ", JSON.parse(highest_id?.data));
@@ -142,29 +145,54 @@ function fetch_duels(specific_tx: any) {
 }
 
 function fetch_ai_duels(specific_tx: any) {
-  console.log(specific_tx);
-  const all_duels = specific_tx.filter(
-    (tx: any) => tx.method == "create_ai_duel"
+  console.log("Specific TX:  -----------------------------------> ", specific_tx);
+  const all_duels = (specific_tx ?? []).filter(
+    (tx: any) => tx.method === "create_ai_duel",
   );
-  const all_ai_duels = [];
-  for (let i = 0; i < all_duels.length; i++) {
-    // console.log("testing", JSON.parse(all_duels[i].data)[0]);
-    all_ai_duels.push(JSON.parse(all_duels[i].data)[0]);
+  if (all_duels.length === 0) {
+    return [];
   }
 
-  console.log("all AI duels are:", all_ai_duels[0]);
-  let highest_id = all_duels[0];
-  // console.log("CHECK all AI duels are:", JSON.parse(highest_id.data));
+  console.log("All AI Duels:  -----------------------------------> ", all_duels);
 
+  const all_ai_duels: any[] = [];
   for (let i = 0; i < all_duels.length; i++) {
-    if (all_duels[i].tx_id > highest_id.tx_id) {
+    try {
+      const parsed = JSON.parse(all_duels[i].data);
+      const first = Array.isArray(parsed) ? parsed[0] : parsed;
+
+      if (first != null) all_ai_duels.push(first);
+    } catch {
+      // skip malformed entry
+    }
+  }
+  console.log("All AI Duels2222:  -----------------------------------> ", all_ai_duels);
+
+  let highest_id = all_duels[0];
+  for (let i = 0; i < all_duels.length; i++) {
+    const data = all_duels[i]?.data;
+    const parsed = JSON.parse(data);
+    const parsed_array = Array.isArray(parsed) ? parsed : [parsed];
+
+    const highest_id_parsed = JSON.parse(highest_id?.data);
+    const highest_id_parsed_array = Array.isArray(highest_id_parsed) ? highest_id_parsed : [highest_id_parsed];
+
+    
+    if (parsed_array.length > highest_id_parsed_array.length) {
       highest_id = all_duels[i];
     }
   }
-  // console.log("All Player Characters: ", highest_id);
-  console.log("All Player Characters: ", JSON.parse(highest_id?.data));
-  // return highest_id?.data ? JSON.parse(highest_id?.data) : [];
-  return JSON.parse(highest_id?.data);
+
+
+  try {
+    const data = highest_id?.data;
+    if (data == null || data === "") return all_ai_duels;
+    const parsed = JSON.parse(data);
+    console.log("All AI Duels Parsed:  -----------------------------------> ", parsed);
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    return all_ai_duels;
+  }
 }
 
 function fetch_all_tx(all_tx: any) {

@@ -1,5 +1,5 @@
-// import GameArena from "../components/arena/GameArena"
 import GameLayout from "../components/arena/GameLayout"
+import MaxWrapper from "../components/shared/MaxWrapper"
 
 //   type Duel = {
 //     duel_id: number;
@@ -27,8 +27,9 @@ import GameLayout from "../components/arena/GameLayout"
 const Arena = () => {
     return (
         <main className="w-full flex flex-col">
-             <GameLayout  />
-
+            <MaxWrapper className="w-full px-0">
+                <GameLayout />
+            </MaxWrapper>
         </main>
     )
 }

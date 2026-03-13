@@ -20,7 +20,6 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import signMessages from "../../utils/relayTransaction.tsx"
 import { useProfileContext } from "../contexts/ProfileContext.js";
-import fetchNotices from '../../utils/readSubgraph.tsx';
 import readGameState from "../../utils/readState.tsx";
 
 interface Character {
@@ -59,36 +58,49 @@ const PurchaseCharacter = () => {
   const activeAccount = useActiveAccount()?.address;
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const characters = charactersdata;
-  const {profile, setProfile} = useProfileContext();
+  const { setProfile } = useProfileContext();
   const [submiting, setSubmiting] = useState<boolean>(false);
+  const [initialised, setInitialised] = useState<boolean>(false);
 
 
 
   useEffect(() => {
     async function SetUp() {
+      if (initialised) return;
+      if (!activeAccount) {
+        navigate("/profile");
+        return;
+      }
 
-      if (activeAccount?.toLowerCase() != profile?.wallet_address?.toLowerCase()) {   
-        try {
-          let request_payload = await fetchNotices("all_profiles");
-          request_payload = request_payload.filter((player: any) => player.wallet_address == activeAccount?.toLowerCase());
-          if (request_payload.length > 0){
-            setProfile(request_payload[0]);
-          } else {
-            navigate('/profile');
-          }
-        } catch (e) {
-          navigate('/profile');
-        console.log(e);
+      const wallet = activeAccount.toLowerCase();
+
+      // First, check via inspect if the player has a profile
+      const hasProfileResp = await readGameState(`has_profile/${wallet}`);
+      if (!hasProfileResp.Status || hasProfileResp.request_payload !== true) {
+        navigate("/profile");
+        return;
+      }
+
+      // Then fetch full profile details via inspect
+      const { Status, request_payload } = await readGameState(
+        `profile/${wallet}`,
+      );
+
+      if (!Status || !request_payload) {
+        // Profile should exist, but if this fails, stay on page and show nothing rather than looping
+        return;
+      }
+
+      setProfile(request_payload);
+      setProfileData(request_payload);
+      console.log(
+        "characters ==",
+        getArrayLength(request_payload.characters as string),
+      );
     }
-  } else {
-    setProfileData(profile);
-    console.log("characters ==", getArrayLength(profile?.characters as string));
-  }
-}
 
-SetUp();
-  
-  }, [location]);
+    SetUp().finally(() => setInitialised(true));
+  }, [activeAccount, navigate, setProfile, initialised]);
 
   function getArrayLength(jsonString: string): number | null {
     try {
@@ -113,12 +125,12 @@ SetUp();
     if (index < 0) {
       if (selectedCharacters.length < 3) {
         //check that total price is not greater than 1050
-        if (totalCharacterPrice + character.price > 1050) {
-          toast.error("You've exceeded max points: 1050 points", {
-            position: "top-right",
-          });
-          return;
-        }
+        // if (totalCharacterPrice + character.price > 1050) {
+        //   toast.error("You've exceeded max points: 1050 points", {
+        //     position: "top-right",
+        //   });
+        //   return;
+        // }
         setSelectedCharacters([...selectedCharacters, character]);
         setSelectedCharactersId([...selectedCharactersId, character.id]);
         setTotalCharacterPrice(character.price + totalCharacterPrice);
@@ -149,47 +161,62 @@ SetUp();
 
   const handlePurchaseCharacter = async (e: any) => {
     e.preventDefault();
+
     if (selectedCharactersId.length < 3) {
-        toast.error("You can have to select 3 characters.", {
+      toast.error("You have to select 3 characters.", {
+        position: "top-right",
+      });
+      return;
+    }
+
+    const availablePoints = (profileData?.points as number) ?? 0;
+    if (totalCharacterPrice > availablePoints) {
+      toast.error("You don't have enough points to purchase this team.", {
+        position: "top-right",
+      });
+      return;
+    }
+
+    console.log("selected id's are: ", selectedCharactersId);
+    setSubmiting(true);
+    const dataObject = {
+      func: "purchase_team",
+      char_id1: selectedCharactersId[0] - 1,
+      char_id2: selectedCharactersId[1] - 1,
+      char_id3: selectedCharactersId[2] - 1,
+    };
+    console.log("data Obj", dataObject);
+    const txhash = await signMessages(dataObject);
+
+    if (txhash) {
+      await delay(2000);
+
+      const { Status, request_payload } = await readGameState(
+        `profile/${activeAccount}`,
+      );
+      if (Status && JSON.parse(request_payload.characters).length > 0) {
+        setSelectedCharacters([]);
+        setSelectedCharactersId([]);
+        setTotalCharacterPrice(0);
+        setProfileData(request_payload);
+        setProfile(request_payload);
+
+        toast.success("Character(s) purchased successfully!", {
           position: "top-right",
         });
-        return;
-    } else {
-      console.log("selected id's are: ", selectedCharactersId);
-      setSubmiting(true);
-      const dataObject = {"func": "purchase_team", "char_id1": (selectedCharactersId[0] - 1), "char_id2": (selectedCharactersId[1] - 1), "char_id3": (selectedCharactersId[2] - 1)};
-      console.log("data Obj", dataObject);
-      const txhash = await signMessages(dataObject);
-
-      if (txhash) {
-        // console.log("tx hash is: ", txhash);
-        await delay(2000);
-
-        const {Status, request_payload} = await readGameState(`profile/${activeAccount}`); // Call your function
-        if (Status && JSON.parse(request_payload.characters).length > 0) {
-          setSelectedCharacters([ ]);
-          setSelectedCharactersId([ ]);
-          setTotalCharacterPrice(0);
-          setProfileData(request_payload);
-          setProfile(request_payload);
-          
-          toast.success("Character(s) purchased successfully!", {
-            position: "top-right",
-          });
-          navigate('/duels');
-        } else {
-          toast.error("Something went wrong, please submit again!", {
-            position: "top-right",
-          });
-        }
+        navigate("/duels");
       } else {
         toast.error("Something went wrong, please submit again!", {
           position: "top-right",
         });
       }
-      
+    } else {
+      toast.error("Something went wrong, please submit again!", {
+        position: "top-right",
+      });
     }
-    setSubmiting(false)
+
+    setSubmiting(false);
   };
 
   //nebuladuel
@@ -207,139 +234,165 @@ SetUp();
   }
 
   return (
-    <section className="w-full h-auto bg-bodyBg">
-      <main className="w-full lg:py-24 md:py-24 py-20 md:px-6 px-3 flex flex-col items-center gap-4">
+    <section className="w-full min-h-screen bg-bodyBg">
+      <main className="w-full max-w-[1368px] mx-auto py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <Text
-          as="h2"
-          className="font-bold font-belanosima text-center uppercase lg:text-4xl md:text-3xl text-2xl tracking-wide"
+          as="h1"
+          className="font-bold text-center uppercase font-belanosima text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
         >
-          Select characters to Purchase!
+          Select characters to purchase
         </Text>
+        <p className="text-gray-400 font-poppins text-sm sm:text-base text-center max-w-lg mb-8 sm:mb-10 md:mb-12">
+          Choose 3 characters for your team. Max 1050 points total. Tap to add or remove.
+        </p>
 
-        <section className=" w-full mt-20 flex flex-row lg:gap-20 md:gap-20 gap-14">
-          <main className="w-7/12 flex flex-col gap-4">
-            <Text
-              as="h3"
-              className="font-semibold font-belanosima text-2xl tracking-wide text-center"
-            >
-              All Characters
-            </Text>
-            <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
-              {characters.map((item, index) => (
-                <div
-                  className={`w-full border ${selectedCharactersId.includes(item.id) ? 'border-myGreen' : 'border-gray-800'} border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`}
-                  key={index}
-                  onClick={() => toggleCharacterSelection(item)}
-                >
-                  <ImageWrap
-                    image={item.img}
-                    className="w-full"
-                    alt={item.name}
-                    objectStatus="object-contain"
-                  />
-                  <Text as="h5" className="font-belanosima">
-                    {item.name}
-                  </Text>
-                  <div className="w-full grid grid-cols-2 gap-1">
-                    <Text
-                      as="span"
-                      className="text-gray-500 text-xs font-poppins"
-                    >
-                      Health: {item.health}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-500 text-xs font-poppins"
-                    >
-                      Attack: {item.attack}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-500 text-xs font-poppins"
-                    >
-                      Strength: {item.strength}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-500 text-xs font-poppins"
-                    >
-                      Speed: {item.speed}
-                    </Text>
-                  </div>
-                  <div>
-                    <Text
-                      as="span"
-                      className="text-[#ffbe18] text-xs text-bold font-poppins"
-                    >
-                      Price: {item.price}
-                    </Text>
-                  </div>
-                </div>
-              ))}
+        <div className="w-full flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 xl:gap-16">
+          {/* All Characters */}
+          <div className="w-full lg:flex-[7] lg:min-w-0 flex flex-col">
+            <div className="flex items-center gap-2 mb-4 sm:mb-6">
+              <span className="h-0.5 w-8 sm:w-12 bg-myGreen rounded" />
+              <Text
+                as="h2"
+                className="font-semibold font-belanosima text-lg sm:text-xl md:text-2xl text-white tracking-wide"
+              >
+                All characters
+              </Text>
             </div>
-          </main>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
+              {characters.map((item, index) => {
+                const selected = selectedCharactersId.includes(item.id);
+                return (
+                  <button
+                    type="button"
+                    key={`${item.id}-${index}`}
+                    onClick={() => toggleCharacterSelection(item)}
+                    className={`w-full text-left rounded-xl border-2 bg-myBlack/80 backdrop-blur-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-myGreen/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-myGreen focus-visible:ring-offset-2 focus-visible:ring-offset-bodyBg ${
+                      selected
+                        ? "border-myGreen shadow-md shadow-myGreen/20"
+                        : "border-gray-700/80 hover:border-gray-600"
+                    }`}
+                  >
+                    <div className="aspect-[4/3] w-full bg-gray-800/50 relative overflow-hidden">
+                      <ImageWrap
+                        image={item.img}
+                        className="w-full h-full"
+                        alt={item.name}
+                        objectStatus="object-contain"
+                      />
+                      {selected && (
+                        <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-myGreen flex items-center justify-center text-navBg text-xs font-bold">
+                          ✓
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-3 sm:p-4 flex flex-col gap-2">
+                      <Text as="span" className="font-belanosima text-white text-base sm:text-lg truncate">
+                        {item.name}
+                      </Text>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                          HP {item.health}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                          ATK {item.attack}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                          STR {item.strength}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                          SPD {item.speed}
+                        </span>
+                      </div>
+                      <span className="text-myYellow font-poppins text-xs font-semibold">
+                        {item.price} pts
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-          <main className=" w-5/12 flex flex-col items-center gap-4">
-            <Text
-              as="h3"
-              className="font-semibold font-belanosima text-2xl tracking-wide text-center"
-            >
-              Selected Characters
-            </Text>
+          {/* Selected + summary + CTA */}
+          <div className="w-full lg:flex-[5] lg:min-w-0 lg:sticky lg:top-8 flex flex-col gap-6 sm:gap-8">
+            <div className="flex items-center gap-2">
+              <span className="h-0.5 w-8 sm:w-12 bg-myGreen rounded" />
+              <Text
+                as="h2"
+                className="font-semibold font-belanosima text-lg sm:text-xl md:text-2xl text-white tracking-wide"
+              >
+                Selected ({selectedCharacters.length}/3)
+              </Text>
+            </div>
 
-            <div className="w-full p-5 mb-8 relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 min-h-[220px] lg:h-fit md:h-fit h-fit rounded-md">
-              {selectedCharacters?.map((character) => (
-                <div
-                  key={character.id}
-                  className="w-full bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md md:p-4 p-2"
-                >
-                  <ImageWrap
-                    image={character.img}
-                    className="w-full h-full"
-                    alt={character.name}
-                    objectStatus="object-contain"
-                  />
-                  <Text as="h5" className="font-belanosima">
-                    {character.name}
-                  </Text>
-                </div>
-              ))}
+            <div className="w-full relative rounded-xl border-2 border-gray-700/80 bg-myBlack/80 min-h-[200px] sm:min-h-[240px] p-4 sm:p-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 h-full">
+                {[0, 1, 2].map((slot) => {
+                  const character = selectedCharacters[slot];
+                  return (
+                    <div
+                      key={slot}
+                      className="rounded-lg border border-dashed border-gray-600 bg-gray-900/50 min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center p-2 overflow-hidden"
+                    >
+                      {character ? (
+                        <>
+                          <div className="aspect-square w-full max-w-[80px] flex-shrink-0">
+                            <ImageWrap
+                              image={character.img}
+                              className="w-full h-full"
+                              alt={character.name}
+                              objectStatus="object-contain"
+                            />
+                          </div>
+                          <Text as="span" className="font-belanosima text-white text-xs sm:text-sm truncate w-full text-center">
+                            {character.name}
+                          </Text>
+                        </>
+                      ) : (
+                        <span className="text-gray-500 text-xs font-poppins">Slot {slot + 1}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
               {selectedCharacters.length > 0 && (
                 <Button
                   type="button"
-                  className="bg-myGreen text-gray-950 p-2 rounded-full absolute right-2 bottom-2 z-10 font-bold text-lg"
+                  aria-label="Clear selection"
+                  className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full transition-colors z-10"
                   onClick={handleReset}
                 >
-                  <HiOutlineArrowPath />
+                  <HiOutlineArrowPath className="w-5 h-5" />
                 </Button>
               )}
             </div>
 
-            <Text
-              as="p"
-              className="font-semibold font-barlow text-xl tracking-wide text-center"
-            >
-              Total Price: {totalCharacterPrice} points
-            </Text>
-            <Text
-              as="p"
-              className=" text-gray-400 font-thin font-poppins text-md tracking-wide text-center"
-            >
-              Your Availabe point: {(profileData?.points as number) - totalCharacterPrice} points
-            </Text>
+            <div className="rounded-xl border border-gray-700/60 bg-myBlack/60 p-4 sm:p-5 space-y-4">
+              <p className="text-gray-400 font-poppins text-sm sm:text-base text-center">
+                Total: <span className="text-myYellow font-semibold">{totalCharacterPrice} points</span>
+              </p>
+              <p className="text-gray-400 font-poppins text-sm sm:text-base text-center">
+                Available: <span className="text-white font-medium">{((profileData?.points as number) ?? 0) - totalCharacterPrice} points</span>
+              </p>
+            </div>
 
             <Button
               type="button"
-              className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+              className="w-full text-navBg uppercase font-bold font-barlow text-sm sm:text-base tracking-wide py-3.5 sm:py-4 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={handlePurchaseCharacter}
-            > { submiting ?
-              (<div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>)
-              : 
-              "Purchase Characters"
-            }
+              disabled={submiting}
+            >
+              {submiting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin rounded-full h-5 w-5 border-2 border-navBg border-t-transparent" />
+                  Purchasing…
+                </span>
+              ) : (
+                "Purchase characters"
+              )}
             </Button>
-          </main>
-        </section>
+          </div>
+        </div>
       </main>
     </section>
   );

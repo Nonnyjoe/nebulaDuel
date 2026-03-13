@@ -4,14 +4,13 @@ import userImg from "../../assets/img/team01.png";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Button } from "../atom/Button";
 import { toast } from "sonner";
-import signMessages from "../../utils/relayTransaction.tsx"
-// import readGameState from "../../utils/readState.js";
+import signMessages from "../../utils/relayTransaction.tsx";
+import readGameState from "../../utils/readState.tsx";
 import axios from "axios";
 import { useActiveAccount } from "thirdweb/react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
-// import readGameState from "../../utils/readState.tsx";
 
 
 const UserProfile = () => {
@@ -24,40 +23,52 @@ const UserProfile = () => {
   const [uploading, setUploading] = useState<boolean>(false);
   const navigate = useNavigate();
   const userAccount = useActiveAccount();
-  const {profile, setProfile} = useProfileContext();
+  const { setProfile } = useProfileContext();
 
   const fetchData = async () => {
-    let request_payload = await fetchNotices("all_profiles");
-    request_payload = request_payload.filter((player: any) => player.wallet_address == userAccount?.address.toLowerCase());
-    if (request_payload.length > 0) {
-        setProfile(request_payload[0]);
-        console.log(request_payload[0], 'user profile data');
-          setProfileData(request_payload[0]);
-          setCreatedProfile(true);
-    } else {
-        setCreatedProfile(false);   
+    const address = userAccount?.address?.toLowerCase();
+    if (!address) {
+      setCreatedProfile(false);
+      return;
     }
-}
+
+    // Prefer inspect (Cartesi backend) as source of truth for profile card
+    const { Status, request_payload } = await readGameState(`profile/${address}`);
+    if (Status && request_payload && typeof request_payload === "object") {
+      setProfile(request_payload);
+      setProfileData(request_payload);
+      setCreatedProfile(true);
+      return;
+    }
+
+    // Fallback: JSON-RPC notices (in case inspect path differs or is slow)
+    const notices = await fetchNotices("all_profiles");
+    if (notices && Array.isArray(notices)) {
+      const match = notices.filter(
+        (p: any) => p.wallet_address === address
+      );
+      if (match.length > 0) {
+        setProfile(match[0]);
+        setProfileData(match[0]);
+        setCreatedProfile(true);
+        return;
+      }
+    }
+
+    setCreatedProfile(false);
+  };
 
   useEffect(() => {
-    const getAllData = async() => {
-        await fetchData(); 
-        const address = userAccount?.address;
-        if (userAccount && address) {
-            setUserAddress(address);
-            if (address.toLowerCase() == profile?.wallet_address?.toLowerCase()) {
-                console.log(profile, 'user profile data');
-                setProfileData(profile);
-                setCreatedProfile(true);
-            } else {
-                setCreatedProfile(false);   
-            }
-        }
+    async function loadProfile() {
+      if (userAccount?.address) {
+        setUserAddress(userAccount.address);
+        await fetchData();
+      } else {
+        setCreatedProfile(false);
+      }
     }
-
-    getAllData()
-
-  }, [userAccount, navigate]);
+    loadProfile();
+  }, [userAccount?.address]);
 
 
 
@@ -143,19 +154,29 @@ const UserProfile = () => {
 
     setUploading(true);
     try {
-         const txhash = await signMessages(togglePlayer);
-        if (txhash.message === "Transaction added successfully") {
-            let request_payload = await fetchNotices("all_tx");
-            request_payload = request_payload.filter((tx: any) => tx.caller == userAccount?.address.toLowerCase());
-            if (request_payload.length > 0) {
-                console.log(request_payload);
-                toast.success("Transaction Successful.. Profile Created", {
-                position: 'top-right'
-             })
-            }
-            navigate("/");
+        const txhash = await signMessages(togglePlayer);
+        console.log("Profile tx hash:", txhash);
+        // After sending input, poll notices to confirm profile exists, then route to purchase page
+        let request_payload = await fetchNotices("all_profiles");
+        if (request_payload && Array.isArray(request_payload)) {
+          request_payload = request_payload.filter(
+            (player: any) =>
+              player.wallet_address == userAccount?.address?.toLowerCase()
+          );
         }
-
+        if (request_payload && request_payload.length > 0) {
+          console.log(request_payload);
+          toast.success("Transaction Successful.. Profile Created", {
+            position: "top-right",
+          });
+          setProfile(request_payload[0]);
+          navigate("/profile/purchasecharacter");
+        } else {
+          toast.info(
+            "Profile transaction sent. It may take a moment to appear.",
+            { position: "top-right" }
+          );
+        }
     } catch(err) {
         toast.error("Transaction Failed.. Try again later.", {
             position: 'top-right'

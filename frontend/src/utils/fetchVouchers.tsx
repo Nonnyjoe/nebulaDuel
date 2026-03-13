@@ -5,50 +5,23 @@ export type Voucher = {
   proof: any;
 };
 
-export async function fetchVouchers() {
-  // const url = 'https://nebuladuel.fly.dev/graphql';
-  const url = "http://localhost:8080/graphql";
-  const query = `
-        query vouchers {
-        vouchers {
-            edges {
-            node {
-                index
-                input {
-                index
-                }
-                destination
-                payload
-                proof {
-                validity {
-                    inputIndexWithinEpoch
-                    outputIndexWithinInput
-                    outputHashesRootHash
-                    vouchersEpochRootHash
-                    noticesEpochRootHash
-                    machineStateHash
-                    outputHashInOutputHashesSiblings
-                    outputHashesInEpochSiblings
-                    
-                }
-                context
-                }
-            }
-            }
-        }
-        }
-    `;
+const JSON_RPC_URL = "http://127.0.0.1:6751/rpc";
+const APPLICATION_NAME = "nebula-duel";
 
+export async function fetchVouchers() {
   try {
-    const response = await fetch(url, {
+    const response = await fetch(JSON_RPC_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        query: query,
-        variables: {},
+        jsonrpc: "2.0",
+        method: "cartesi_listOutputs",
+        params: {
+          application: APPLICATION_NAME,
+          limit: 1000,
+          offset: 0,
+        },
+        id: 2,
       }),
     });
 
@@ -56,26 +29,28 @@ export async function fetchVouchers() {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
 
-    const responseData = await response.json();
-    const vouchers = responseData?.data.vouchers.edges;
+    const result = await response.json();
+    const outputs = result?.result?.data ?? [];
 
     const all_Vouchers: Voucher[] = [];
 
-    for (let i = 0; i < vouchers.length; i++) {
-      const index = vouchers[i].node.index;
-      const payload = vouchers[i].node.payload;
-      const destination = vouchers[i].node.destination;
-      const proof = vouchers[i].node.proof;
+    for (let i = 0; i < outputs.length; i++) {
+      const decoded = outputs[i]?.decoded_data;
+      if (!decoded || decoded.type !== "Voucher") continue;
 
       all_Vouchers.push({
-        index: index,
-        payload: payload,
-        destination: destination,
-        proof: proof,
+        index:
+          typeof outputs[i]?.index === "string"
+            ? parseInt(outputs[i].index, 16)
+            : i,
+        payload: decoded.payload,
+        destination: decoded.destination,
+        proof: decoded.proof,
       });
     }
+
     return all_Vouchers;
   } catch (error) {
-    console.error("Error fetching notices:", error);
+    console.error("Error fetching vouchers via JSON-RPC:", error);
   }
 }

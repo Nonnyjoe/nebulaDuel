@@ -208,120 +208,117 @@ const ChooseStrategy = () => {
     e.preventDefault();
     console.log(selectedStrategy?.id);
     console.log(duelJoiner);
-
-    if (opponentCharacterDetails.length == 3) {
-      if (selectedStrategy != undefined) {
-        const dataObject1 = {
-          func: "set_strategy",
-          strategy_id: selectedStrategy.id,
-          duel_id: Number(+(duelId as string)),
-        };
-        const dataObject2 = {
-          func: "select_ai_battle_strategy",
-          strategy_id: Number(selectedStrategy.id),
-          duel_id: Number(duelId),
-        };
-        console.log(dataObject1, "dataObject");
-        console.log("...........", duelType);
-        // const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
-        setSubmiting(true);
-        let txhash;
-        try {
-          if (duelType.toLowerCase() != "P2P".toLowerCase()) {
-            txhash = await signMessages(dataObject2);
-          } else {
-            txhash = await signMessages(dataObject1);
-          }
-        } catch (e: any) {
-          toast.error("Error in transaction: " + e.message, {
-            position: "top-right",
-          });
-          setSubmiting(false);
-          return;
-        }
-        if (txhash.message === "Transaction added successfully") {
-          // if (true) {
-
-          delay(4000);
-
-          toast.success("Transaction Successful..", {
-            position: "top-right",
-          });
-          setSubmiting(false);
-          navigate(`/duels/${duelId}`);
-
-          //   const { Status, request_payload } = await readGameState(
-          //     `duels/${duelId}`
-          //   );
-
-          //   let Status = false;
-          //   let request_payload = await fetchNotices("all_duels");
-          //   request_payload = request_payload.filter(
-          //     (Payload: any) => Number(Payload.duel_id) == Number(duelId)
-          //   )[0];
-          //   if (request_payload.length == 0) {
-          //     Status = false;
-          //     return;
-          //   } else {
-          //     Status = true;
-          //   }
-          //   delay(2000);
-
-          //   if (Status) {
-          //     setSubmiting(false);
-          //     navigate(`/duels/${duelId}`);
-          //   }
-
-          //   if (Status) {
-          //     console.log("GETTING TX DATA HERE", request_payload);
-          //     if (
-          //       duelCreator == activeAccount?.address.toLowerCase() &&
-          //       request_payload.creators_strategy != "Yet_to_select"
-          //     ) {
-          //       toast.success("Transaction Successful.. Duel Created", {
-          //         position: "top-right",
-          //       });
-          //       setSubmiting(false);
-          //       navigate(`/duels/${duelId}`);
-          //     } else if (
-          //       duelJoiner == activeAccount?.address.toLowerCase() &&
-          //       request_payload.opponents_strategy != "Yet_to_select"
-          //     ) {
-          //       toast.success("Transaction Successful.. Duel Started", {
-          //         position: "top-right",
-          //       });
-          //       setSubmiting(false);
-          //       navigate(`/duels/${duelId}`);
-          //     } else {
-          //       toast.error("Transaction Failed.. Try again later.", {
-          //         position: "top-right",
-          //       });
-          //       setSubmiting(false);
-          //     }
-          //   }
-        } else {
-          toast.error("Failed to set strategy. Please try again later.", {
-            position: "top-right",
-          });
-          setSubmiting(false);
-        }
-      } else {
-        toast.error("Please select a strategy before starting duel.", {
-          position: "top-right",
-        });
-        setSubmiting(false);
-        return;
-      }
-    } else {
+  
+    if (opponentCharacterDetails.length !== 3) {
       toast.error(
-        "Please wait for opponent to join before starting duel... Refreash screen to confirm a new partificipant.",
-        {
-          position: "top-right",
-        }
+        "Please wait for opponent to join before starting duel... Refresh to confirm a new participant.",
+        { position: "top-right" },
       );
       setSubmiting(false);
       return;
     }
+  
+    if (!selectedStrategy) {
+      toast.error("Please select a strategy before starting the duel.", {
+        position: "top-right",
+      });
+      setSubmiting(false);
+      return;
+    }
+  
+    const dataObject1 = {
+      func: "set_strategy",
+      strategy_id: selectedStrategy.id,
+      duel_id: Number(duelId as string),
+    };
+    const dataObject2 = {
+      func: "select_ai_battle_strategy",
+      strategy_id: Number(selectedStrategy.id),
+      duel_id: Number(duelId),
+    };
+  
+    console.log(dataObject1, "dataObject");
+    console.log("...........", duelType);
+  
+    setSubmiting(true);
+  
+    let txhash;
+    try {
+      if (duelType.toLowerCase() !== "p2p") {
+        txhash = await signMessages(dataObject2);
+      } else {
+        txhash = await signMessages(dataObject1);
+      }
+    } catch (err: any) {
+      toast.error("Error in transaction: " + err.message, {
+        position: "top-right",
+      });
+      setSubmiting(false);
+      return;
+    }
+  
+    if (!txhash) {
+      toast.error("Failed to set strategy. Please try again later.", {
+        position: "top-right",
+      });
+      setSubmiting(false);
+      return;
+    }
+  
+    // 1) Transaction submitted
+    toast.success("Transaction submitted successfully.", {
+      position: "top-right",
+    });
+  
+    // 2) Start confirmation toast and poll backend for duel status
+    toast("Confirming duel status...", { position: "top-right" });
+  
+    const maxAttempts = 6;
+    const pollIntervalMs = 3000;
+    const lowerActive = activeAccount?.address.toLowerCase();
+    const creatorAddr = duelCreator?.toLowerCase();
+    const joinerAddr = duelJoiner?.toLowerCase();
+  
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await delay(pollIntervalMs);
+  
+      let duelsPayload: any = await fetchNotices("all_duels");
+      if (!Array.isArray(duelsPayload)) {
+        duelsPayload = [];
+      }
+  
+      const duel = duelsPayload.find(
+        (d: any) => Number(d.duel_id) === Number(duelId),
+      );
+  
+      if (!duel) {
+        continue;
+      }
+  
+      const creatorReady =
+        lowerActive === creatorAddr &&
+        duel.creators_strategy &&
+        duel.creators_strategy !== "Yet_to_select";
+      const opponentReady =
+        lowerActive === joinerAddr &&
+        duel.opponents_strategy &&
+        duel.opponents_strategy !== "Yet_to_select";
+  
+      if (creatorReady || opponentReady || duel.is_complete) {
+        toast.success("Strategy confirmed. Starting duel...", {
+          position: "top-right",
+        });
+        setSubmiting(false);
+        navigate(`/duels/${duelId}`);
+        return;
+      }
+    }
+  
+    // 3) If we get here, we never saw the updated duel state
+    toast.error(
+      "Unable to confirm duel status yet. Please check the Duels page in a few moments.",
+      { position: "top-right" },
+    );
     setSubmiting(false);
   };
 
@@ -344,162 +341,199 @@ const ChooseStrategy = () => {
   // }
 
   return (
-    <main className="w-full flex flex-col gap-8 items-center lg:py-24 md:py-24 py-20 px-3 md:px-5">
-      <section className="w-full grid lg:grid-cols-2  lg:gap-36 md:gap-10 gap-3">
-        <main className="flex flex-col gap-3">
-          <Text as="h4" className="text-2xl pl-3 font-belanosima">
-            Your Warriors
-          </Text>
-          <div className="w-full grid grid-cols-3 gap-3 mt-10">
+    <main className="w-full min-h-screen bg-bodyBg flex flex-col items-center py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
+      <Text
+        as="h1"
+        className="font-belanosima font-bold text-center uppercase text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
+      >
+        Choose your strategy
+      </Text>
+      <p className="text-gray-400 font-poppins text-sm sm:text-base text-center max-w-xl mb-8 sm:mb-10 md:mb-12">
+        Review both teams and pick how your warriors should attack. Your choice
+        will decide the flow of the battle.
+      </p>
+
+      <section className="w-full max-w-[1368px] flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 xl:gap-16">
+        {/* Your warriors column */}
+        <div className="w-full lg:flex-[7] lg:min-w-0 flex flex-col">
+          <div className="flex items-center gap-2 mb-4 sm:mb-6">
+            <span className="h-0.5 w-8 sm:w-12 bg-myGreen rounded" />
+            <Text
+              as="h2"
+              className="font-belanosima font-semibold text-lg sm:text-xl md:text-2xl text-white"
+            >
+              Your warriors
+            </Text>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
             {getYourWarriors().map((item, index) => (
               <div
-                className="w-full border border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4"
                 key={index}
+                className="w-full rounded-xl border-2 border-gray-700/80 bg-myBlack/80 backdrop-blur-sm flex flex-col overflow-hidden p-3 sm:p-4"
               >
-                <ImageWrap
-                  image={item.img}
-                  className="w-full"
-                  alt={item.name}
-                  objectStatus="object-contain"
-                />
-                <Text as="h5" className="font-belanosima">
-                  {item.name}
-                </Text>
-                <div className="w-full grid md:grid-cols-2 gap-1">
+                <div className="aspect-[4/3] w-full bg-gray-800/50">
+                  <ImageWrap
+                    image={item.img}
+                    className="w-full h-full"
+                    alt={item.name}
+                    objectStatus="object-contain"
+                  />
+                </div>
+                <div className="mt-3 flex flex-col gap-2">
                   <Text
                     as="span"
-                    className="text-gray-500 text-xs font-poppins"
+                    className="font-belanosima text-white text-sm sm:text-base truncate"
                   >
-                    Health: {item.health}
+                    {item.name}
                   </Text>
-                  <Text
-                    as="span"
-                    className="text-gray-500 text-xs font-poppins"
-                  >
-                    Attack: {item.attack}
-                  </Text>
-                  <Text
-                    as="span"
-                    className="text-gray-500 text-xs font-poppins"
-                  >
-                    Strength: {item.strength}
-                  </Text>
-                  <Text
-                    as="span"
-                    className="text-gray-500 text-xs font-poppins"
-                  >
-                    Speed: {item.speed}
-                  </Text>
+                  <div className="flex flex-wrap gap-1.5">
+                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                      HP {item.health}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                      ATK {item.attack}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                      STR {item.strength}
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                      SPD {item.speed}
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </main>
-        <main className="flex flex-col gap-3">
-          <Text as="h4" className="text-2xl pl-3 font-belanosima">
-            Opponent Warriors
-          </Text>
+        </div>
+
+        {/* Opponent warriors column */}
+        <div className="w-full lg:flex-[5] lg:min-w-0 flex flex-col">
+          <div className="flex items-center gap-2 mb-4 sm:mb-6">
+            <span className="h-0.5 w-8 sm:w-12 bg-myGreen rounded" />
+            <Text
+              as="h2"
+              className="font-belanosima font-semibold text-lg sm:text-xl md:text-2xl text-white"
+            >
+              Opponent warriors
+            </Text>
+          </div>
+
           {getOtherWarriors().length > 0 ? (
-            <div className="w-full grid grid-cols-3 gap-3 mt-10">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
               {getOtherWarriors().map((item, index) => (
                 <div
-                  className="w-full border border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4"
                   key={index}
+                  className="w-full rounded-xl border-2 border-gray-700/80 bg-myBlack/80 backdrop-blur-sm flex flex-col overflow-hidden p-3 sm:p-4"
                 >
-                  <ImageWrap
-                    image={item.img}
-                    className="w-full"
-                    alt={item.name}
-                    objectStatus="object-contain"
-                  />
-                  <Text as="h5" className="font-belanosima">
-                    {item.name}
-                  </Text>
-                  <div className="w-full grid md:grid-cols-2 gap-1">
+                  <div className="aspect-[4/3] w-full bg-gray-800/50">
+                    <ImageWrap
+                      image={item.img}
+                      className="w-full h-full"
+                      alt={item.name}
+                      objectStatus="object-contain"
+                    />
+                  </div>
+                  <div className="mt-3 flex flex-col gap-2">
                     <Text
                       as="span"
-                      className="text-gray-500 text-xs font-poppins"
+                      className="font-belanosima text-white text-sm sm:text-base truncate"
                     >
-                      Health: {item.health}
+                      {item.name}
                     </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-500 text-xs font-poppins"
-                    >
-                      Attack: {item.attack}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-500 text-xs font-poppins"
-                    >
-                      Strength: {item.strength}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-500 text-xs font-poppins"
-                    >
-                      Speed: {item.speed}
-                    </Text>
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                        HP {item.health}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                        ATK {item.attack}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                        STR {item.strength}
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
+                        SPD {item.speed}
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className=" mt-10 w-full h-[35vh] border border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4">
-              <div className=" mt-auto mb-auto">
-                <Text as="h5" className="font-belanosima text-center mb-6">
-                  Waiting for Opponent to Join.......
-                </Text>
-                <div className="animate-spin rounded-full ml-auto mr-auto h-20 w-20 border-t-2 border-b-2 border-myGreen"></div>
-              </div>
+            <div className="mt-6 sm:mt-8 w-full min-h-[200px] sm:min-h-[240px] rounded-xl border-2 border-dashed border-gray-700 bg-myBlack/80 flex flex-col items-center justify-center px-4">
+              <Text
+                as="h5"
+                className="font-belanosima text-center text-sm sm:text-base text-gray-300 mb-4"
+              >
+                Waiting for opponent to join…
+              </Text>
+              <div className="animate-spin rounded-full h-14 w-14 sm:h-16 sm:w-16 border-2 border-myGreen border-t-transparent" />
             </div>
           )}
-        </main>
+        </div>
       </section>
 
-      <section className="lg:w-[70%] md:w-[90%] w-full mt-12 flex flex-col items-center gap-4">
-        <Text as="h2" className="text-3xl pl-3 text-center font-belanosima">
-          Select Attack Strategy
+      {/* Strategy selection section */}
+      <section className="w-full max-w-[1368px] mt-12 sm:mt-14 md:mt-16 flex flex-col items-center gap-5 sm:gap-6">
+        <Text
+          as="h2"
+          className="font-belanosima text-center text-xl sm:text-2xl md:text-3xl text-white"
+        >
+          Select attack strategy
         </Text>
+        <p className="text-gray-400 font-poppins text-xs sm:text-sm text-center max-w-lg">
+          Choose how your warriors will prioritize their targets. You can change
+          this before the duel begins.
+        </p>
 
-        <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-3">
+        <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {strategy.map((item) => {
+            const selected = selectedStrategy?.id === item.id;
             return (
-              <div
-                className={`w-full border-4 border-gray-800 bg-myBlack flex flex-col items-center gap-2 cursor-pointer hover:border-[#ffbe18] transition-all duration-200 rounded-md p-4  ${
-                  selectedStrategy?.id == item.id
-                    ? "border-myGreen/40"
-                    : "border-gray-800"
-                }`}
+              <button
+                type="button"
                 key={item.id}
                 onClick={() => toggleStrategySelection(item)}
+                className={`w-full rounded-xl border-2 px-3 py-3 sm:px-4 sm:py-4 bg-myBlack/80 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-myGreen focus-visible:ring-offset-2 focus-visible:ring-offset-bodyBg ${
+                  selected
+                    ? "border-myGreen bg-myGreen/10 shadow-md shadow-myGreen/20"
+                    : "border-gray-700/80 hover:border-gray-500 hover:bg-gray-900/60"
+                }`}
               >
-                <Text as="h4" className="text-center">
+                <Text
+                  as="span"
+                  className="font-belanosima text-sm sm:text-base text-white"
+                >
                   {item.name}
                 </Text>
-              </div>
+              </button>
             );
           })}
         </div>
-        <div className="flex gap-3 items-center">
+
+        <div className="flex gap-3 items-center mt-2 sm:mt-4">
           <Button
             type="button"
-            className="mt-4 text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+            className="w-full sm:w-auto text-navBg uppercase font-bold font-barlow text-sm sm:text-base tracking-wide py-3.5 sm:py-4 px-8 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={handleStrategySelection}
+            disabled={submiting}
           >
             {submiting ? (
-              <div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-spin rounded-full h-5 w-5 border-2 border-navBg border-t-transparent" />
+                Setting…
+              </span>
             ) : (
-              "Set Strategy"
+              "Set strategy"
             )}
           </Button>
-          {selectedStrategy != undefined && (
+          {selectedStrategy && (
             <Button
               type="button"
-              className="bg-myGreen text-gray-950 p-2 rounded-full z-10 font-bold text-lg"
+              className="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full z-10 font-bold text-lg"
               onClick={handleReset}
             >
-              <HiOutlineArrowPath />
+              <HiOutlineArrowPath className="w-5 h-5" />
             </Button>
           )}
         </div>

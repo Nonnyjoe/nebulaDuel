@@ -45,13 +45,13 @@ pub struct StandardInput {
 
 pub fn emit_notice(data: &str, rollup_server: &str) -> Result<String, Box<dyn Error>> {
     // let hexresult = string_to_hex(data);
-    let hexresult = hex::encode(data);
+    let hexresult = "0x".to_string() + &hex::encode(data);
 
     // Create the JSON payload
     let payload = format!(r#"{{"payload":"{}"}}"#, hexresult);
 
     let modified_url = Box::leak([rollup_server, "/notice"].concat().into_boxed_str());
-    println!("Sending a notice to this address: {}", rollup_server);
+    println!("Sending a notice to this address: {}", modified_url);
 
     // Parse the rollup server URL
     let url = url::Url::parse(modified_url)?;

@@ -1,9 +1,12 @@
 import ListDuels from "../components/duels/ListDuels";
+import MaxWrapper from "../components/shared/MaxWrapper";
 
 const Duels = () => {
   return (
     <main className="w-full flex flex-col">
-      <ListDuels />
+      <MaxWrapper className="w-full px-4 md:px-6 lg:px-8">
+        <ListDuels />
+      </MaxWrapper>
     </main>
   );
 };

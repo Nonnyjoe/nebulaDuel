@@ -1,10 +1,12 @@
 import UserActivity from "../components/funding/userActivity"
+import MaxWrapper from "../components/shared/MaxWrapper"
 
 const Dashboard = () => {
     return (
-
-        <main className="w-full h-full min-h-screen bg-bodyBg absolute top-0 left-0 z-[99999]">
-            <UserActivity />
+        <main className="w-full flex flex-col">
+            <MaxWrapper className="w-full px-4 md:px-6 lg:px-8">
+                <UserActivity />
+            </MaxWrapper>
         </main>
     )
 }
