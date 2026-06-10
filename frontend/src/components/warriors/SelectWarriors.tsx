@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import readGameState from "../../utils/readState.tsx";
+import fetchNotices from "../../utils/readSubgraph.js";
 
 // interface Character {
 //     id: number;
@@ -203,10 +204,6 @@ const SelectWarriors = () => {
   //     }
   // }
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   const submitTx = async () => {
     if (selectedCharactersId.length < 3) {
       toast.error("You can have to select 3 characters.", {
@@ -236,54 +233,47 @@ const SelectWarriors = () => {
     console.log("active account:", activeAccount?.address);
 
     setSubmiting(true);
-    const txhash = await signMessages(dataObject);
+    try {
+      // signMessages resolves only after the Cartesi node has processed the
+      // input, so the duel is guaranteed to be visible in the next fetch.
+      const txhash = await signMessages(dataObject);
 
-    if (txhash) {
-      await delay(4000);
-      // TODO: fetch latest duel via JSON-RPC or inspect and route accordingly.
-      // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-      //   try {
-      //     let request_payload = await fetchNotices("all_tx");
-      //     request_payload = request_payload.filter(
-      //       (tx: any) => tx.caller == activeAccount?.address.toLowerCase()
-      //     );
-      //     let Highest_tx;
-      //     for (let i = 0; i < request_payload.length; i++) {
-      //       Highest_tx = request_payload[i];
-      //       if (request_payload[i].tx_id > Highest_tx.tx_id) {
-      //         Highest_tx = request_payload[i];
-      //       }
-      //     }
+      if (txhash) {
+        const duels = await fetchNotices("all_duels");
+        const myDuels = (Array.isArray(duels) ? duels : []).filter(
+          (duel: any) =>
+            duel.duel_creator?.toLowerCase() ===
+            activeAccount?.address?.toLowerCase(),
+        );
 
-      //     if (Highest_tx.method == "create_duel") {
-      //       toast.success("Transaction Successful.. Duel Created", {
-      //         position: "top-right",
-      //       });
-      //       setTotalCharacterPrice(0);
-      //       setSelectedCharacters([]);
-      //       setSelectedCharactersId([]);
-      //       const duels = await fetchNotices("all_duels");
-      //       const userDuels = findHighestIdDuel(
-      //         duels,
-      //         activeAccount?.address as string
-      //       );
-      //       navigate(`/strategy/${userDuels?.duel_id}`);
-      //     } else {
-      //       toast.error("Transaction Failed.. Try again later.", {
-      //         position: "top-right",
-      //       });
-      //       setSubmiting(false);
-      //     }
-      //   } catch (err) {
-      //     console.log(err);
-      //     setSubmiting(false);
-      //     toast.error("Transaction Failed.. Try again later.", {
-      //       position: "top-right",
-      //     });
-      //     setSubmiting(false);
-      //   }
+        if (myDuels.length > 0) {
+          let latest = myDuels[0];
+          for (const duel of myDuels) {
+            if (Number(duel.duel_id) > Number(latest.duel_id)) latest = duel;
+          }
+          toast.success("Duel created! Now choose your strategy.", {
+            position: "top-right",
+          });
+          setTotalCharacterPrice(0);
+          setSelectedCharacters([]);
+          setSelectedCharactersId([]);
+          navigate(`/strategy/${latest.duel_id}`);
+          return;
+        }
+
+        toast.error(
+          "Duel was submitted but isn't visible yet. Check the Duels page shortly.",
+          { position: "top-right" },
+        );
+      }
+    } catch (err: any) {
+      console.log(err);
+      toast.error(err?.message ?? "Transaction failed. Try again later.", {
+        position: "top-right",
+      });
+    } finally {
+      setSubmiting(false);
     }
-    setSubmiting(false);
   };
 
   const toggleCharacterSelection = (character: CharacterDetails) => {

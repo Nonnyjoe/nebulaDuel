@@ -1,6 +1,6 @@
 use crate::game_characters::{
-    confirm_ownership, get_character_details, get_characters, purchase_team, select_fighters,
-    Character, SuperPower,
+    get_character_details,
+    Character,
 };
 
 #[derive(Debug, PartialEq, Clone)]
@@ -62,9 +62,10 @@ impl Player {
         self.total_battles += 1;
         self.total_wins += 1;
         for characters in self.characters.iter() {
-            let character_details = get_character_details(all_characters, *characters);
-            character_details.total_wins += 1;
-            character_details.total_battles += 1;
+            if let Some(character_details) = get_character_details(all_characters, *characters) {
+                character_details.total_wins += 1;
+                character_details.total_battles += 1;
+            }
         }
         return self;
     }
@@ -73,16 +74,17 @@ impl Player {
         self.total_battles += 1;
         self.total_losses += 1;
         for characters in self.characters.iter() {
-            let character_details = get_character_details(all_characters, *characters);
-            character_details.total_wins += 1;
-            character_details.total_losses += 1;
+            if let Some(character_details) = get_character_details(all_characters, *characters) {
+                character_details.total_losses += 1;
+                character_details.total_battles += 1;
+            }
         }
         return self;
     }
 
     pub fn register_transaction(
         &mut self,
-        all_characters: &mut Vec<Character>,
+        _all_characters: &mut Vec<Character>,
         tx_id: u128,
         method_called: String,
     ) {

@@ -1,13 +1,23 @@
 import { useEffect } from "react";
 import { Button } from "../atom/Button";
-import { createThirdwebClient } from "thirdweb";
+import { createThirdwebClient, defineChain } from "thirdweb";
 import { darkTheme, ConnectButton, useActiveAccount, useActiveWalletConnectionStatus } from "thirdweb/react";
 import { useProfileContext } from "../contexts/ProfileContext";
 import fetchNotices from "../../utils/readSubgraph.js";
-import { anvil } from "thirdweb/chains";
+import { CHAIN_ID, CHAIN_NAME, CHAIN_RPC } from "../../utils/cartesi";
 
 const clientId = "5555e76cfe72676f69d044a91ce98d30";
 const client = createThirdwebClient({ clientId });
+
+// Chain config comes from .env (VITE_CHAIN_RPC / VITE_CHAIN_ID / VITE_CHAIN_NAME).
+// Cartesi CLI v2 proxies the anvil chain at <node-url>/anvil — do NOT use
+// thirdweb's built-in `anvil` chain, which points at localhost:8545.
+const localChain = defineChain({
+  id: CHAIN_ID,
+  name: CHAIN_NAME,
+  rpc: CHAIN_RPC,
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+});
 
 const customTheme = darkTheme({
   colors: {
@@ -54,7 +64,7 @@ const ConnectButton2 = () => {
 
   return (
     <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-barlow px-4 py-2 flex justify-center items-center">
-      <ConnectButton client={client} theme={customTheme} chain={anvil} />
+      <ConnectButton client={client} theme={customTheme} chain={localChain} />
     </Button>
   );
 };

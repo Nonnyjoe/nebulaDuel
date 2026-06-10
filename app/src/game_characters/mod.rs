@@ -297,41 +297,45 @@ pub fn purchase_team(
     character1_id: u128,
     character2_id: u128,
     character3_id: u128,
-) {
-    let mut character1 = sort_characters(character1_id).expect("Invalid character Id");
-    let mut character2 = sort_characters(character2_id).expect("Invalid character Id");
-    let mut character3 = sort_characters(character3_id).expect("Invalid character Id");
-    let total_price = character1.price + &character2.price + &character3.price;
+) -> Result<(), String> {
+    let mut character1 = sort_characters(character1_id)
+        .ok_or_else(|| format!("Invalid character id: {}", character1_id))?;
+    let mut character2 = sort_characters(character2_id)
+        .ok_or_else(|| format!("Invalid character id: {}", character2_id))?;
+    let mut character3 = sort_characters(character3_id)
+        .ok_or_else(|| format!("Invalid character id: {}", character3_id))?;
+    let total_price = character1.price + character2.price + character3.price;
 
     let player = find_player(all_players, wallet_address.clone())
-        .expect("Player not registered. please register!!");
+        .ok_or("Player not registered. Please register first")?;
 
     if player.points < total_price {
-        println!(
-            "Insufficient balance, you need {} more points",
+        return Err(format!(
+            "Insufficient points balance, you need {} more points",
             total_price - player.points
-        )
-    } else {
-        player.points -= total_price;
-        character1.owner = wallet_address.clone();
-        character2.owner = wallet_address.clone();
-        character3.owner = wallet_address.clone();
-
-        character1.id = *total_characters + 1;
-        character2.id = *total_characters + 2;
-        character3.id = *total_characters + 3;
-        *total_characters += 3;
-
-        player.characters.push(character1.id);
-        player.characters.push(character2.id);
-        player.characters.push(character3.id);
-
-        all_characters.push(character1);
-        all_characters.push(character2);
-        all_characters.push(character3);
-
-        println!("Team purchase successful!!")
+        ));
     }
+
+    player.points -= total_price;
+    character1.owner = wallet_address.clone();
+    character2.owner = wallet_address.clone();
+    character3.owner = wallet_address.clone();
+
+    character1.id = *total_characters + 1;
+    character2.id = *total_characters + 2;
+    character3.id = *total_characters + 3;
+    *total_characters += 3;
+
+    player.characters.push(character1.id);
+    player.characters.push(character2.id);
+    player.characters.push(character3.id);
+
+    all_characters.push(character1);
+    all_characters.push(character2);
+    all_characters.push(character3);
+
+    println!("Team purchase successful!!");
+    Ok(())
 }
 
 pub fn purchase_single_character(
@@ -340,29 +344,30 @@ pub fn purchase_single_character(
     total_characters: &mut u128,
     wallet_address: String,
     character_id: u128,
-) {
-    let mut character = sort_characters(character_id).expect("Invalid character Id");
+) -> Result<(), String> {
+    let mut character = sort_characters(character_id)
+        .ok_or_else(|| format!("Invalid character id: {}", character_id))?;
     let price = character.price;
     let player = find_player(all_players, wallet_address.clone())
-        .expect("Player not registered. please register!!");
+        .ok_or("Player not registered. Please register first")?;
 
     if player.points < price {
-        println!(
-            "Insufficient balance, you need {} more points",
+        return Err(format!(
+            "Insufficient points balance, you need {} more points",
             price - player.points
-        )
-    } else {
-        player.points -= price;
-        character.owner = wallet_address.clone();
-        *total_characters += 1;
-        character.id = *total_characters;
-
-        player.characters.push(character.id);
-
-        all_characters.push(character);
-
-        println!("Character purchase successful!!")
+        ));
     }
+
+    player.points -= price;
+    character.owner = wallet_address.clone();
+    *total_characters += 1;
+    character.id = *total_characters;
+
+    player.characters.push(character.id);
+    all_characters.push(character);
+
+    println!("Character purchase successful!!");
+    Ok(())
 }
 
 // function to return an array containing the Id's of a users characters
@@ -383,75 +388,64 @@ pub fn select_fighters(
     character1_id: u128,
     character2_id: u128,
     character3_id: u128,
-) -> Vec<u128> {
+) -> Result<Vec<u128>, String> {
+    if character1_id == character2_id || character1_id == character3_id || character2_id == character3_id {
+        return Err("Cannot select the same character more than once".to_string());
+    }
     let mut selected_fighters: Vec<u128> = Vec::new();
     selected_fighters.push(confirm_ownership(
         all_characters,
         all_players,
         wallet_address.clone(),
         character1_id,
-    ));
+    )?);
     selected_fighters.push(confirm_ownership(
         all_characters,
         all_players,
         wallet_address.clone(),
         character2_id,
-    ));
+    )?);
     selected_fighters.push(confirm_ownership(
         all_characters,
         all_players,
         wallet_address.clone(),
         character3_id,
-    ));
+    )?);
 
     println!("Fighters selected");
-    return selected_fighters;
+    Ok(selected_fighters)
 }
 
+/// Confirms a character exists AND belongs to the given wallet.
+/// Unlike the previous version, failing either check is now an error that
+/// rejects the input instead of a log line that lets the action through.
 pub fn confirm_ownership(
     all_characters: &mut Vec<Character>,
     all_players: &mut Vec<Player>,
     wallet_address: String,
     character_id: u128,
-) -> u128 {
-    let mut selected_character: Option<&mut Character> = None;
-    for character in all_characters {
-        if character.id == character_id {
-            selected_character = Some(character);
-        }
-    }
-    if selected_character.is_none() {
-        println!("Character with id {} not found", character_id);
+) -> Result<u128, String> {
+    let selected_character = all_characters
+        .iter()
+        .find(|c| c.id == character_id)
+        .ok_or_else(|| format!("Character with id {} not found", character_id))?;
+
+    find_player(all_players, wallet_address.clone())
+        .ok_or("Player not registered. Please register first")?;
+
+    if selected_character.owner.to_lowercase() != wallet_address.to_lowercase() {
+        return Err(format!(
+            "Player is not the owner of character id: {}",
+            character_id
+        ));
     }
 
-    match find_player(all_players, wallet_address.clone()) {
-        Some(_player) => {
-            if selected_character
-                .expect("ERROR WITH SELECTED CHARACTER")
-                .owner
-                != wallet_address.clone()
-            {
-                println!("Player not owner of character Id: {}", character_id)
-            }
-        }
-        None => println!("Player not registered. Please register!!"),
-    }
-
-    return character_id;
+    Ok(character_id)
 }
 
 pub fn get_character_details(
     all_characters: &mut Vec<Character>,
     character_id: u128,
-) -> &mut Character {
-    let mut selected_character: Option<&mut Character> = None;
-    for character in all_characters {
-        if character.id == character_id {
-            selected_character = Some(character);
-        }
-    }
-    if selected_character.is_none() {
-        println!("Character with id {} not found", character_id);
-    }
-    return selected_character.expect("ERROR WITH SELECTED CHARACTER");
+) -> Option<&mut Character> {
+    all_characters.iter_mut().find(|c| c.id == character_id)
 }

@@ -11,26 +11,17 @@ import { toWei } from "thirdweb";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 // import fetchNotices from "../../utils/readSubgraph.js";
-import readGameState from "../../utils/readState.tsx";
-import {
-  ERC20Portal,
-  DAPP,
-  CTSI,
-  ADDRESS_RELAYER,
-} from "../../utils/tokenPortal.tsx";
+import { ERC20Portal, DAPP, CTSI } from "../../utils/tokenPortal.tsx";
 import { HiOutlineArrowNarrowLeft } from "react-icons/hi";
 import { ethers } from "ethers";
 // import { useSendBatchTransaction } from "thirdweb/react";
 import signMessages from "../../utils/relayTransaction";
-import { fetchVouchers, Voucher } from "../../utils/fetchVouchers";
-import { CartesiDApp__factory } from "@cartesi/rollups";
+import {
+  fetchVouchers,
+  executeVoucherOnchain,
+  Voucher,
+} from "../../utils/fetchVouchers";
 import fetchNotices from "../../utils/readSubgraph.tsx";
-
-type ExecuteVoucherParams = {
-  payload: string;
-  destination: string;
-  proof: any;
-};
 
 const UserActivity = () => {
   //Ethers integration
@@ -75,30 +66,23 @@ const UserActivity = () => {
     loadVouchers();
   }, [isNftTransferModalOpen]);
 
-  const executeVoucher = async ({
-    payload,
-    destination,
-    proof,
-  }: ExecuteVoucherParams) => {
-    if (proof) {
-      toast.info("Executing Voucher, Please wait...");
-
-      const dApp = CartesiDApp__factory.connect(DAPP, signer);
-      const voucher_execution = await dApp.executeVoucher(
-        destination,
-        payload,
-        proof
-      );
-      const receipt = voucher_execution.wait();
-      // return receipt;
-
+  const executeVoucher = async (voucher: Voucher) => {
+    try {
+      if (!voucher.proofReady) {
+        toast.error(
+          "Voucher not finalised yet — wait for the epoch claim to be accepted.",
+        );
+        return;
+      }
+      toast.info("Executing Voucher, please wait...");
+      const receipt = await executeVoucherOnchain(DAPP, voucher, signer);
       console.log(receipt);
-      // await tx.wait();
-
-      toast.success("Voucher executed successfully....");
-    } else {
-      console.log(proof);
-      toast.error("Voucher not finalised yet......");
+      toast.success("Voucher executed successfully!");
+      const data: Voucher[] = await fetchVouchers();
+      setVouchers(data);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message ?? "Voucher execution failed");
     }
   };
 
@@ -189,49 +173,42 @@ const UserActivity = () => {
       receiver_add: transferAddress,
     };
 
-    toast.info("Sending Tx to relayer, please wait...");
-    await signMessages(payload);
-
-    toast.success("Transfer submitted, please refreash page");
-    setIsTransferModalOpen(false);
-    setTransferAddress("");
-    setTransferAmount("");
+    try {
+      toast.info("Sending transaction, please wait...");
+      await signMessages(payload);
+      toast.success("Transfer complete!");
+      setIsTransferModalOpen(false);
+      setTransferAddress("");
+      setTransferAmount("");
+      await fetchData();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Transfer failed");
+    }
   };
 
   const handleWithdraw = async (e: FormEvent) => {
     e.preventDefault();
-    const { Status, request_payload } = await readGameState(
-      `check_relayed_dapp_address`
-    );
+    // Node v2: the backend learns the application address automatically from
+    // input metadata (metadata.app_contract) — no DAppAddressRelay needed.
     const payload = { func: "withdraw", amount: Number(withdrawAmount) };
 
-    if (Status) {
-      console.log(request_payload);
-      if (request_payload === "rue") {
-        toast.info("Sending Tx to relayer, please wait...");
-        await signMessages(payload);
-        toast.success("Withdrawal submitted, please refreash page");
-        setIsWithdrawModalOpen(false);
-        setWithdrawAmount("");
-        return;
-      }
+    try {
+      setIsWithdrawing(true);
+      toast.info("Sending withdrawal, please wait...");
+      await signMessages(payload);
+      toast.success(
+        "Withdrawal processed — a voucher was emitted. Execute it below once its epoch is finalised.",
+      );
+      setIsWithdrawModalOpen(false);
+      setWithdrawAmount("");
+      await fetchData();
+      const data: Voucher[] = await fetchVouchers();
+      setVouchers(data);
+    } catch (err: any) {
+      toast.error(err?.message ?? "Withdrawal failed");
+    } finally {
+      setIsWithdrawing(false);
     }
-
-    setIsWithdrawing(true);
-    const abi = ["function relayDAppAddress(address _dapp) external"];
-    const addressRelayer = new ethers.Contract(ADDRESS_RELAYER, abi, signer);
-    const tx = await addressRelayer.relayDAppAddress(DAPP);
-    toast.info("Repalying Dapp address, please wait...");
-    console.log(tx);
-    await tx.wait();
-
-    toast.info("Sending Tx to relayer, please wait...");
-    await signMessages(payload);
-    toast.success("Withdrawal submitted, please refreash page");
-    setIsWithdrawModalOpen(false);
-    setIsWithdrawing(false);
-
-    setWithdrawAmount("");
   };
 
   // const handleNftTransfer = (e: FormEvent) => {
@@ -618,17 +595,23 @@ const UserActivity = () => {
                               </td>
                               <td className="py-3 px-6 text-left whitespace-nowrap">
                                 <Button
-                                  onClick={() =>
-                                    executeVoucher({
-                                      payload: voucher.payload,
-                                      destination: voucher.destination,
-                                      proof: voucher.proof,
-                                    })
-                                  }
+                                  onClick={() => executeVoucher(voucher)}
                                   type="button"
-                                  className="bg-myGreen text-gray-900 w-full py-2 rounded-md capitalize hover:bg-myYellow flex justify-center items-center gap-1 p-5"
+                                  disabled={voucher.executed}
+                                  className={`w-full py-2 rounded-md capitalize flex justify-center items-center gap-1 p-5 ${
+                                    voucher.executed
+                                      ? "bg-gray-500 text-gray-300 cursor-not-allowed"
+                                      : voucher.proofReady
+                                        ? "bg-myGreen text-gray-900 hover:bg-myYellow"
+                                        : "bg-gray-600 text-gray-200 hover:bg-gray-500"
+                                  }`}
                                 >
-                                  Execute <MdOutlineArrowRightAlt />
+                                  {voucher.executed
+                                    ? "Executed"
+                                    : voucher.proofReady
+                                      ? "Execute"
+                                      : "Pending epoch"}{" "}
+                                  <MdOutlineArrowRightAlt />
                                 </Button>
                               </td>
                             </tr>

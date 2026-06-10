@@ -1,13 +1,9 @@
-use crate::game_characters::{
-    confirm_ownership, get_character_details, get_characters, purchase_team, select_fighters,
-    Character, SuperPower,
-};
-use crate::players_profile::{add_character, find_player, remove_character, Player};
-use crate::storage;
+use crate::game_characters::{confirm_ownership, Character};
+use crate::players_profile::{find_player, remove_character, Player};
 use crate::storage::*;
+use crate::structures::emit_voucher;
 extern crate ethabi;
 use ethabi::{Function, Param, ParamType, Token};
-use json::{object, JsonValue};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SaleDetails {
@@ -20,44 +16,43 @@ pub fn deposit(
     all_players: &mut Vec<Player>,
     wallet_address: String,
     amount: f64,
-) -> Option<&mut Player> {
-    match find_player(all_players, wallet_address) {
-        Some(player) => {
-            player.cartesi_token_balance += amount;
-            return Some(player);
-        }
-        None => {
-            println!("Couldn't find player, please register!!");
-            return None;
-        }
-    }
+) -> Result<(), String> {
+    let player = find_player(all_players, wallet_address)
+        .ok_or("Couldn't find player, please register first")?;
+    player.cartesi_token_balance += amount;
+    Ok(())
 }
 
-pub async fn withdraw<'a>(
+pub async fn withdraw(
     storage: &mut Storage,
     wallet_address: String,
     amount: f64,
-) -> Option<&mut Storage> {
-    match find_player(&mut storage.all_players, wallet_address.clone()) {
-        Some(player) => {
-            if player.cartesi_token_balance < amount {
-                println!("Insufficient token balance");
-                return None;
-            } else {
-                player.cartesi_token_balance -= amount;
-                // Emit a voucher to pay the user.
-                return transfer_token(storage, wallet_address.clone(), amount).await;
-            }
-            // return storage;
+) -> Result<(), String> {
+    if amount <= 0.0 {
+        return Err("Withdrawal amount must be positive".to_string());
+    }
+
+    {
+        let player = find_player(&mut storage.all_players, wallet_address.clone())
+            .ok_or("Couldn't find player, please register first")?;
+        if player.cartesi_token_balance < amount {
+            return Err("Insufficient token balance".to_string());
         }
-        None => {
-            println!("Couldn't find player, please register!!");
-            return None;
+        player.cartesi_token_balance -= amount;
+    }
+
+    // Emit a voucher to pay the user. If the voucher emission fails, roll the
+    // balance back so state stays consistent.
+    match transfer_token(storage, wallet_address.clone(), amount).await {
+        Ok(()) => Ok(()),
+        Err(e) => {
+            if let Some(player) = find_player(&mut storage.all_players, wallet_address) {
+                player.cartesi_token_balance += amount;
+            }
+            Err(e)
         }
     }
 }
-
-// function entrypoint(address to, uint256 _tokenid, string memory _name, string memory _image, uint256 health, uint256 strength, uint256 attack, uint256 speed, string memory superPower, uint256 totalWins, uint256 totalLoss) external onlyOwner{}
 
 pub fn withdraw_character_as_nft(
     all_players: &mut Vec<Player>,
@@ -65,23 +60,27 @@ pub fn withdraw_character_as_nft(
     wallet_address: String,
     character_id: u128,
     all_offchain_characters: &mut Vec<u128>,
-) {
-    match find_player(all_players, wallet_address) {
-        Some(player) => {
-            player.remove_character(character_id);
-            all_offchain_characters.push(character_id);
+) -> Result<(), String> {
+    // Ownership must be confirmed before any mutation.
+    confirm_ownership(
+        all_characters,
+        all_players,
+        wallet_address.clone(),
+        character_id,
+    )?;
 
-            for character in all_characters {
-                if character.id == character_id {
-                    character.owner = String::from("0xOffChain");
-                }
-            }
-            // Emit a voucher to transfer an nft with the if of the character id to the user;
-        }
-        None => {
-            println!("Couldn't find player, please register!!")
+    let player = find_player(all_players, wallet_address)
+        .ok_or("Couldn't find player, please register first")?;
+
+    player.remove_character(character_id);
+    all_offchain_characters.push(character_id);
+
+    for character in all_characters {
+        if character.id == character_id {
+            character.owner = String::from("0xOffChain");
         }
     }
+    Ok(())
 }
 
 pub fn deposit_character_as_nft(
@@ -90,26 +89,19 @@ pub fn deposit_character_as_nft(
     wallet_address: String,
     character_id: u128,
     all_offchain_characters: &mut Vec<u128>,
-) {
-    match find_player(all_players, wallet_address.clone()) {
-        Some(player) => {
-            player.add_character(character_id);
-            for (index, character) in all_offchain_characters.iter().enumerate() {
-                if *character == character_id {
-                    all_offchain_characters.remove(index);
-                    break;
-                }
-            }
-            for character in all_characters {
-                if character.id == character_id {
-                    character.owner = String::from(wallet_address.clone());
-                }
-            }
-        }
-        None => {
-            println!("Couldn't find player, please register!!")
+) -> Result<(), String> {
+    let player = find_player(all_players, wallet_address.clone())
+        .ok_or("Couldn't find player, please register first")?;
+
+    player.add_character(character_id);
+    all_offchain_characters.retain(|c| *c != character_id);
+
+    for character in all_characters {
+        if character.id == character_id {
+            character.owner = wallet_address.clone();
         }
     }
+    Ok(())
 }
 
 pub fn transfer_tokens(
@@ -117,55 +109,44 @@ pub fn transfer_tokens(
     wallet_address: String,
     receiver_address: String,
     amount: f64,
-) {
+) -> Result<(), String> {
+    if amount <= 0.0 {
+        return Err("Transfer amount must be positive".to_string());
+    }
+
     let sender_index = all_players
         .iter()
-        .position(|player| player.wallet_address == wallet_address);
+        .position(|p| p.wallet_address.to_lowercase() == wallet_address.to_lowercase())
+        .ok_or("Couldn't find sender address, please register first")?;
     let receiver_index = all_players
         .iter()
-        .position(|player| player.wallet_address == receiver_address);
+        .position(|p| p.wallet_address.to_lowercase() == receiver_address.to_lowercase())
+        .ok_or("Receiver address could not be found, please register first")?;
 
-    match sender_index {
-        Some(s_index) => {
-            match receiver_index {
-                Some(r_index) => {
-                    // Ensure sender and receiver are not the same
-                    if s_index != r_index {
-                        let (sender, receiver) = if s_index < r_index {
-                            let (left, right) = all_players.split_at_mut(r_index);
-                            (&mut left[s_index], &mut right[0])
-                        } else {
-                            let (left, right) = all_players.split_at_mut(s_index);
-                            (&mut right[0], &mut left[r_index])
-                        };
-
-                        if sender.cartesi_token_balance >= amount {
-                            sender.cartesi_token_balance -= amount;
-                            receiver.cartesi_token_balance += amount;
-                        } else {
-                            println!("Sender has insufficient balance")
-                        }
-                    } else {
-                        println!("Sender and receiver cannot be the same")
-                    }
-                }
-                None => {
-                    println!("Receiver address could not be found, please register!!")
-                }
-            }
-        }
-        None => {
-            println!("Couldn't find sender address, please register!!")
-        }
+    if sender_index == receiver_index {
+        return Err("Sender and receiver cannot be the same".to_string());
     }
+
+    if all_players[sender_index].cartesi_token_balance < amount {
+        return Err("Sender has insufficient balance".to_string());
+    }
+
+    all_players[sender_index].cartesi_token_balance -= amount;
+    all_players[receiver_index].cartesi_token_balance += amount;
+    Ok(())
 }
 
-fn assert_not_listed(character_id: u128, listed_characters: &mut Vec<SaleDetails>) {
-    for character in listed_characters {
-        if character.character_id == character_id {
-            println!("Character already listed");
-        }
+fn assert_not_listed(
+    character_id: u128,
+    listed_characters: &Vec<SaleDetails>,
+) -> Result<(), String> {
+    if listed_characters
+        .iter()
+        .any(|c| c.character_id == character_id)
+    {
+        return Err("Character already listed".to_string());
     }
+    Ok(())
 }
 
 pub fn list_character(
@@ -175,20 +156,23 @@ pub fn list_character(
     wallet_address: String,
     character_id: u128,
     price: f64,
-) {
-    let _selected_character_id = confirm_ownership(
+) -> Result<(), String> {
+    if price <= 0.0 {
+        return Err("List price must be positive".to_string());
+    }
+    confirm_ownership(
         all_characters,
         all_players,
         wallet_address.clone(),
         character_id,
-    );
-    assert_not_listed(character_id, listed_characters);
-    let sales_details = SaleDetails {
+    )?;
+    assert_not_listed(character_id, listed_characters)?;
+    listed_characters.push(SaleDetails {
         character_id,
         price,
         seller: wallet_address,
-    };
-    listed_characters.push(sales_details);
+    });
+    Ok(())
 }
 
 pub fn modify_list_price(
@@ -196,72 +180,73 @@ pub fn modify_list_price(
     wallet_address: String,
     character_id: u128,
     price: f64,
-) -> Option<&mut Vec<SaleDetails>> {
-    let mut found_character: bool = false;
-    for character in listed_characters.iter_mut() {
-        if character.character_id == character_id {
-            if character.seller == wallet_address {
-                character.price = price;
-            } else {
-                println!("Not initial Lister");
-            }
-            found_character = true;
-        }
+) -> Result<(), String> {
+    if price <= 0.0 {
+        return Err("List price must be positive".to_string());
     }
-    if found_character {
-        return Some(listed_characters);
-    } else {
-        println!("Character not Listed");
-        return None;
+    let listing = listed_characters
+        .iter_mut()
+        .find(|c| c.character_id == character_id)
+        .ok_or("Character not listed")?;
+
+    if listing.seller.to_lowercase() != wallet_address.to_lowercase() {
+        return Err("Only the original lister can modify the price".to_string());
     }
+    listing.price = price;
+    Ok(())
 }
 
-pub fn buy_character<'a>(
-    all_players: &'a mut Vec<Player>,
+pub fn buy_character(
+    all_players: &mut Vec<Player>,
     all_characters: &mut Vec<Character>,
     listed_characters: &mut Vec<SaleDetails>,
     wallet_address: String,
     character_id: u128,
     profit_from_p2p_sales: &mut f64,
-) {
-    let mut list_index: Option<usize> = None;
-    let mut found_character: bool = false;
-    for (index, character) in listed_characters.iter_mut().enumerate() {
-        if character.character_id == character_id {
-            let mut traders = extract_traders(all_players, &wallet_address, &character.seller);
-            traders[0].reduce_cartesi_token_balance(character.price);
-            traders[0].add_character(character_id);
-            found_character = true;
-            match find_player(all_players, character.seller.clone()) {
-                Some(seller) => {
-                    seller.increase_cartesi_token_balance(character.price * 0.97);
-                    *profit_from_p2p_sales += character.price * 0.03;
-                    remove_character(
-                        seller,
-                        all_characters,
-                        wallet_address.clone(),
-                        character.character_id,
-                    );
-                    list_index = Some(index.clone());
-                }
-                None => {
-                    println!("Couldn't find seller, please register!!")
-                }
-            }
+) -> Result<(), String> {
+    let list_index = listed_characters
+        .iter()
+        .position(|c| c.character_id == character_id)
+        .ok_or("Character not listed")?;
+
+    let listing = listed_characters[list_index].clone();
+
+    if listing.seller.to_lowercase() == wallet_address.to_lowercase() {
+        return Err("You cannot buy your own listing".to_string());
+    }
+
+    // Validate buyer funds before mutating anything.
+    {
+        let buyer = find_player(all_players, wallet_address.clone())
+            .ok_or("Buyer not registered, please register first")?;
+        if buyer.cartesi_token_balance < listing.price {
+            return Err("Insufficient balance to buy this character".to_string());
         }
     }
-    if found_character {
-        match list_index {
-            Some(index) => {
-                listed_characters.remove(index);
-            }
-            None => {
-                println!("Character not listed");
-            }
-        }
-    } else {
-        println!("Character not Listed");
+    find_player(all_players, listing.seller.clone())
+        .ok_or("Seller profile not found")?;
+
+    // Apply the trade.
+    {
+        let buyer = find_player(all_players, wallet_address.clone())
+            .ok_or("Buyer not registered")?;
+        buyer.reduce_cartesi_token_balance(listing.price);
+        buyer.add_character(character_id);
     }
+    {
+        let seller = find_player(all_players, listing.seller.clone())
+            .ok_or("Seller profile not found")?;
+        seller.increase_cartesi_token_balance(listing.price * 0.97);
+        remove_character(
+            seller,
+            all_characters,
+            wallet_address.clone(),
+            character_id,
+        );
+    }
+    *profit_from_p2p_sales += listing.price * 0.03;
+    listed_characters.remove(list_index);
+    Ok(())
 }
 
 pub fn purchase_points(
@@ -270,58 +255,34 @@ pub fn purchase_points(
     amount: f64,
     points_rate: f64,
     profit_from_points_purchase: &mut f64,
-) {
-    match find_player(all_players, wallet_address) {
-        Some(player) => {
-            if player.cartesi_token_balance >= amount {
-                player.reduce_cartesi_token_balance(amount);
-                let obtained_points = calculate_points(amount, points_rate);
-                player.points += obtained_points;
-                *profit_from_points_purchase += amount;
-            } else {
-                println!("Insufficient cartesi tokeen balance, please deposit!!")
-            }
-        }
-        None => {
-            println!("Couldn't find player, please register!!")
-        }
+) -> Result<(), String> {
+    if amount <= 0.0 {
+        return Err("Purchase amount must be positive".to_string());
     }
+    let player = find_player(all_players, wallet_address)
+        .ok_or("Couldn't find player, please register first")?;
+
+    if player.cartesi_token_balance < amount {
+        return Err("Insufficient cartesi token balance, please deposit first".to_string());
+    }
+    player.reduce_cartesi_token_balance(amount);
+    player.points += calculate_points(amount, points_rate);
+    *profit_from_points_purchase += amount;
+    Ok(())
 }
 
 fn calculate_points(cartesi_token_amount: f64, points_rate: f64) -> u128 {
-    let obtained_points = cartesi_token_amount * points_rate;
-    return obtained_points as u128;
+    (cartesi_token_amount * points_rate) as u128
 }
 
-fn extract_traders<'a>(
-    all_players: &'a mut Vec<Player>,
-    buyer_address: &String,
-    seller_address: &String,
-) -> Vec<&'a mut Player> {
-    let mut traders: Vec<&'a mut Player> = Vec::new();
-    let mut buyer_profile: Option<&mut Player> = None;
-    let mut seller_profile: Option<&mut Player> = None;
-    for player in all_players.iter_mut() {
-        if player.wallet_address == *buyer_address {
-            buyer_profile = Some(player);
-        } else if player.wallet_address == *seller_address {
-            seller_profile = Some(player);
-        }
-    }
-
-    if buyer_profile.is_none() || seller_profile.is_none() {
-        println!("Couldn't find complete traders, please register!!")
-    }
-    traders.push(buyer_profile.expect("ERROR WITH BUYER PROFILE"));
-    traders.push(seller_profile.expect("ERROR WITH SELLER PROFILE"));
-    return traders;
-}
-
+/// Emit a v2 voucher instructing the CTSI ERC-20 contract to transfer
+/// `amount` to `recipient` when executed on L1.
 async fn transfer_token(
     storage: &mut Storage,
     recipient: String,
     amount: f64,
-) -> Option<&mut Storage> {
+) -> Result<(), String> {
+    #[allow(deprecated)]
     let transfer_function = Function {
         name: "transfer".to_owned(),
         inputs: vec![
@@ -343,41 +304,28 @@ async fn transfer_token(
 
     let destination = storage.cartesi_token_address.clone();
 
-    // Encode the inputs for the mint function
+    let recipient_address = recipient
+        .parse()
+        .map_err(|_| "Invalid recipient address".to_string())?;
+
+    // Balances are tracked as whole token units; keep full integer precision
+    // through u128 instead of truncating through u64.
+    let amount_uint: u128 = amount as u128;
+
     let transfer_payload = transfer_function
         .encode_input(&[
-            Token::Address(recipient.parse().expect("Invalid to address")),
-            Token::Uint((amount as u64).into()),
+            Token::Address(recipient_address),
+            Token::Uint(amount_uint.into()),
         ])
-        .expect("Encoding failed");
+        .map_err(|e| format!("ABI encoding failed: {}", e))?;
 
-    let hex: String = transfer_payload
-        .iter()
-        .map(|byte| format!("{:02x}", byte))
-        .collect();
-    let ethereum_hex = format!("0x{}", hex);
+    let payload_hex = format!("0x{}", hex::encode(&transfer_payload));
 
-    let response = object! {
-        "destination" => format!("{}", destination),
-        "payload" => format!("{}", ethereum_hex)
-    };
+    // Cartesi Rollups v2 vouchers require a `value` field (Wei forwarded with
+    // the call). An ERC-20 transfer forwards no Ether.
+    emit_voucher(&destination, &payload_hex, "0x0", &storage.server_addr)
+        .map_err(|e| format!("Voucher request failed: {}", e))?;
 
-    let request = hyper::Request::builder()
-        .method(hyper::Method::POST)
-        .header(hyper::header::CONTENT_TYPE, "application/json")
-        .uri(format!("{}/voucher", storage.server_addr))
-        .body(hyper::Body::from(response.dump()))
-        .ok()?;
-    let response = storage.client.request(request).await;
-
-    match response {
-        Ok(status) => {
-            println!("Transfer successful");
-            return Some(storage);
-        }
-        Err(e) => {
-            println!("Voucher request failed {}", e);
-            None
-        }
-    }
+    println!("Withdrawal voucher emitted for {} -> {}", amount, recipient);
+    Ok(())
 }

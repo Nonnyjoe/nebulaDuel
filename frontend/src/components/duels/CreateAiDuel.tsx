@@ -214,10 +214,6 @@ const CreateAiDuel = () => {
   //     return highestIdDuel;
   //   }
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   const submitTx = async () => {
     if (selectedCharactersId.length < 3) {
       toast.error("You can have to select 3 characters.", {
@@ -259,7 +255,8 @@ const CreateAiDuel = () => {
       return;
     }
 
-    await delay(4000);
+    // signMessages waits for the node to process the input — the new duel is
+    // already queryable.
     console.log("Fetching AI duels");
     let request_payload = await fetchNotices("ai_duels");
     console.log("Request payload: ", request_payload);

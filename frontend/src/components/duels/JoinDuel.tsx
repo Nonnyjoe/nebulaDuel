@@ -173,10 +173,6 @@ const JoinDuelComp = () => {
   //     }
   // }
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   const submitTx = async () => {
     if (selectedCharactersId.length < 3) {
       toast.error("You can have to select 3 characters.", {
@@ -210,10 +206,11 @@ const JoinDuelComp = () => {
     const txhash = await signMessages(dataObject);
 
     if (txhash) {
-      toast.success("Transaction Successful.. Duel Created", {
+      // signMessages waits until the node has processed the input, so duel
+      // state is already up to date when we land on the strategy page.
+      toast.success("Duel joined! Now choose your strategy.", {
         position: "top-right",
       });
-      await delay(4000);
       navigate(`/strategy/${duelId}`);
 
       // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function

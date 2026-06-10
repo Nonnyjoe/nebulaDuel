@@ -1,4 +1,3 @@
-use crate::ai_battle;
 use crate::battle_challenge::{Difficulty, Duel};
 use crate::game_characters::{Character, MinimalCharacter, SuperPower};
 use crate::market_place::SaleDetails;
@@ -7,7 +6,7 @@ use crate::strategy_simulation::AllStrategies;
 use json::JsonValue;
 use std::io::{Read, Write};
 use std::net::TcpStream;
-use std::{error::Error, fmt};
+use std::error::Error;
 pub const WEI_TO_GWEI_FACTOR: u128 = 1000000000;
 pub const GWEI_TO_WEI_FACTOR: i32 = 1000000000;
 pub const ROLLUP_ADDRESS: &str = "ROLLUPS_ADDRESS";
@@ -43,26 +42,23 @@ pub struct StandardInput {
     pub request: JsonValue,
 }
 
-pub fn emit_notice(data: &str, rollup_server: &str) -> Result<String, Box<dyn Error>> {
-    // let hexresult = string_to_hex(data);
-    let hexresult = "0x".to_string() + &hex::encode(data);
+/// POST a rollup output (notice/report/voucher) to the rollup HTTP server.
+/// Shared transport used by all emitters. Never panics: transport errors are
+/// returned to the caller, who decides whether they are fatal.
+fn post_rollup_output(
+    endpoint: &str,
+    body_json: &str,
+    rollup_server: &str,
+) -> Result<String, Box<dyn Error>> {
+    let full_url = format!("{}/{}", rollup_server.trim_end_matches('/'), endpoint);
 
-    // Create the JSON payload
-    let payload = format!(r#"{{"payload":"{}"}}"#, hexresult);
-
-    let modified_url = Box::leak([rollup_server, "/notice"].concat().into_boxed_str());
-    println!("Sending a notice to this address: {}", modified_url);
-
-    // Parse the rollup server URL
-    let url = url::Url::parse(modified_url)?;
+    let url = url::Url::parse(&full_url)?;
     let host = url.host_str().ok_or("Invalid URL")?;
     let port = url.port_or_known_default().ok_or("Invalid port")?;
     let path = url.path();
 
-    // Create a TCP connection
     let mut stream = TcpStream::connect((host, port))?;
 
-    // Construct the HTTP POST request
     let request = format!(
         "POST {} HTTP/1.1\r\n\
         Host: {}\r\n\
@@ -73,62 +69,60 @@ pub fn emit_notice(data: &str, rollup_server: &str) -> Result<String, Box<dyn Er
         {}",
         path,
         host,
-        payload.len(),
-        payload
+        body_json.len(),
+        body_json
     );
 
-    // Send the request
     stream.write_all(request.as_bytes())?;
 
-    // Read the response
     let mut response = String::new();
     stream.read_to_string(&mut response)?;
 
     Ok(response)
 }
 
-pub fn emit_report(data: &str, rollup_server: &str) -> Result<String, Box<dyn Error>> {
-    // let hexresult = string_to_hex(data);
-    let hexresult = hex::encode(data);
-
-    // Create the JSON payload
+/// Emit a notice (verifiable, consensus-relevant output).
+/// Payload must be "0x"-prefixed hex per the rollup HTTP API.
+pub fn emit_notice(data: &str, rollup_server: &str) -> Result<String, Box<dyn Error>> {
+    let hexresult = "0x".to_string() + &hex::encode(data);
     let payload = format!(r#"{{"payload":"{}"}}"#, hexresult);
+    post_rollup_output("notice", &payload, rollup_server)
+}
 
-    let modified_url = Box::leak([rollup_server, "/report"].concat().into_boxed_str());
-    println!("Sending a report to this address: {}", rollup_server);
+/// Emit a report (diagnostic / inspect response output).
+/// Payload must be "0x"-prefixed hex per the rollup HTTP API.
+pub fn emit_report(data: &str, rollup_server: &str) -> Result<String, Box<dyn Error>> {
+    let hexresult = "0x".to_string() + &hex::encode(data);
+    let payload = format!(r#"{{"payload":"{}"}}"#, hexresult);
+    post_rollup_output("report", &payload, rollup_server)
+}
 
-    // Parse the rollup server URL
-    let url = url::Url::parse(modified_url)?;
-    let host = url.host_str().ok_or("Invalid URL")?;
-    let port = url.port_or_known_default().ok_or("Invalid port")?;
-    let path = url.path();
+/// Emit a structured error report so the frontend always receives a response
+/// it can parse, even on rejected/invalid inputs.
+pub fn emit_error_report(method: &str, error: &str, rollup_server: &str) {
+    let mut output_json = JsonValue::new_object();
+    output_json["error"] = error.into();
+    output_json["method"] = method.into();
+    output_json["status"] = "rejected".into();
+    if let Err(e) = emit_report(&output_json.dump(), rollup_server) {
+        println!("Failed to emit error report: {}", e);
+    }
+}
 
-    // Create a TCP connection
-    let mut stream = TcpStream::connect((host, port))?;
-
-    // Construct the HTTP POST request
-    let request = format!(
-        "POST {} HTTP/1.1\r\n\
-        Host: {}\r\n\
-        Content-Type: application/json\r\n\
-        Content-Length: {}\r\n\
-        Connection: close\r\n\
-        \r\n\
-        {}",
-        path,
-        host,
-        payload.len(),
-        payload
+/// Emit a voucher in the Cartesi Rollups v2 format. v2 vouchers carry a
+/// `value` field (Wei to forward with the call) in addition to destination
+/// and payload.
+pub fn emit_voucher(
+    destination: &str,
+    payload_hex: &str,
+    value_wei_hex: &str,
+    rollup_server: &str,
+) -> Result<String, Box<dyn Error>> {
+    let body = format!(
+        r#"{{"destination":"{}","payload":"{}","value":"{}"}}"#,
+        destination, payload_hex, value_wei_hex
     );
-
-    // Send the request
-    stream.write_all(request.as_bytes())?;
-
-    // Read the response
-    let mut response = String::new();
-    stream.read_to_string(&mut response)?;
-
-    Ok(response)
+    post_rollup_output("voucher", &body, rollup_server)
 }
 
 pub fn structure_notice(
@@ -146,7 +140,9 @@ pub fn structure_notice(
     output_json["data"] = data.into();
     output_json["notice_type"] = String::from("specific_tx").into();
 
-    emit_notice(&output_json.dump()[..], &mut server_addr[..]);
+    if let Err(e) = emit_notice(&output_json.dump()[..], &mut server_addr[..]) {
+        println!("Failed to emit notice: {}", e);
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -300,7 +296,7 @@ pub fn character_to_json(all_characters: Vec<Character>) -> String {
         tx_json["strength"] = (character.strength as u64).into();
         tx_json["attack"] = (character.attack as u64).into();
         tx_json["speed"] = (character.speed as u64).into();
-        tx_json["super_power"] = (decode_super_power_json(character.super_power).into());
+        tx_json["super_power"] = decode_super_power_json(character.super_power).into() ;
         tx_json["id"] = (character.id as u64).into();
         tx_json["total_battles"] = (character.total_battles as u64).into();
         tx_json["total_wins"] = (character.total_wins as u64).into();
@@ -321,7 +317,7 @@ pub fn single_character_to_json(character: Character) -> String {
     tx_json["strength"] = (character.strength as u64).into();
     tx_json["attack"] = (character.attack as u64).into();
     tx_json["speed"] = (character.speed as u64).into();
-    tx_json["super_power"] = (decode_super_power_json(character.super_power).into());
+    tx_json["super_power"] = decode_super_power_json(character.super_power).into() ;
     tx_json["id"] = (character.id as u64).into();
     tx_json["total_battles"] = (character.total_battles as u64).into();
     tx_json["total_wins"] = (character.total_wins as u64).into();
@@ -371,7 +367,7 @@ pub fn players_profile_to_json(all_players: Vec<Player>) -> String {
         tx_json["ai_battles_won"] = (player.ai_battles_won as u64).into();
         tx_json["ai_battles_losses"] = (player.ai_battles_losses as u64).into();
         tx_json["transaction_history"] =
-            (player_transactions_to_json(player.transaction_history).into());
+            player_transactions_to_json(player.transaction_history).into() ;
         json_array.push(tx_json).expect("JSON ERROR6");
     }
 
@@ -422,7 +418,7 @@ pub fn single_player_profile_to_json(player: &mut Player) -> String {
     tx_json["ai_battles_won"] = (player.ai_battles_won as u64).into();
     tx_json["ai_battles_losses"] = (player.ai_battles_losses as u64).into();
     tx_json["transaction_history"] =
-        (player_transactions_to_json(player.transaction_history.clone()).into());
+        player_transactions_to_json(player.transaction_history.clone()).into() ;
 
     return tx_json.to_string();
 }
