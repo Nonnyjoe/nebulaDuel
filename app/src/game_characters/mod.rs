@@ -288,7 +288,81 @@ fn model_character(
     return Some(character);
 }
 
-// Function to create a team
+// ---------------------------------------------------------------------------
+// Mint economics
+//
+// Points are earned in battle, so points-funded mints must be rate-limited or
+// the campaign becomes a character printer:
+//   * escalating premium: each successive points mint costs +15% more
+//   * cooldown: one points mint per 6 in-game hours (block timestamp)
+//   * the starter team (purchase_team) is one-time per player at base price
+// CTSI-funded mints carry no premium/cooldown — tokens were deposited, not
+// farmed. CTSI price = base points price / points_rate.
+// ---------------------------------------------------------------------------
+
+pub const POINT_MINT_COOLDOWN_SECS: u128 = 6 * 60 * 60;
+pub const POINT_MINT_PREMIUM_PCT_PER_PURCHASE: u128 = 15;
+pub const POINT_MINT_PREMIUM_CAP_PCT: u128 = 300; // premium tops out at +300%
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum MintCurrency {
+    Points,
+    Ctsi,
+}
+
+pub fn decode_currency(s: &str) -> Result<MintCurrency, String> {
+    match s.to_lowercase().as_str() {
+        "points" => Ok(MintCurrency::Points),
+        "ctsi" | "tokens" | "token" => Ok(MintCurrency::Ctsi),
+        other => Err(format!(
+            "Unknown currency '{}': use \"points\" or \"ctsi\"",
+            other
+        )),
+    }
+}
+
+/// Points price for this player including the anti-farm premium.
+pub fn points_price_for(player: &Player, base_price: u128) -> u128 {
+    let premium =
+        (player.point_purchase_count * POINT_MINT_PREMIUM_PCT_PER_PURCHASE)
+            .min(POINT_MINT_PREMIUM_CAP_PCT);
+    base_price * (100 + premium) / 100
+}
+
+/// CTSI price for a base points price at the given points rate.
+pub fn ctsi_price_for(base_price: u128, points_rate: f64) -> f64 {
+    if points_rate <= 0.0 {
+        return base_price as f64;
+    }
+    base_price as f64 / points_rate
+}
+
+/// Internal mint that bypasses economics — used for AI setup only.
+pub fn mint_character_unchecked(
+    all_players: &mut Vec<Player>,
+    all_characters: &mut Vec<Character>,
+    total_characters: &mut u128,
+    wallet_address: String,
+    template_id: u128,
+) -> Result<(), String> {
+    let mut character = sort_characters(template_id)
+        .ok_or_else(|| format!("Invalid character id: {}", template_id))?;
+    let price = character.price;
+    let player = find_player(all_players, wallet_address.clone())
+        .ok_or("Player not registered")?;
+    if player.points < price {
+        return Err("Insufficient points".to_string());
+    }
+    player.points -= price;
+    character.owner = wallet_address;
+    *total_characters += 1;
+    character.id = *total_characters;
+    player.characters.push(character.id);
+    all_characters.push(character);
+    Ok(())
+}
+
+/// One-time starter team: 3 characters at base points price, no premium.
 pub fn purchase_team(
     all_players: &mut Vec<Player>,
     all_characters: &mut Vec<Character>,
@@ -309,6 +383,12 @@ pub fn purchase_team(
     let player = find_player(all_players, wallet_address.clone())
         .ok_or("Player not registered. Please register first")?;
 
+    if player.starter_team_claimed {
+        return Err(
+            "Starter team already claimed — recruit individual warriors in the marketplace"
+                .to_string(),
+        );
+    }
     if player.points < total_price {
         return Err(format!(
             "Insufficient points balance, you need {} more points",
@@ -317,6 +397,7 @@ pub fn purchase_team(
     }
 
     player.points -= total_price;
+    player.starter_team_claimed = true;
     character1.owner = wallet_address.clone();
     character2.owner = wallet_address.clone();
     character3.owner = wallet_address.clone();
@@ -334,31 +415,68 @@ pub fn purchase_team(
     all_characters.push(character2);
     all_characters.push(character3);
 
-    println!("Team purchase successful!!");
+    println!("Starter team claimed!!");
     Ok(())
 }
 
+/// Mint a single character paying with battle points (premium + cooldown) or
+/// deposited CTSI (base-rate price, no cooldown).
+#[allow(clippy::too_many_arguments)]
 pub fn purchase_single_character(
     all_players: &mut Vec<Player>,
     all_characters: &mut Vec<Character>,
     total_characters: &mut u128,
     wallet_address: String,
     character_id: u128,
+    currency: MintCurrency,
+    points_rate: f64,
+    time_stamp: u128,
+    profit_from_points_purchase: &mut f64,
 ) -> Result<(), String> {
     let mut character = sort_characters(character_id)
         .ok_or_else(|| format!("Invalid character id: {}", character_id))?;
-    let price = character.price;
+    let base_price = character.price;
     let player = find_player(all_players, wallet_address.clone())
         .ok_or("Player not registered. Please register first")?;
 
-    if player.points < price {
-        return Err(format!(
-            "Insufficient points balance, you need {} more points",
-            price - player.points
-        ));
+    match currency {
+        MintCurrency::Points => {
+            // Cooldown gate.
+            if player.last_point_purchase_time > 0
+                && time_stamp > 0
+                && time_stamp < player.last_point_purchase_time + POINT_MINT_COOLDOWN_SECS
+            {
+                let wait =
+                    player.last_point_purchase_time + POINT_MINT_COOLDOWN_SECS - time_stamp;
+                return Err(format!(
+                    "Points recruiting is on cooldown — try again in {} minutes, or pay with CTSI",
+                    wait / 60 + 1
+                ));
+            }
+            let price = points_price_for(player, base_price);
+            if player.points < price {
+                return Err(format!(
+                    "This recruit costs {} points at your current premium — you have {}",
+                    price, player.points
+                ));
+            }
+            player.points -= price;
+            player.point_purchase_count += 1;
+            player.last_point_purchase_time = time_stamp;
+        }
+        MintCurrency::Ctsi => {
+            let price = ctsi_price_for(base_price, points_rate);
+            if player.cartesi_token_balance < price {
+                return Err(format!(
+                    "This recruit costs {:.2} CTSI — you have {:.2}. Deposit more tokens first",
+                    price, player.cartesi_token_balance
+                ));
+            }
+            player.cartesi_token_balance -= price;
+            *profit_from_points_purchase += price;
+        }
     }
 
-    player.points -= price;
     character.owner = wallet_address.clone();
     *total_characters += 1;
     character.id = *total_characters;

@@ -19,6 +19,8 @@ pub struct Storage {
     pub available_duels: Vec<Duel>,
     pub total_duels: u128,
     pub points_rate: f64,
+    /// Marketplace platform fee in basis points (300 = 3%).
+    pub marketplace_fee_bps: u128,
     pub who_plays_first: u128,
     pub profit_from_stake: f64,
     pub profit_from_p2p_sales: f64,
@@ -51,6 +53,7 @@ impl Storage {
             available_duels: Vec::new(),
             total_duels: 0,
             points_rate: 100.00,
+            marketplace_fee_bps: 300,
             who_plays_first: 1,
             profit_from_stake: 0.0,
             profit_from_p2p_sales: 0.0,

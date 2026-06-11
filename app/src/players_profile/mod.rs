@@ -20,6 +20,22 @@ pub struct Player {
     pub ai_battles_won: u128,
     pub ai_battles_losses: u128,
     pub transaction_history: Vec<UserTransaction>,
+    // --- Campaign mode ---
+    /// Highest level cleared (0 = none).
+    pub campaign_progress: u128,
+    pub campaign_wins: u128,
+    pub campaign_losses: u128,
+    pub campaign_titles: Vec<String>,
+    /// (level_id, attempt_count) pairs.
+    pub campaign_attempts: Vec<(u128, u128)>,
+    // --- Marketplace anti-farm tracking ---
+    /// How many characters this player has minted with points (drives the
+    /// escalating price premium).
+    pub point_purchase_count: u128,
+    /// Block timestamp of the last points-funded mint (drives the cooldown).
+    pub last_point_purchase_time: u128,
+    /// Whether the one-time starter team has been claimed.
+    pub starter_team_claimed: bool,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -82,6 +98,26 @@ impl Player {
         return self;
     }
 
+    pub fn campaign_attempt_count(&self, level_id: u128) -> u128 {
+        self.campaign_attempts
+            .iter()
+            .find(|(lvl, _)| *lvl == level_id)
+            .map(|(_, n)| *n)
+            .unwrap_or(0)
+    }
+
+    pub fn record_campaign_attempt(&mut self, level_id: u128) {
+        if let Some(entry) = self
+            .campaign_attempts
+            .iter_mut()
+            .find(|(lvl, _)| *lvl == level_id)
+        {
+            entry.1 += 1;
+        } else {
+            self.campaign_attempts.push((level_id, 1));
+        }
+    }
+
     pub fn register_transaction(
         &mut self,
         _all_characters: &mut Vec<Character>,
@@ -135,6 +171,14 @@ pub fn create_player(
                 ai_battles_losses: 0,
                 ai_battles_won: 0,
                 transaction_history: Vec::new(),
+                campaign_progress: 0,
+                campaign_wins: 0,
+                campaign_losses: 0,
+                campaign_titles: Vec::new(),
+                campaign_attempts: Vec::new(),
+                point_purchase_count: 0,
+                last_point_purchase_time: 0,
+                starter_team_claimed: false,
             };
 
             if player.wallet_address == String::from("0xnebula") {

@@ -196,6 +196,8 @@ pub fn modify_list_price(
     Ok(())
 }
 
+/// Buy a P2P listing with deposited CTSI. The platform keeps
+/// `fee_bps` basis points (e.g. 300 = 3%) and the seller receives the rest.
 pub fn buy_character(
     all_players: &mut Vec<Player>,
     all_characters: &mut Vec<Character>,
@@ -203,6 +205,7 @@ pub fn buy_character(
     wallet_address: String,
     character_id: u128,
     profit_from_p2p_sales: &mut f64,
+    fee_bps: u128,
 ) -> Result<(), String> {
     let list_index = listed_characters
         .iter()
@@ -215,16 +218,34 @@ pub fn buy_character(
         return Err("You cannot buy your own listing".to_string());
     }
 
+    // The seller must STILL own the character (it could have been withdrawn
+    // as an NFT after listing). Stale listings are removed instead of
+    // charging the buyer.
+    let still_owned = all_characters
+        .iter()
+        .any(|c| c.id == character_id && c.owner.to_lowercase() == listing.seller.to_lowercase());
+    if !still_owned {
+        listed_characters.remove(list_index);
+        return Err("Listing was stale (seller no longer owns this character) and has been removed".to_string());
+    }
+
     // Validate buyer funds before mutating anything.
     {
         let buyer = find_player(all_players, wallet_address.clone())
             .ok_or("Buyer not registered, please register first")?;
         if buyer.cartesi_token_balance < listing.price {
-            return Err("Insufficient balance to buy this character".to_string());
+            return Err(format!(
+                "This warrior costs {:.2} CTSI — you have {:.2}. Deposit more tokens first",
+                listing.price, buyer.cartesi_token_balance
+            ));
         }
     }
     find_player(all_players, listing.seller.clone())
         .ok_or("Seller profile not found")?;
+
+    let fee_fraction = (fee_bps.min(10_000)) as f64 / 10_000.0;
+    let platform_cut = listing.price * fee_fraction;
+    let seller_cut = listing.price - platform_cut;
 
     // Apply the trade.
     {
@@ -236,7 +257,7 @@ pub fn buy_character(
     {
         let seller = find_player(all_players, listing.seller.clone())
             .ok_or("Seller profile not found")?;
-        seller.increase_cartesi_token_balance(listing.price * 0.97);
+        seller.increase_cartesi_token_balance(seller_cut);
         remove_character(
             seller,
             all_characters,
@@ -244,8 +265,26 @@ pub fn buy_character(
             character_id,
         );
     }
-    *profit_from_p2p_sales += listing.price * 0.03;
+    *profit_from_p2p_sales += platform_cut;
     listed_characters.remove(list_index);
+    Ok(())
+}
+
+/// Remove your own listing from the marketplace.
+pub fn delist_character(
+    listed_characters: &mut Vec<SaleDetails>,
+    wallet_address: String,
+    character_id: u128,
+) -> Result<(), String> {
+    let index = listed_characters
+        .iter()
+        .position(|c| c.character_id == character_id)
+        .ok_or("Character not listed")?;
+
+    if listed_characters[index].seller.to_lowercase() != wallet_address.to_lowercase() {
+        return Err("Only the seller can delist this character".to_string());
+    }
+    listed_characters.remove(index);
     Ok(())
 }
 

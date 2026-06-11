@@ -2,12 +2,14 @@ use crate::admin_functions;
 use crate::ai_battle;
 use crate::battle_challenge;
 use crate::battle_challenge::Difficulty;
+use crate::campaign;
 use crate::game_characters;
 use crate::market_place;
 use crate::players_profile;
 use crate::players_profile::get_profile;
 use crate::storage::*;
 use crate::strategy_simulation;
+use crate::strategy_simulation::AllStrategies;
 use crate::structures::*;
 use json::object::Object;
 use json::JsonValue;
@@ -146,10 +148,17 @@ pub async fn router(
             handle_transfer_tokens(payload, msg_sender.to_string(), storage).await
         }
         "purchase_single_character" => {
-            handle_purchase_single_character(payload, msg_sender.to_string(), storage).await
+            handle_purchase_single_character(payload, msg_sender.to_string(), storage, time_stamp)
+                .await
         }
         "list_character" => {
             handle_listing_character(payload, msg_sender.to_string(), storage).await
+        }
+        "delist_character" => {
+            handle_delist_character(payload, msg_sender.to_string(), storage).await
+        }
+        "set_marketplace_fee" => {
+            handle_set_marketplace_fee(payload, msg_sender.to_string(), storage).await
         }
         "buy_character" => handle_buy_character(payload, msg_sender.to_string(), storage).await,
         "purchase_points" => {
@@ -161,6 +170,9 @@ pub async fn router(
         "create_player" => handle_create_player(payload, msg_sender.to_string(), storage).await,
         "modify_monika" => handle_modify_monika(payload, msg_sender.to_string(), storage).await,
         "modify_avatar" => handle_modify_avatar(payload, msg_sender.to_string(), storage).await,
+        "play_campaign_level" => {
+            handle_play_campaign_level(payload, msg_sender.to_string(), storage, time_stamp).await
+        }
         _ => Err(format!("Method '{}' does not exist", function)),
     };
 
@@ -684,14 +696,18 @@ pub async fn handle_transfer_tokens(
     Ok(())
 }
 
-// {"func": "purchase_single_character", "character_id": 1}
+// {"func": "purchase_single_character", "character_id": 1, "currency": "points" | "ctsi"}
 pub async fn handle_purchase_single_character(
     payload: &JsonValue,
     msg_sender: String,
     storage: &mut Storage,
+    time_stamp: u128,
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
     let character_id = get_u128(obj, "character_id")?;
+    // Default to points for backward compatibility with older payloads.
+    let currency_str = get_str(obj, "currency").unwrap_or_else(|_| "points".to_string());
+    let currency = game_characters::decode_currency(&currency_str)?;
 
     game_characters::purchase_single_character(
         &mut storage.all_players,
@@ -699,6 +715,10 @@ pub async fn handle_purchase_single_character(
         &mut storage.total_characters,
         msg_sender.clone(),
         character_id,
+        currency,
+        storage.points_rate,
+        time_stamp,
+        &mut storage.profit_from_points_purchase,
     )?;
 
     storage.record_tx(
@@ -711,8 +731,82 @@ pub async fn handle_purchase_single_character(
     structure_notice(
         String::from("purchase_single_character"),
         &mut storage.total_transactions,
+        msg_sender.clone(),
+        json_data,
+        &mut storage.server_addr,
+    );
+    // Balances/premium counters changed too.
+    let json_data = players_profile_to_json(storage.all_players.to_vec());
+    structure_notice(
+        String::from("purchase_points"),
+        &mut storage.total_transactions,
         msg_sender,
         json_data,
+        &mut storage.server_addr,
+    );
+    Ok(())
+}
+
+// {"func": "delist_character", "character_id": 1}
+pub async fn handle_delist_character(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) -> Result<(), String> {
+    let obj = as_object(payload)?;
+    let character_id = get_u128(obj, "character_id")?;
+
+    market_place::delist_character(
+        &mut storage.listed_characters,
+        msg_sender.clone(),
+        character_id,
+    )?;
+
+    storage.record_tx(
+        String::from("delist_character"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+
+    let json_data = listed_character_json(storage.listed_characters.to_vec());
+    structure_notice(
+        String::from("list_character"),
+        &mut storage.total_transactions,
+        msg_sender,
+        json_data,
+        &mut storage.server_addr,
+    );
+    Ok(())
+}
+
+// {"func": "set_marketplace_fee", "fee_bps": 300}  (admin only)
+pub async fn handle_set_marketplace_fee(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) -> Result<(), String> {
+    let obj = as_object(payload)?;
+    let fee_bps = get_u128(obj, "fee_bps")?;
+
+    if msg_sender.to_lowercase() != storage.admin_address.to_lowercase() {
+        return Err("Only the admin can change the marketplace fee".to_string());
+    }
+    if fee_bps > 2_000 {
+        return Err("Marketplace fee cannot exceed 20% (2000 bps)".to_string());
+    }
+    storage.marketplace_fee_bps = fee_bps;
+
+    storage.record_tx(
+        String::from("set_marketplace_fee"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+
+    structure_notice(
+        String::from("set_marketplace_fee"),
+        &mut storage.total_transactions,
+        msg_sender,
+        fee_bps.to_string(),
         &mut storage.server_addr,
     );
     Ok(())
@@ -770,6 +864,7 @@ pub async fn handle_buy_character(
         msg_sender.clone(),
         character_id,
         &mut storage.profit_from_p2p_sales,
+        storage.marketplace_fee_bps,
     )?;
 
     storage.record_tx(
@@ -781,6 +876,24 @@ pub async fn handle_buy_character(
     let json_data = character_to_json(storage.all_characters.to_vec());
     structure_notice(
         String::from("buy_character"),
+        &mut storage.total_transactions,
+        msg_sender.clone(),
+        json_data,
+        &mut storage.server_addr,
+    );
+    // Buyer/seller balances changed.
+    let json_data = players_profile_to_json(storage.all_players.to_vec());
+    structure_notice(
+        String::from("transfer_tokens"),
+        &mut storage.total_transactions,
+        msg_sender.clone(),
+        json_data,
+        &mut storage.server_addr,
+    );
+    // Listing was consumed.
+    let json_data = listed_character_json(storage.listed_characters.to_vec());
+    structure_notice(
+        String::from("list_character"),
         &mut storage.total_transactions,
         msg_sender,
         json_data,
@@ -1113,6 +1226,70 @@ pub async fn handle_withdraw(
     let json_data = players_profile_to_json(storage.all_players.to_vec());
     structure_notice(
         String::from("withdraw"),
+        &mut storage.total_transactions,
+        msg_sender,
+        json_data,
+        &mut storage.server_addr,
+    );
+    Ok(())
+}
+
+// {"func": "play_campaign_level", "level_id": 1, "char_id1": 21, "char_id2": 22, "char_id3": 23, "strategy_id": 2}
+pub async fn handle_play_campaign_level(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+    time_stamp: u128,
+) -> Result<(), String> {
+    let obj = as_object(payload)?;
+    let level_id = get_u128(obj, "level_id")?;
+    let char_ids = get_char_ids(obj)?;
+    // Optional battle strategy; defaults to hunting the weakest enemy.
+    let strategy = match obj.get("strategy_id").and_then(|v| v.as_u64()) {
+        Some(id) => strategy_simulation::decode_strategy(id as u128)
+            .ok_or_else(|| format!("Invalid strategy id: {}", id))?,
+        None => AllStrategies::LowestHealthToMax,
+    };
+
+    let result = campaign::play_level(
+        &mut storage.all_players,
+        &mut storage.all_characters,
+        msg_sender.clone(),
+        level_id,
+        char_ids,
+        time_stamp,
+        strategy,
+    )?;
+
+    storage.record_tx(
+        String::from("play_campaign_level"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+
+    // 1) Full battle report (replayed by the frontend battle page).
+    structure_notice(
+        String::from("campaign_battle"),
+        &mut storage.total_transactions,
+        msg_sender.clone(),
+        result.report.dump(),
+        &mut storage.server_addr,
+    );
+
+    // 2) Updated player snapshot (points / progress / titles changed).
+    let json_data = players_profile_to_json(storage.all_players.to_vec());
+    structure_notice(
+        String::from("campaign_progress"),
+        &mut storage.total_transactions,
+        msg_sender.clone(),
+        json_data,
+        &mut storage.server_addr,
+    );
+
+    // 3) Updated characters snapshot (stat boosts on first clear).
+    let json_data = character_to_json(storage.all_characters.to_vec());
+    structure_notice(
+        String::from("campaign_characters"),
         &mut storage.total_transactions,
         msg_sender,
         json_data,

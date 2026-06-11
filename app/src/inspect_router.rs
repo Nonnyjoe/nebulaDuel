@@ -1,4 +1,5 @@
 use crate::battle_challenge::get_duel;
+use crate::campaign;
 use crate::game_characters::{get_character_details, get_characters};
 use crate::players_profile::find_player;
 use crate::storage::Storage;
@@ -44,6 +45,22 @@ pub fn inspect_router(payload: &str, storage: &mut Storage) {
         "get_duel_characters" => {
             println!("Fetching characters in duel");
             handle_get_characters_in_duel(&new_payload, storage)
+        }
+        "campaign_levels" => {
+            println!("Fetching campaign level catalog");
+            Ok(campaign::levels_to_json())
+        }
+        "campaign" => {
+            println!("Fetching campaign progress");
+            handle_fetch_campaign_progress(&new_payload, storage)
+        }
+        "campaign_leaderboard" => {
+            println!("Fetching campaign leaderboard");
+            Ok(campaign::leaderboard_to_json(&storage.all_players))
+        }
+        "market_info" => {
+            println!("Fetching marketplace info");
+            handle_fetch_market_info(&new_payload, storage)
         }
         other => Err(format!("Inspect route '{}' not implemented", other)),
     };
@@ -139,6 +156,53 @@ fn handle_get_players_characters(
     } else {
         Err("Usage: players_characters/<wallet_address>".to_string())
     }
+}
+
+/// market_info or market_info/<wallet_address>
+/// Returns fee + points rate, and when a wallet is given, that player's
+/// personal mint economics (premium %, cooldown anchor).
+fn handle_fetch_market_info(
+    new_payload: &Vec<&str>,
+    storage: &mut Storage,
+) -> Result<String, String> {
+    use crate::game_characters::{
+        points_price_for, POINT_MINT_COOLDOWN_SECS, POINT_MINT_PREMIUM_CAP_PCT,
+        POINT_MINT_PREMIUM_PCT_PER_PURCHASE,
+    };
+    let mut j = json::JsonValue::new_object();
+    j["marketplace_fee_bps"] = (storage.marketplace_fee_bps as u64).into();
+    j["points_rate"] = storage.points_rate.into();
+    j["point_mint_cooldown_secs"] = (POINT_MINT_COOLDOWN_SECS as u64).into();
+    j["point_mint_premium_pct_per_purchase"] =
+        (POINT_MINT_PREMIUM_PCT_PER_PURCHASE as u64).into();
+    j["point_mint_premium_cap_pct"] = (POINT_MINT_PREMIUM_CAP_PCT as u64).into();
+
+    if new_payload.len() > 1 && !new_payload[1].is_empty() {
+        if let Some(player) =
+            find_player(&mut storage.all_players, new_payload[1].to_string())
+        {
+            j["point_purchase_count"] = (player.point_purchase_count as u64).into();
+            j["last_point_purchase_time"] =
+                (player.last_point_purchase_time as u64).into();
+            j["starter_team_claimed"] = player.starter_team_claimed.into();
+            // Example: premium-adjusted price for a base price of 100.
+            j["points_price_per_100_base"] =
+                (points_price_for(player, 100) as u64).into();
+        }
+    }
+    Ok(j.dump())
+}
+
+fn handle_fetch_campaign_progress(
+    new_payload: &Vec<&str>,
+    storage: &mut Storage,
+) -> Result<String, String> {
+    if new_payload.len() < 2 || new_payload[1].is_empty() {
+        return Err("Usage: campaign/<wallet_address>".to_string());
+    }
+    let player = find_player(&mut storage.all_players, new_payload[1].to_string())
+        .ok_or_else(|| format!("Player {} not found", new_payload[1]))?;
+    Ok(campaign::progress_to_json(player))
 }
 
 fn handle_get_characters_in_duel(

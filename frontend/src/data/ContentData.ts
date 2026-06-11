@@ -16,6 +16,10 @@ export const NavLinks: NavArray = [
     path: "/",
   },
   {
+    name: "Campaign",
+    path: "/campaign",
+  },
+  {
     name: "Create Duel",
     dropdown: [
       { name: "AI Duel", path: "/aiduel" },

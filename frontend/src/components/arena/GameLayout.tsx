@@ -1,16 +1,10 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  useCallback,
-  Suspense,
-} from "react";
-import * as THREE from "three";
+/**
+ * Duel arena (P2P + AI duels) — replays the on-chain battle log inside the
+ * shared BattleStage engine: one 3D scene, fighters physically run to their
+ * target to strike, restart-proof animations, sound and music.
+ */
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Canvas } from "@react-three/fiber";
-import { useAnimations, useGLTF, Html, useProgress } from "@react-three/drei";
-import { SkeletonUtils } from "three/examples/jsm/Addons.js";
 import { toast } from "sonner";
 
 import charactersdata from "../../utils/Charactersdata";
@@ -19,224 +13,37 @@ import Popup from "./Popup";
 import signMessages from "../../utils/relayTransaction";
 import fetchNotices from "../../utils/readSubgraph";
 import readGameState from "../../utils/readState";
+import audio from "../../utils/audio";
+import {
+  BIOME_THEMES,
+  ELEMENT_META,
+  powerToElement,
+} from "../../utils/campaign";
+import BattleStage, { StageUnit, StageEvent } from "../battle/BattleStage";
 
 // ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 
-export type CharacterAction = "idle" | "attack" | "hit" | "death" | "victory";
-
-interface WarriorState {
+interface WarriorInfo {
   id: number;
   name: string;
   health: number;
-  maxHealth: number;
   strength: number;
   attack: number;
   speed: number;
+  super_power: string;
   owner: string;
   img?: string;
   model?: string;
-  action: CharacterAction;
-  alive: boolean;
 }
 
-interface BattleLogEntry {
-  attacker: {
-    character_id: number;
-    name: string;
-    health: number;
-    strength: number;
-    attack: number;
-    owner: string;
-  };
-  victim: {
-    character_id: number;
-    name: string;
-    health: number;
-    strength: number;
-    attack: number;
-    owner: string;
-  };
+interface LogSnapshot {
+  character_id: number;
+  name: string;
+  health: number;
+  strength: number;
+  attack: number;
+  owner: string;
 }
-
-// Pacing of one battle round, in ms.
-const STRIKE_MS = 900; // attack + hit animations play
-const SETTLE_MS = 700; // stats update, hit highlight fades
-
-// ---------------------------------------------------------------------------
-// 3D character with named-animation control
-// ---------------------------------------------------------------------------
-
-function Loader() {
-  const { progress } = useProgress();
-  return (
-    <Html center className="text-sm font-poppins">
-      {Math.floor(progress)}%
-    </Html>
-  );
-}
-
-/** Resolve a logical action to an animation clip name present in the model.
- * Models name clips like "attack1", "attack2_Armature", "fightIdle ",
- * "death", "defeat", "hit_Armature", "victory"... so match by pattern. */
-function resolveClipName(
-  names: string[],
-  action: CharacterAction,
-  variant: number,
-): string | undefined {
-  const lower = names.map((n) => n.toLowerCase());
-  const findAll = (re: RegExp) =>
-    names.filter((_, i) => re.test(lower[i]));
-
-  let candidates: string[] = [];
-  switch (action) {
-    case "attack": {
-      candidates = findAll(/attack|kick/);
-      break;
-    }
-    case "hit":
-      candidates = findAll(/^hit|_hit|hit_/);
-      if (!candidates.length) candidates = findAll(/hit/);
-      break;
-    case "death":
-      candidates = findAll(/death|defeat|die/);
-      break;
-    case "victory":
-      candidates = findAll(/victory|win|flex|cocky|taunt/);
-      break;
-    case "idle":
-    default:
-      candidates = findAll(/idle/);
-      break;
-  }
-  if (!candidates.length) {
-    // Fall back to idle, then to the first clip.
-    const idle = names.find((n) => /idle/i.test(n));
-    return idle ?? names[0];
-  }
-  return candidates[variant % candidates.length];
-}
-
-interface CharacterModelProps {
-  modelPath: string;
-  facingRight: boolean;
-  action: CharacterAction;
-  /** rotates between attack variations so repeated attacks look alive */
-  variant: number;
-}
-
-const CharacterModel: React.FC<CharacterModelProps> = ({
-  modelPath,
-  facingRight,
-  action,
-  variant,
-}) => {
-  const groupRef = useRef<THREE.Group>(null!);
-  const model = useGLTF(modelPath);
-  const clone = useMemo(() => SkeletonUtils.clone(model.scene), [model.scene]);
-  const { actions, names } = useAnimations(model.animations, groupRef);
-  const currentClip = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!names.length) return; // some models (e.g. luna) ship no animations
-
-    const clipName = resolveClipName(names, action, variant);
-    if (!clipName) return;
-
-    const next = actions[clipName];
-    if (!next) return;
-
-    // Fade out whatever is playing.
-    if (currentClip.current && currentClip.current !== clipName) {
-      actions[currentClip.current]?.fadeOut(0.25);
-    }
-
-    next.reset();
-    if (action === "death") {
-      next.setLoop(THREE.LoopOnce, 1);
-      next.clampWhenFinished = true; // stay down
-    } else if (action === "attack" || action === "hit") {
-      next.setLoop(THREE.LoopOnce, 1);
-      next.clampWhenFinished = true;
-    } else {
-      next.setLoop(THREE.LoopRepeat, Infinity);
-    }
-    next.fadeIn(0.2).play();
-    currentClip.current = clipName;
-  }, [action, variant, names, actions]);
-
-  return (
-    <primitive
-      ref={groupRef}
-      object={clone}
-      scale={0.8}
-      position={[0, -1, 0]}
-      rotation-y={facingRight ? 1.1 : -1.1}
-    />
-  );
-};
-
-// ---------------------------------------------------------------------------
-// Small presentational helpers
-// ---------------------------------------------------------------------------
-
-const HealthBar: React.FC<{ value: number; max: number }> = ({ value, max }) => {
-  const pct = max > 0 ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
-  const color =
-    pct > 50 ? "bg-myGreen" : pct > 20 ? "bg-myYellow" : "bg-red-600";
-  return (
-    <div className="w-full h-1.5 rounded bg-gray-800 overflow-hidden">
-      <div
-        className={`h-full ${color} transition-all duration-500`}
-        style={{ width: `${pct}%` }}
-      />
-    </div>
-  );
-};
-
-const WarriorCard: React.FC<{ warrior: WarriorState; highlight: boolean }> = ({
-  warrior,
-  highlight,
-}) => (
-  <div
-    className={`w-full md:w-[90%] grid grid-cols-2 gap-3 rounded-xl border-2 bg-myBlack/90 p-3 md:p-4 transition-all duration-300 ${
-      !warrior.alive
-        ? "border-red-700 opacity-60 grayscale"
-        : highlight
-          ? "border-myYellow animate-pulse scale-[1.02] shadow-lg shadow-myYellow/20"
-          : "border-myGreen/60 hover:border-myGreen"
-    }`}
-  >
-    <ImageWrap
-      image={warrior.img as string}
-      alt={warrior.name}
-      className="w-20 h-20 md:w-24 md:h-24 lg:w-32 lg:h-32"
-      objectStatus="object-cover"
-    />
-    <div className="flex flex-col items-center justify-center gap-1">
-      <p
-        className={`${
-          !warrior.alive ? "text-red-700" : "text-myGreen"
-        } font-belanosima text-sm font-medium text-center`}
-      >
-        {warrior.name}
-      </p>
-      <HealthBar value={warrior.health} max={warrior.maxHealth} />
-      <p className="text-xs text-gray-400">
-        HLT {warrior.health} · STR {warrior.strength}
-      </p>
-      <p className="text-xs text-gray-400">
-        ATK {warrior.attack} · SPD {warrior.speed}
-      </p>
-      {!warrior.alive && (
-        <p className="text-[10px] uppercase tracking-widest text-red-500 font-belanosima">
-          Fallen
-        </p>
-      )}
-    </div>
-  </div>
-);
 
 const shortAddress = (addr?: string) => {
   if (!addr) return "";
@@ -244,69 +51,31 @@ const shortAddress = (addr?: string) => {
   return `${addr.slice(0, 8)}…${addr.slice(-6)}`;
 };
 
-// ---------------------------------------------------------------------------
-// Battle page
-// ---------------------------------------------------------------------------
-
 const GameLayout = () => {
   const { duelId } = useParams();
   const navigate = useNavigate();
 
   const [duelData, setDuelData] = useState<any>();
-  const [creatorWarriors, setCreatorWarriors] = useState<WarriorState[]>([]);
-  const [opponentWarriors, setOpponentWarriors] = useState<WarriorState[]>([]);
-  const [battleLog, setBattleLog] = useState<BattleLogEntry[]>([]);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [creatorWarriors, setCreatorWarriors] = useState<WarriorInfo[]>([]);
+  const [opponentWarriors, setOpponentWarriors] = useState<WarriorInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentRound, setCurrentRound] = useState(0);
-  const [lastHitId, setLastHitId] = useState<number | null>(null);
-  const [attackVariant, setAttackVariant] = useState(0);
+  const [isBusy, setIsBusy] = useState(false);
+  const [replaying, setReplaying] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [creatorName, setCreatorName] = useState("");
   const [opponentName, setOpponentName] = useState("");
+  const [, setSoundTick] = useState(0);
 
   const cancelled = useRef(false);
   useEffect(() => {
     cancelled.current = false;
     return () => {
       cancelled.current = true;
+      audio.stopMusic();
     };
   }, []);
 
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
   // ----- data loading ------------------------------------------------------
-
-  const buildWarriors = useCallback(
-    (
-      allCharacters: any[],
-      warriorIds: number[],
-      owner: string,
-    ): WarriorState[] => {
-      const out: WarriorState[] = [];
-      for (const id of warriorIds) {
-        const char = allCharacters.find((c: any) => Number(c.id) === id);
-        if (!char) continue;
-        const meta = charactersdata.find((c) => c.name === char.name);
-        out.push({
-          id: Number(char.id),
-          name: char.name,
-          health: Number(char.health),
-          maxHealth: Number(char.health),
-          strength: Number(char.strength),
-          attack: Number(char.attack),
-          speed: Number(char.speed),
-          owner,
-          img: meta?.img,
-          model: meta?.model,
-          action: "idle",
-          alive: Number(char.health) > 0,
-        });
-      }
-      return out;
-    },
-    [],
-  );
 
   const parseWarriorIds = (raw: any): number[] => {
     try {
@@ -318,16 +87,30 @@ const GameLayout = () => {
     }
   };
 
-  const parseBattleLog = (raw: any): BattleLogEntry[] => {
-    try {
-      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-      if (!Array.isArray(parsed)) return [];
-      return parsed
-        .filter((round: any) => Array.isArray(round) && round.length >= 2)
-        .map((round: any) => ({ attacker: round[0], victim: round[1] }));
-    } catch {
-      return [];
+  const buildWarriors = (
+    allCharacters: any[],
+    ids: number[],
+    owner: string,
+  ): WarriorInfo[] => {
+    const out: WarriorInfo[] = [];
+    for (const id of ids) {
+      const c = allCharacters.find((x: any) => Number(x.id) === id);
+      if (!c) continue;
+      const meta = charactersdata.find((d) => d.name === c.name);
+      out.push({
+        id: Number(c.id),
+        name: c.name,
+        health: Number(c.health),
+        strength: Number(c.strength),
+        attack: Number(c.attack),
+        speed: Number(c.speed),
+        super_power: c.super_power,
+        owner,
+        img: meta?.img,
+        model: meta?.model,
+      });
     }
+    return out;
   };
 
   const loadDuel = useCallback(async () => {
@@ -335,36 +118,32 @@ const GameLayout = () => {
     const aiDuels = await fetchNotices("ai_duels");
     const pool = [...(allDuels ?? []), ...(aiDuels ?? [])];
     const duel = pool.find((d: any) => Number(d.duel_id) === Number(duelId));
+    if (!duel) return null;
 
-    if (!duel) {
-      return null;
-    }
     if (duel.duel_opponent === "" || duel.duel_opponent == null) {
-      // No opponent yet -> strategy/wait page
       navigate(`/strategy/${duelId}`);
       return null;
     }
 
     const allCharacters = await fetchNotices("all_characters");
-    const creatorIds = parseWarriorIds(duel.creator_warriors);
-    const opponentIds = parseWarriorIds(duel.opponent_warriors);
-
-    const creators = buildWarriors(allCharacters, creatorIds, duel.duel_creator);
+    const creators = buildWarriors(
+      allCharacters,
+      parseWarriorIds(duel.creator_warriors),
+      duel.duel_creator,
+    );
     const opponents = buildWarriors(
       allCharacters,
-      opponentIds,
+      parseWarriorIds(duel.opponent_warriors),
       duel.duel_opponent,
     );
-    const log = parseBattleLog(duel.battle_log);
 
     if (!cancelled.current) {
       setDuelData(duel);
       setCreatorWarriors(creators);
       setOpponentWarriors(opponents);
-      setBattleLog(log);
     }
-    return { duel, creators, opponents, log };
-  }, [duelId, navigate, buildWarriors]);
+    return { duel, creators, opponents };
+  }, [duelId, navigate]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -373,7 +152,7 @@ const GameLayout = () => {
     });
   }, [loadDuel]);
 
-  // Participant display names (inspect: profile/<addr>)
+  // Participant display names
   useEffect(() => {
     const loadNames = async () => {
       if (!duelData) return;
@@ -386,7 +165,7 @@ const GameLayout = () => {
           );
           if (Status && request_payload?.monika) return request_payload.monika;
         } catch {
-          /* fall through */
+          /* ignore */
         }
         return shortAddress(addr);
       };
@@ -403,101 +182,96 @@ const GameLayout = () => {
     loadNames();
   }, [duelData]);
 
-  // ----- battle playback ---------------------------------------------------
+  // ----- battle log -> stage events ---------------------------------------
 
-  const setWarriorState = (
-    id: number,
-    patch: Partial<WarriorState> | ((w: WarriorState) => Partial<WarriorState>),
-  ) => {
-    const apply = (list: WarriorState[]) =>
-      list.map((w) =>
-        w.id === id
-          ? { ...w, ...(typeof patch === "function" ? patch(w) : patch) }
-          : w,
-      );
-    setCreatorWarriors(apply);
-    setOpponentWarriors(apply);
+  const parseBattleLog = (raw: any): [LogSnapshot, LogSnapshot][] => {
+    try {
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter(
+        (r: any) => Array.isArray(r) && r.length >= 2,
+      ) as [LogSnapshot, LogSnapshot][];
+    } catch {
+      return [];
+    }
   };
 
-  const resetForPlayback = (creators: WarriorState[], opponents: WarriorState[]) => {
-    const fresh = (list: WarriorState[]) =>
-      list.map((w) => ({
-        ...w,
-        health: w.maxHealth,
-        action: "idle" as CharacterAction,
-        alive: true,
-      }));
-    setCreatorWarriors(fresh(creators));
-    setOpponentWarriors(fresh(opponents));
-  };
-
-  const playBattle = async (
-    log: BattleLogEntry[],
+  /** Convert the on-chain duel battle log (post-round stat snapshots) into
+   * replayable StageEvents, deriving per-hit damage from HP deltas. */
+  const buildStageData = (
     duel: any,
-    creators: WarriorState[],
-    opponents: WarriorState[],
-  ) => {
-    if (!log.length) return;
-    setIsAnimating(true);
-    resetForPlayback(creators, opponents);
-    setCurrentRound(0);
-    await sleep(400);
+    creators: WarriorInfo[],
+    opponents: WarriorInfo[],
+  ): {
+    events: StageEvent[];
+    units: StageUnit[];
+    rounds: number;
+    victorySide: "player" | "enemy";
+  } => {
+    const log = parseBattleLog(duel.battle_log);
+    const everyone = [...creators, ...opponents];
 
-    for (let step = 0; step < log.length; step++) {
-      if (cancelled.current) return;
-      const { attacker, victim } = log[step];
-      setCurrentRound(step + 1);
-      setAttackVariant(step);
+    const hp = new Map<number, number>();
+    for (const w of everyone) hp.set(w.id, w.health);
 
-      const victimDies = Number(victim.health) <= 0;
+    const elementOf = (name: string) => {
+      const meta = charactersdata.find((d) => d.name === name);
+      return powerToElement(meta?.super_power ?? "");
+    };
 
-      // 1) Strike: attacker plays attack, victim plays hit or death.
-      setWarriorState(Number(attacker.character_id), { action: "attack" });
-      setWarriorState(Number(victim.character_id), {
-        action: victimDies ? "death" : "hit",
+    const events: StageEvent[] = [];
+    log.forEach(([attacker, victim], step) => {
+      const prevVictimHp = hp.get(Number(victim.character_id)) ?? Number(victim.health);
+      const damage = Math.max(0, prevVictimHp - Number(victim.health));
+      hp.set(Number(victim.character_id), Number(victim.health));
+      hp.set(Number(attacker.character_id), Number(attacker.health));
+
+      events.push({
+        round: step + 1,
+        actor_id: Number(attacker.character_id),
+        target_id: Number(victim.character_id),
+        action: "attack",
+        element: elementOf(attacker.name),
+        damage,
+        crit: false,
+        effective: "normal",
+        actor_hp: Number(attacker.health),
+        target_hp: Number(victim.health),
+        target_ko: Number(victim.health) <= 0,
       });
-      setLastHitId(Number(victim.character_id));
+    });
 
-      await sleep(STRIKE_MS);
-      if (cancelled.current) return;
+    const units: StageUnit[] = [
+      ...creators.map((w) => ({
+        id: w.id,
+        side: "player" as const,
+        name: w.name,
+        element: powerToElement(w.super_power),
+        model: w.model,
+        maxHealth: w.health,
+      })),
+      ...opponents.map((w) => ({
+        id: w.id,
+        side: "enemy" as const,
+        name: w.name,
+        element: powerToElement(w.super_power),
+        model: w.model,
+        maxHealth: w.health,
+      })),
+    ];
 
-      // 2) Settle: apply on-chain post-round stats from the battle log.
-      setWarriorState(Number(attacker.character_id), {
-        health: Number(attacker.health),
-        strength: Number(attacker.strength),
-        attack: Number(attacker.attack),
-        action: "idle",
-      });
-      setWarriorState(Number(victim.character_id), {
-        health: Number(victim.health),
-        strength: Number(victim.strength),
-        attack: Number(victim.attack),
-        alive: !victimDies,
-        // dead warriors stay in their death pose
-        action: victimDies ? "death" : "idle",
-      });
-      setLastHitId(null);
+    const victorySide: "player" | "enemy" =
+      (duel.duel_winner ?? "").toLowerCase() ===
+      (duel.duel_creator ?? "").toLowerCase()
+        ? "player"
+        : "enemy";
 
-      await sleep(SETTLE_MS);
-    }
-
-    // 3) Finale: winner's surviving warriors celebrate.
-    const winner = (duel?.duel_winner ?? "").toLowerCase();
-    const celebrate = (prev: WarriorState[]) =>
-      prev.map((w) =>
-        w.alive && w.owner?.toLowerCase() === winner
-          ? { ...w, action: "victory" as CharacterAction }
-          : w,
-      );
-    setCreatorWarriors(celebrate);
-    setOpponentWarriors(celebrate);
-
-    await sleep(1200);
-    if (!cancelled.current) {
-      setIsAnimating(false);
-      setShowPopup(true);
-    }
+    return { events, units, rounds: events.length, victorySide };
   };
+
+  const [stage, setStage] = useState<ReturnType<typeof buildStageData> | null>(
+    null,
+  );
 
   const startBattle = async () => {
     if (!duelData) return;
@@ -510,101 +284,84 @@ const GameLayout = () => {
       });
       return;
     }
-
+    audio.play("click");
+    setIsBusy(true);
     try {
-      setIsAnimating(true);
-      let log = battleLog;
       let duel = duelData;
       let creators = creatorWarriors;
       let opponents = opponentWarriors;
 
-      if (!log.length) {
-        // The fight hasn't been simulated on-chain yet: send the input.
-        // signMessages waits until the node has processed it, so the reload
-        // below is guaranteed to see the battle log.
+      if (!parseBattleLog(duel.battle_log).length) {
         toast.info("Submitting fight to the Cartesi machine…", {
           position: "top-right",
         });
         await signMessages({ func: "fight", duel_id: Number(duelId) });
         const reloaded = await loadDuel();
-        if (!reloaded || !reloaded.log.length) {
-          toast.error(
-            "Battle was submitted but no battle log is available yet. Try refreshing.",
-            { position: "top-right" },
-          );
-          setIsAnimating(false);
+        if (!reloaded || !parseBattleLog(reloaded.duel.battle_log).length) {
+          toast.error("Battle submitted but no battle log yet — try again shortly.", {
+            position: "top-right",
+          });
+          setIsBusy(false);
           return;
         }
-        log = reloaded.log;
         duel = reloaded.duel;
         creators = reloaded.creators;
         opponents = reloaded.opponents;
       }
 
-      await playBattle(log, duel, creators, opponents);
+      setStage(buildStageData(duel, creators, opponents));
+      setReplaying(true);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to start battle", {
         position: "top-right",
       });
-      setIsAnimating(false);
+    } finally {
+      setIsBusy(false);
     }
   };
 
-  const closePopup = () => {
-    setShowPopup(false);
+  const onReplayFinished = () => {
+    setShowPopup(true);
   };
 
-  // ----- render ------------------------------------------------------------
-
-  const renderArenaSide = (warriors: WarriorState[], facingRight: boolean) => (
-    <div className="flex flex-row sm:flex-col h-fit overflow-visible gap-2 sm:gap-4">
-      {warriors.map((warrior) => (
-        <div
-          key={warrior.id}
-          id={warrior.id.toString()}
-          className={`w-28 h-28 md:w-40 md:h-40 lg:w-52 lg:h-52 flex text-2xl text-white overflow-visible -mt-6 sm:mt-[-40px] transition-transform duration-300 ${
-            warrior.action === "attack"
-              ? facingRight
-                ? "translate-x-3 sm:translate-x-5"
-                : "-translate-x-3 sm:-translate-x-5"
-              : ""
-          }`}
-        >
-          {warrior.model ? (
-            <Canvas linear flat shadows camera={{ position: [0, 2, 3], fov: 30 }}>
-              <fog attach="fog" args={["#171720", 10, 30]} />
-              <ambientLight intensity={2} />
-              <directionalLight position={[3.3, 1.0, 4.4]} intensity={5} />
-              <directionalLight
-                intensity={16}
-                position={[1, 1, 1]}
-                castShadow
-                shadow-mapSize={2048}
-                shadow-bias={-0.0001}
-              />
-              <Suspense fallback={<Loader />}>
-                <CharacterModel
-                  modelPath={warrior.model}
-                  facingRight={facingRight}
-                  action={warrior.action}
-                  variant={attackVariant}
-                />
-              </Suspense>
-            </Canvas>
-          ) : (
-            <div className="m-auto">
-              <ImageWrap
-                image={warrior.img as string}
-                alt={warrior.name}
-                className="w-20 h-20"
-                objectStatus="object-cover"
-              />
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
+  const hasLog = useMemo(
+    () => (duelData ? parseBattleLog(duelData.battle_log).length > 0 : false),
+    [duelData],
   );
+
+  // Duel arenas use a fixed cosmic theme (campaign biomes stay campaign-only).
+  const theme = BIOME_THEMES.StormSpire;
+
+  // ----- presentational ----------------------------------------------------
+
+  const WarriorCard = ({ w }: { w: WarriorInfo }) => {
+    const element = powerToElement(w.super_power);
+    const meta = ELEMENT_META[element];
+    return (
+      <div className="w-full grid grid-cols-2 gap-3 rounded-xl border-2 border-myGreen/40 bg-myBlack/90 p-3 hover:border-myGreen transition-colors">
+        <ImageWrap
+          image={w.img as string}
+          alt={w.name}
+          className="w-20 h-20 md:w-24 md:h-24"
+          objectStatus="object-cover"
+        />
+        <div className="flex flex-col items-center justify-center gap-0.5">
+          <p className="text-myGreen font-belanosima text-sm text-center">
+            {w.name}
+          </p>
+          <span className={`text-[9px] rounded-full px-1.5 py-0.5 ${meta.bg} ${meta.color}`}>
+            {meta.emoji} {element}
+          </span>
+          <p className="text-[11px] text-gray-400">
+            HP {w.health} · STR {w.strength}
+          </p>
+          <p className="text-[11px] text-gray-400">
+            ATK {w.attack} · SPD {w.speed}
+          </p>
+        </div>
+      </div>
+    );
+  };
 
   const participantPanel = (
     title: string,
@@ -692,44 +449,65 @@ const GameLayout = () => {
           )}
           <div className="grid md:gap-4 gap-3">
             {creatorWarriors.map((w) => (
-              <WarriorCard key={w.id} warrior={w} highlight={w.id === lastHitId} />
+              <WarriorCard key={w.id} w={w} />
             ))}
           </div>
         </div>
 
         {/* Arena */}
-        <div className="w-full lg:w-6/12 mt-8 lg:mt-10 lg:mr-4 xl:mr-8 mb-10 lg:mb-20">
-          <div className="w-full max-w-[960px] mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="font-belanosima text-myGreen text-sm uppercase tracking-widest">
-                {isAnimating
-                  ? `Round ${currentRound} / ${battleLog.length || "?"}`
-                  : duelData?.is_completed
-                    ? "Battle complete — replay available"
-                    : "Ready to battle"}
-              </span>
-            </div>
-            <div className="relative flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6 p-4 md:p-6 lg:p-8 border-4 md:border-8 border-green-800 w-full bg-[url('/nebulaDuelArena9.webp')] bg-cover bg-center py-8 md:py-12 lg:py-20 min-h-[320px] sm:min-h-[420px] md:min-h-[480px] rounded-xl overflow-hidden">
-              {renderArenaSide(creatorWarriors, true)}
-              <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 font-belanosima text-3xl md:text-5xl text-white/20 select-none">
-                VS
+        <div className="w-full lg:w-6/12 mt-8 lg:mt-10 mb-10 lg:mb-20">
+          {replaying && stage ? (
+            <BattleStage
+              theme={theme}
+              playerUnits={stage.units.filter((u) => u.side === "player")}
+              enemyUnits={stage.units.filter((u) => u.side === "enemy")}
+              events={stage.events}
+              totalRounds={stage.rounds}
+              victorySide={stage.victorySide}
+              title={`Duel #${duelId}`}
+              onFinished={onReplayFinished}
+            />
+          ) : (
+            <div className="relative w-full min-h-[380px] md:min-h-[480px] rounded-2xl overflow-hidden border-4 border-green-800 bg-[url('/nebulaDuelArena9.webp')] bg-cover bg-center flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/55" />
+              <div className="relative z-10 text-center px-6">
+                <p className="font-belanosima text-white text-2xl md:text-4xl uppercase tracking-widest mb-3">
+                  {hasLog ? "Battle concluded" : "The arena awaits"}
+                </p>
+                <p className="font-poppins text-gray-300 text-sm max-w-md mx-auto">
+                  {hasLog
+                    ? "Replay the on-chain battle to watch every strike again."
+                    : "Both strategies are locked in — begin the fight to let the Cartesi machine decide your fate."}
+                </p>
               </div>
-              {renderArenaSide(opponentWarriors, false)}
             </div>
-          </div>
-          <div className="w-full flex mt-6 md:mt-8 lg:mt-10">
+          )}
+
+          <div className="w-full flex items-center justify-center gap-3 mt-6 md:mt-8">
             <button
-              className="mx-auto inline-flex items-center justify-center rounded-xl bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase tracking-wide px-10 py-3.5 md:px-14 md:py-4 text-sm md:text-base shadow-[0_0_20px_rgba(69,248,130,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
-              onClick={startBattle}
-              disabled={isAnimating}
+              className="inline-flex items-center justify-center rounded-xl bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase tracking-wide px-10 py-3.5 md:px-14 md:py-4 text-sm md:text-base shadow-[0_0_20px_rgba(69,248,130,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
+              onClick={() => {
+                setReplaying(false);
+                setShowPopup(false);
+                setStage(null);
+                // small delay so BattleStage fully unmounts before remount
+                setTimeout(() => startBattle(), 50);
+              }}
+              disabled={isBusy}
             >
               <span>
-                {isAnimating
-                  ? "Battling…"
-                  : battleLog.length
-                    ? "Replay battle"
-                    : "Start battle"}
+                {isBusy ? "Summoning…" : hasLog ? "Replay battle" : "Start battle"}
               </span>
+            </button>
+            <button
+              className="inline-flex items-center justify-center rounded-xl border border-gray-700 text-gray-300 font-belanosima uppercase tracking-wide px-4 py-3.5 text-sm hover:border-myGreen hover:text-myGreen"
+              onClick={() => {
+                audio.toggleMuted();
+                setSoundTick((t) => t + 1);
+              }}
+              title={audio.muted ? "Unmute" : "Mute"}
+            >
+              {audio.muted ? "🔇" : "🔊"}
             </button>
           </div>
         </div>
@@ -745,13 +523,16 @@ const GameLayout = () => {
           )}
           <div className="grid md:gap-4 gap-3">
             {opponentWarriors.map((w) => (
-              <WarriorCard key={w.id} warrior={w} highlight={w.id === lastHitId} />
+              <WarriorCard key={w.id} w={w} />
             ))}
           </div>
         </div>
 
         {showPopup && (
-          <Popup winnerAddress={duelData?.duel_winner ?? ""} onClose={closePopup} />
+          <Popup
+            winnerAddress={duelData?.duel_winner ?? ""}
+            onClose={() => setShowPopup(false)}
+          />
         )}
       </main>
     </section>

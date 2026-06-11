@@ -19,6 +19,7 @@ const PROFILE_METHODS = new Set([
   "purchase_points",
   "modify_monika",
   "modify_avatar",
+  "campaign_progress",
 ]);
 
 /** Methods whose notices carry a full `all_characters` snapshot. */
@@ -26,6 +27,7 @@ const CHARACTER_METHODS = new Set([
   "purchase_team",
   "purchase_single_character",
   "buy_character",
+  "campaign_characters",
 ]);
 
 /** Methods whose notices carry a full `all_duels` snapshot. */

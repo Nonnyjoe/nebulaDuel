@@ -1,5 +1,5 @@
 use crate::battle_challenge::{fight, set_strategy, Difficulty, Duel};
-use crate::game_characters::{purchase_single_character, select_fighters, Character};
+use crate::game_characters::{mint_character_unchecked, select_fighters, Character};
 use crate::players_profile::{create_player, Player};
 use crate::strategy_simulation::AllStrategies;
 
@@ -24,14 +24,14 @@ pub fn set_up_ai(
     ) {
         Some(ai) => {
             for x in 0..20 {
-                if let Err(e) = purchase_single_character(
+                if let Err(e) = mint_character_unchecked(
                     all_players,
                     all_characters,
                     total_characters,
                     ai.wallet_address.clone(),
                     x,
                 ) {
-                    println!("AI setup: failed to purchase character {}: {}", x, e);
+                    println!("AI setup: failed to mint character {}: {}", x, e);
                 }
             }
             println!("AI Created!!");

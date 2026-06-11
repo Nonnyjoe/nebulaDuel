@@ -15,6 +15,8 @@ const Duels = lazy(() => import("../pages/Duels"));
 const JoinDuel = lazy(() => import("../pages/JoinDuel"));
 const AIduel = lazy(() => import("../pages/Aiduel"));
 const UserActivity = lazy(() => import("../pages/userTx"));
+const Campaign = lazy(() => import("../pages/Campaign"));
+const CampaignLevel = lazy(() => import("../pages/CampaignLevel"));
 
 type Route = {
   path: string;
@@ -68,6 +70,16 @@ const coreRoutes: coreRoutes = [
     path: "/arena",
     title: "Arena",
     component: Arena,
+  },
+  {
+    path: "/campaign",
+    title: "Campaign",
+    component: Campaign,
+  },
+  {
+    path: "/campaign/:levelId",
+    title: "Campaign Level",
+    component: CampaignLevel,
   },
   {
     path: "/joinduel/:duelId",

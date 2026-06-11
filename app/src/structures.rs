@@ -366,6 +366,10 @@ pub fn players_profile_to_json(all_players: Vec<Player>) -> String {
         tx_json["total_ai_battles"] = (player.total_ai_battles as u64).into();
         tx_json["ai_battles_won"] = (player.ai_battles_won as u64).into();
         tx_json["ai_battles_losses"] = (player.ai_battles_losses as u64).into();
+        tx_json["campaign_progress"] = (player.campaign_progress as u64).into();
+        tx_json["campaign_wins"] = (player.campaign_wins as u64).into();
+        tx_json["campaign_losses"] = (player.campaign_losses as u64).into();
+        tx_json["campaign_titles"] = campaign_titles_to_json(&player.campaign_titles);
         tx_json["transaction_history"] =
             player_transactions_to_json(player.transaction_history).into() ;
         json_array.push(tx_json).expect("JSON ERROR6");
@@ -417,10 +421,22 @@ pub fn single_player_profile_to_json(player: &mut Player) -> String {
     tx_json["total_ai_battles"] = (player.total_ai_battles as u64).into();
     tx_json["ai_battles_won"] = (player.ai_battles_won as u64).into();
     tx_json["ai_battles_losses"] = (player.ai_battles_losses as u64).into();
+    tx_json["campaign_progress"] = (player.campaign_progress as u64).into();
+    tx_json["campaign_wins"] = (player.campaign_wins as u64).into();
+    tx_json["campaign_losses"] = (player.campaign_losses as u64).into();
+    tx_json["campaign_titles"] = campaign_titles_to_json(&player.campaign_titles);
     tx_json["transaction_history"] =
         player_transactions_to_json(player.transaction_history.clone()).into() ;
 
     return tx_json.to_string();
+}
+
+fn campaign_titles_to_json(titles: &[String]) -> JsonValue {
+    let mut arr = JsonValue::new_array();
+    for t in titles {
+        let _ = arr.push(JsonValue::from(t.clone()));
+    }
+    arr
 }
 
 // pub fn listed_characters_to_json(listed_characters: Vec<SaleDetails>) -> String {
