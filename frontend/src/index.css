@@ -8,15 +8,244 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   TYPE RAMP — one display face (Belanosima), one text face (Poppins).
+   Headings are enforced globally so every page shares the same scale.
+   =========================================================================== */
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Belanosima", sans-serif;
+    letter-spacing: 0.02em;
+    color: #fff;
+  }
+  h1 { font-size: clamp(2rem, 4.5vw, 3.25rem); line-height: 1.1; text-transform: uppercase; }
+  h2 { font-size: clamp(1.5rem, 3vw, 2.25rem); line-height: 1.15; text-transform: uppercase; }
+  h3 { font-size: clamp(1.15rem, 2vw, 1.5rem); line-height: 1.2; }
+  h4 { font-size: 1.125rem; }
+  body {
+    font-family: "Poppins", "Open Sans", sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+}
+
+@layer components {
+  /* Standard page container: uses the full canvas with consistent gutters */
+  .container-game {
+    @apply w-full max-w-[1500px] mx-auto px-4 sm:px-6 lg:px-10;
+  }
+  /* Standard vertical rhythm for page sections */
+  .section {
+    @apply py-10 md:py-14;
+  }
+  /* Standard section header block */
+  .section-head {
+    @apply flex items-center gap-3 mb-6;
+  }
+  .section-head::before {
+    content: "";
+    @apply h-0.5 w-10 bg-myGreen rounded;
+  }
+  /* Consistent card media: every character/product image shares this frame */
+  .card-media {
+    @apply relative w-full aspect-[4/3] overflow-hidden bg-navBg;
+  }
+  .card-media > img {
+    @apply w-full h-full object-cover object-top transition-transform duration-300;
+  }
+  .lift:hover .card-media > img,
+  button:hover > .card-media > img {
+    transform: scale(1.05);
+  }
+}
+
 body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 *::selection {
   background-color: #45f882;
   color: #101018;
+}
+
+/* ===========================================================================
+   NEBULA DESIGN SYSTEM — global ambient layer
+   =========================================================================== */
+
+/* Cosmic backdrop: deep gradient + drifting nebula glows + twinkling stars. */
+.nebula-app {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse 80% 50% at 70% -10%, rgba(49, 46, 129, 0.35), transparent),
+    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(6, 78, 59, 0.28), transparent),
+    radial-gradient(ellipse 70% 60% at 90% 80%, rgba(88, 28, 135, 0.18), transparent),
+    #0f161b;
+}
+.nebula-app::before {
+  /* star layer — fine dust */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 64%, rgba(255, 255, 255, 0.4) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 41% 32%, rgba(168, 247, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 57% 79%, rgba(255, 255, 255, 0.35) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 66% 12%, rgba(69, 248, 130, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 74% 47%, rgba(255, 255, 255, 0.45) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 86% 68%, rgba(232, 121, 249, 0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 93% 26%, rgba(255, 255, 255, 0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 7% 88%, rgba(255, 255, 255, 0.3) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 49% 93%, rgba(253, 224, 71, 0.4) 50%, transparent 51%);
+  animation: nebulaTwinkle 7s ease-in-out infinite alternate;
+}
+.nebula-app::after {
+  /* slow drifting aurora sheet */
+  content: "";
+  position: fixed;
+  inset: -40%;
+  z-index: -3;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 35% 25% at 30% 40%, rgba(69, 248, 130, 0.07), transparent),
+    radial-gradient(ellipse 30% 30% at 70% 60%, rgba(99, 102, 241, 0.09), transparent);
+  animation: nebulaDrift 36s ease-in-out infinite alternate;
+}
+@keyframes nebulaTwinkle {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+@keyframes nebulaDrift {
+  0% { transform: translate3d(-3%, -2%, 0); }
+  100% { transform: translate3d(3%, 2%, 0); }
+}
+
+/* Glass surface — the standard card material */
+.glass-card {
+  background: linear-gradient(160deg, rgba(22, 30, 38, 0.82), rgba(13, 18, 24, 0.9));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Primary glowing CTA */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(120deg, #45f882, #2dd4bf);
+  color: #101820;
+  box-shadow: 0 0 24px rgba(69, 248, 130, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+.btn-glow:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 34px rgba(69, 248, 130, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  filter: brightness(1.05);
+}
+.btn-glow:active:not(:disabled) { transform: translateY(0); }
+.btn-glow::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -80%;
+  width: 50%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s ease;
+}
+.btn-glow:hover::after { left: 130%; }
+
+/* Animated gradient headline text */
+.text-aurora {
+  background: linear-gradient(90deg, #45f882, #7df9ff, #e879f9, #45f882);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: auroraText 8s linear infinite;
+}
+@keyframes auroraText {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+
+/* Entrance reveals (stagger with .d1–.d6) */
+.reveal-up {
+  opacity: 0;
+  transform: translateY(18px);
+  animation: revealUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes revealUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+.d1 { animation-delay: 0.06s; }
+.d2 { animation-delay: 0.14s; }
+.d3 { animation-delay: 0.22s; }
+.d4 { animation-delay: 0.3s; }
+.d5 { animation-delay: 0.4s; }
+.d6 { animation-delay: 0.52s; }
+
+/* Card hover lift */
+.lift {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
+}
+.lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.7), 0 0 24px -6px rgba(69, 248, 130, 0.25);
+}
+
+/* Page hero band */
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(69, 248, 130, 0.18);
+  background:
+    radial-gradient(ellipse 70% 90% at 50% -30%, rgba(69, 248, 130, 0.12), transparent),
+    radial-gradient(ellipse 50% 80% at 85% 0%, rgba(99, 102, 241, 0.14), transparent),
+    linear-gradient(180deg, rgba(16, 24, 32, 0.6), rgba(15, 22, 27, 0));
+}
+.page-hero::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(69, 248, 130, 0.8), transparent);
+}
+
+/* Decorative scanline grid for hero sections */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(69, 248, 130, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(69, 248, 130, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black, transparent 75%);
+}
+
+/* Global slim scrollbar */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: rgba(15, 22, 27, 0.6); }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2b3a46, #1d2832);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover { background: #45f88299; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nebula-app::before, .nebula-app::after, .text-aurora { animation: none; }
+  .reveal-up { animation-duration: 0.01s; }
 }
 
 .tg-border-btn {

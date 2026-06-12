@@ -8,6 +8,7 @@
 //! Determinism: the only entropy source is an LCG seeded from
 //! (block_timestamp, level_id, attempt#) — all inputs replay identically.
 
+use crate::charms::{build_loadout, consume_charms, Loadout};
 use crate::game_characters::{confirm_ownership, Character, SuperPower};
 use crate::players_profile::{find_player, Player};
 use crate::strategy_simulation::AllStrategies;
@@ -389,6 +390,12 @@ struct Unit {
     burn_rounds: u128,
     stunned: bool,
     shielded: bool,
+    /// Guardian Ward charm: halves the first hit taken.
+    ward: bool,
+    /// Crit chance percent for this unit's attacks.
+    crit_chance: u128,
+    /// Elemental sigil bonus damage percent (player units only).
+    sigil_bonus: u128,
 }
 
 impl Unit {
@@ -513,6 +520,7 @@ pub fn simulate(
     player_units: Vec<(u128, String, SuperPower, u128, u128, u128, u128)>,
     seed: u128,
     player_strategy: AllStrategies,
+    loadout: &Loadout,
 ) -> BattleOutcome {
     let mut rng = Lcg::new(seed);
     let biome = level.biome;
@@ -520,6 +528,13 @@ pub fn simulate(
     let mut units: Vec<Unit> = Vec::new();
     for (id, name, power, health, strength, attack, speed) in player_units {
         let element = power_element(&power);
+        // Apply the charm loadout to player units only.
+        let health = health * (100 + loadout.hp_pct) / 100;
+        let strength = strength * (100 + loadout.strength_pct) / 100;
+        let sigil_bonus = match loadout.dmg_element {
+            Some((e, pct)) if e == element => pct,
+            _ => 0,
+        };
         units.push(Unit {
             id,
             name,
@@ -531,10 +546,17 @@ pub fn simulate(
             strength,
             attack,
             speed,
-            energy: 0,
+            energy: loadout.start_energy,
             burn_rounds: 0,
             stunned: false,
             shielded: false,
+            ward: loadout.first_hit_ward,
+            crit_chance: if loadout.crit_chance > 0 {
+                loadout.crit_chance
+            } else {
+                10
+            },
+            sigil_bonus,
         });
     }
     for (slot, e) in level.enemies.iter().enumerate() {
@@ -554,6 +576,9 @@ pub fn simulate(
             burn_rounds: 0,
             stunned: false,
             shielded: false,
+            ward: false,
+            crit_chance: 10,
+            sigil_bonus: 0,
         });
     }
 
@@ -689,11 +714,20 @@ fn execute_attack(
 
     let elem_mult = element_multiplier(units[attacker_idx].element, units[target_idx].element);
     let bio_mult = biome_multiplier(biome, units[attacker_idx].element);
-    let crit = rng.chance(10);
+    let crit = rng.chance(units[attacker_idx].crit_chance);
     let crit_mult: u128 = if crit { 150 } else { 100 };
+    let sigil_mult: u128 = 100 + units[attacker_idx].sigil_bonus;
 
     let raw = base_damage(&units[attacker_idx], &units[target_idx]);
-    let dmg = (raw * elem_mult * bio_mult * crit_mult / 1_000_000).max(1);
+    let mut dmg = (raw * elem_mult * bio_mult * crit_mult * sigil_mult / 100_000_000).max(1);
+
+    // Guardian Ward: the first hit on a warded unit is halved.
+    let mut effect = "";
+    if units[target_idx].ward {
+        units[target_idx].ward = false;
+        dmg = (dmg / 2).max(1);
+        effect = "warded";
+    }
 
     apply_damage(&mut units[target_idx], dmg);
     units[target_idx].energy = units[target_idx].energy.saturating_add(ENERGY_WHEN_HIT);
@@ -711,7 +745,7 @@ fn execute_attack(
         0,
         crit,
         effectiveness_label(elem_mult * bio_mult / 100),
-        "",
+        effect,
     );
 }
 
@@ -817,6 +851,17 @@ fn execute_power(
         effect = "dodged";
     }
 
+    // Sigil bonus applies to powers too.
+    if units[attacker_idx].sigil_bonus > 0 && damage > 0 {
+        damage = damage * (100 + units[attacker_idx].sigil_bonus) / 100;
+    }
+    // Guardian Ward halves the first hit.
+    if units[target_idx].ward && damage > 0 {
+        units[target_idx].ward = false;
+        damage = (damage / 2).max(1);
+        effect = "warded";
+    }
+
     apply_damage(&mut units[target_idx], damage);
     units[target_idx].energy = units[target_idx].energy.saturating_add(ENERGY_WHEN_HIT);
     if heal > 0 {
@@ -843,6 +888,7 @@ pub struct CampaignResult {
 /// (points, progress, titles) and squad characters (stat boost on first
 /// clear). Returns the full battle report to emit as a notice.
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)]
 pub fn play_level(
     all_players: &mut Vec<Player>,
     all_characters: &mut Vec<Character>,
@@ -851,7 +897,10 @@ pub fn play_level(
     char_ids: Vec<u128>,
     time_stamp: u128,
     player_strategy: AllStrategies,
+    charm_ids: Vec<u128>,
 ) -> Result<CampaignResult, String> {
+    // Validate and build the charm loadout before anything mutates.
+    let loadout = build_loadout(&charm_ids)?;
     let level = get_level(level_id).ok_or_else(|| format!("Level {} does not exist", level_id))?;
 
     if char_ids.len() != 3 {
@@ -889,6 +938,8 @@ pub fn play_level(
             }
             player.points -= level.retry_cost;
         }
+        // Charms are consumed by the attempt, win or lose.
+        consume_charms(player, &charm_ids)?;
         player.record_campaign_attempt(level_id);
         (attempts + 1, player.campaign_progress < level_id)
     };
@@ -914,7 +965,7 @@ pub fn play_level(
     let seed = time_stamp
         .wrapping_add(level_id.wrapping_mul(7919))
         .wrapping_add(attempt_no.wrapping_mul(104729));
-    let outcome = simulate(&level, squad, seed, player_strategy);
+    let outcome = simulate(&level, squad, seed, player_strategy, &loadout);
 
     // Rewards.
     let mut reward_points: u128 = 0;
@@ -984,6 +1035,11 @@ pub fn play_level(
         rewards["title"] = t.into();
     }
     report["rewards"] = rewards;
+    let mut charms_used = JsonValue::new_array();
+    for name in &loadout.used_names {
+        let _ = charms_used.push(JsonValue::from(*name));
+    }
+    report["charms_used"] = charms_used;
 
     Ok(CampaignResult { report })
 }
@@ -1046,6 +1102,7 @@ pub fn progress_to_json(player: &Player) -> String {
         let _ = attempts.push(a);
     }
     j["attempts"] = attempts;
+    j["charm_inventory"] = crate::charms::inventory_to_json(player);
     j.dump()
 }
 

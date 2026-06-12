@@ -19,6 +19,7 @@ import {
   ELEMENT_META,
   powerToElement,
 } from "../../utils/campaign";
+import StatBars from "../shared/StatBars";
 import BattleStage, { StageUnit, StageEvent } from "../battle/BattleStage";
 
 // ---------------------------------------------------------------------------
@@ -345,19 +346,23 @@ const GameLayout = () => {
           className="w-20 h-20 md:w-24 md:h-24"
           objectStatus="object-cover"
         />
-        <div className="flex flex-col items-center justify-center gap-0.5">
-          <p className="text-myGreen font-belanosima text-sm text-center">
-            {w.name}
-          </p>
-          <span className={`text-[9px] rounded-full px-1.5 py-0.5 ${meta.bg} ${meta.color}`}>
-            {meta.emoji} {element}
-          </span>
-          <p className="text-[11px] text-gray-400">
-            HP {w.health} · STR {w.strength}
-          </p>
-          <p className="text-[11px] text-gray-400">
-            ATK {w.attack} · SPD {w.speed}
-          </p>
+        <div className="flex flex-col justify-center gap-1 min-w-0">
+          <div className="flex items-center justify-between gap-1">
+            <p className="text-myGreen font-belanosima text-sm truncate">
+              {w.name}
+            </p>
+            <span className={`shrink-0 text-[9px] rounded-full px-1.5 py-0.5 ${meta.bg} ${meta.color}`}>
+              {meta.emoji} {element}
+            </span>
+          </div>
+          <StatBars
+            stats={{
+              health: w.health,
+              strength: w.strength,
+              attack: w.attack,
+              speed: w.speed,
+            }}
+          />
         </div>
       </div>
     );
@@ -411,7 +416,7 @@ const GameLayout = () => {
 
   if (isLoading) {
     return (
-      <section className="w-full min-h-screen bg-bodyBg flex items-center justify-center">
+      <section className="w-full min-h-screen flex items-center justify-center">
         <p className="font-belanosima text-myGreen animate-pulse text-lg">
           Loading duel #{duelId}…
         </p>
@@ -421,7 +426,7 @@ const GameLayout = () => {
 
   if (!duelData) {
     return (
-      <section className="w-full min-h-screen bg-bodyBg flex flex-col items-center justify-center gap-4">
+      <section className="w-full min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="font-belanosima text-white text-lg">
           Duel #{duelId} was not found.
         </p>
@@ -436,8 +441,8 @@ const GameLayout = () => {
   }
 
   return (
-    <section className="w-full min-h-screen bg-bodyBg">
-      <main className="w-full flex flex-col lg:flex-row gap-6 lg:gap-10 px-4 md:px-6 lg:px-10 py-8 md:py-10 lg:py-12 max-w-[1368px] mx-auto">
+    <section className="w-full min-h-screen">
+      <main className="w-full flex flex-col lg:flex-row gap-6 lg:gap-10 px-4 md:px-6 lg:px-10 py-8 md:py-10 lg:py-12 max-w-[1500px] mx-auto">
         {/* Creator column */}
         <div className="w-full lg:w-3/12 mt-4 lg:mt-12 lg:ml-2 xl:ml-6">
           {participantPanel(
@@ -485,7 +490,7 @@ const GameLayout = () => {
 
           <div className="w-full flex items-center justify-center gap-3 mt-6 md:mt-8">
             <button
-              className="inline-flex items-center justify-center rounded-xl bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase tracking-wide px-10 py-3.5 md:px-14 md:py-4 text-sm md:text-base shadow-[0_0_20px_rgba(69,248,130,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center rounded-xl btn-glow font-belanosima uppercase tracking-wide px-10 py-3.5 md:px-14 md:py-4 text-sm md:text-base shadow-[0_0_20px_rgba(69,248,130,0.35)] disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={() => {
                 setReplaying(false);
                 setShowPopup(false);

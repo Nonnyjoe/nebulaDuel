@@ -7,6 +7,7 @@ import { useState } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 // import readGameState from "../../utils/readState.js"
 import signMessages from "../../utils/relayTransaction.tsx";
+import WarriorPickCard from "../shared/WarriorPickCard";
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -158,14 +159,14 @@ const CreateAiDuel = () => {
 
   if (initialised && characterDetails.length === 0 && profileData) {
     return (
-      <section className="w-full min-h-[50vh] bg-bodyBg flex items-center justify-center px-4 py-12">
+      <section className="w-full min-h-[50vh] flex items-center justify-center px-4 py-12">
         <div className="max-w-md w-full text-center">
           <p className="text-gray-400 font-poppins text-lg mb-6">
             You don't have any characters yet.
           </p>
           <Link
             to="/profile/purchasecharacter"
-            className="inline-flex items-center justify-center bg-myGreen text-navBg font-bold font-barlow py-3 px-6 rounded-lg hover:bg-myGreen/90 transition-colors"
+            className="inline-flex items-center justify-center bg-myGreen text-navBg font-bold font-poppins py-3 px-6 rounded-lg hover:bg-myGreen/90 transition-colors"
           >
             Create your first character
           </Link>
@@ -408,11 +409,11 @@ const CreateAiDuel = () => {
   };
 
   return (
-    <section className="w-full min-h-screen bg-bodyBg">
-      <main className="w-full max-w-[1368px] mx-auto py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    <section className="w-full min-h-screen">
+      <main className="w-full max-w-[1500px] mx-auto py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <Text
           as="h1"
-          className="font-bold text-center uppercase font-belanosima text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
+          className="reveal-up font-belanosima text-center uppercase text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
         >
           Choose your warriors
         </Text>
@@ -433,55 +434,16 @@ const CreateAiDuel = () => {
                 Your characters
               </Text>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
-              {shuffleArray(characterDetails).map((item, index) => {
-                const selected = selectedCharactersId.includes(item.id);
-                return (
-                  <button
-                    type="button"
-                    key={`${item.id}-${index}`}
-                    onClick={() => toggleCharacterSelection(item)}
-                    className={`w-full text-left rounded-xl border-2 bg-myBlack/80 backdrop-blur-sm flex flex-col overflow-hidden transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-myGreen/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-myGreen focus-visible:ring-offset-2 focus-visible:ring-offset-bodyBg ${
-                      selected
-                        ? "border-myGreen shadow-md shadow-myGreen/20"
-                        : "border-gray-700/80 hover:border-gray-600"
-                    }`}
-                  >
-                    <div className="aspect-[4/3] w-full bg-gray-800/50 relative overflow-hidden">
-                      <ImageWrap
-                        image={item.img as string}
-                        className="w-full h-full"
-                        alt={item.name}
-                        objectStatus="object-contain"
-                      />
-                      {selected && (
-                        <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-myGreen flex items-center justify-center text-navBg text-xs font-bold">
-                          ✓
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-3 sm:p-4 flex flex-col gap-2">
-                      <Text as="span" className="font-belanosima text-white text-base sm:text-lg truncate">
-                        {item.name}
-                      </Text>
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          HP {item.health}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          ATK {item.attack}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          STR {item.strength}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          SPD {item.speed}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 p-1.5 -m-1.5">
+              {shuffleArray(characterDetails).map((item, index) => (
+                <WarriorPickCard
+                  key={`${item.id}-${index}`}
+                  warrior={item}
+                  selected={selectedCharactersId.includes(item.id)}
+                  slot={selectedCharactersId.indexOf(item.id)}
+                  onClick={() => toggleCharacterSelection(item)}
+                />
+              ))}
             </div>
           </div>
 
@@ -513,7 +475,7 @@ const CreateAiDuel = () => {
                               image={character.img as string}
                               className="w-full h-full"
                               alt={character.name}
-                              objectStatus="object-contain"
+                              objectStatus="object-cover object-top"
                             />
                           </div>
                           <Text as="span" className="font-belanosima text-white text-xs sm:text-sm truncate w-full text-center">
@@ -580,7 +542,7 @@ const CreateAiDuel = () => {
 
             <Button
               type="button"
-              className="w-full text-navBg uppercase font-bold font-barlow text-sm sm:text-base tracking-wide py-3.5 sm:py-4 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full text-navBg uppercase font-bold font-poppins text-sm sm:text-base tracking-wide py-3.5 sm:py-4 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={handleSelectWarriors}
               disabled={submiting}
             >

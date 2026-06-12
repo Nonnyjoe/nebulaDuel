@@ -36,6 +36,8 @@ pub struct Player {
     pub last_point_purchase_time: u128,
     /// Whether the one-time starter team has been claimed.
     pub starter_team_claimed: bool,
+    /// Battle charm inventory: (charm_id, count) pairs.
+    pub charm_inventory: Vec<(u128, u128)>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -96,6 +98,36 @@ impl Player {
             }
         }
         return self;
+    }
+
+    pub fn charm_count(&self, charm_id: u128) -> u128 {
+        self.charm_inventory
+            .iter()
+            .find(|(id, _)| *id == charm_id)
+            .map(|(_, n)| *n)
+            .unwrap_or(0)
+    }
+
+    pub fn add_charms(&mut self, charm_id: u128, quantity: u128) {
+        if let Some(entry) = self
+            .charm_inventory
+            .iter_mut()
+            .find(|(id, _)| *id == charm_id)
+        {
+            entry.1 += quantity;
+        } else {
+            self.charm_inventory.push((charm_id, quantity));
+        }
+    }
+
+    pub fn remove_charm(&mut self, charm_id: u128) {
+        if let Some(entry) = self
+            .charm_inventory
+            .iter_mut()
+            .find(|(id, _)| *id == charm_id)
+        {
+            entry.1 = entry.1.saturating_sub(1);
+        }
     }
 
     pub fn campaign_attempt_count(&self, level_id: u128) -> u128 {
@@ -179,6 +211,7 @@ pub fn create_player(
                 point_purchase_count: 0,
                 last_point_purchase_time: 0,
                 starter_team_claimed: false,
+                charm_inventory: Vec::new(),
             };
 
             if player.wallet_address == String::from("0xnebula") {

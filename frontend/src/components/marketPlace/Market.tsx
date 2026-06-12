@@ -6,7 +6,13 @@ import { toast } from "sonner";
 import signMessages from "../../utils/relayTransaction";
 import readGameState from "../../utils/readState";
 import audio from "../../utils/audio";
-import { ELEMENT_META } from "../../utils/campaign";
+import StatBars from "../shared/StatBars";
+import {
+  ELEMENT_META,
+  fetchCharmCatalog,
+  CharmDef,
+  CHARM_EMOJI,
+} from "../../utils/campaign";
 import {
   fetchListings,
   fetchAllCharacters,
@@ -20,7 +26,7 @@ import {
   MarketInfo,
 } from "../../utils/marketplace";
 
-type Tab = "trade" | "recruit" | "mine";
+type Tab = "trade" | "recruit" | "charms" | "mine";
 
 const shortAddr = (a: string) =>
   a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
@@ -38,6 +44,7 @@ const Market = () => {
   const [tab, setTab] = useState<Tab>("trade");
   const [listings, setListings] = useState<Listing[]>([]);
   const [owned, setOwned] = useState<MarketCharacter[]>([]);
+  const [charms, setCharms] = useState<CharmDef[]>([]);
   const [info, setInfo] = useState<MarketInfo | null>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,13 +56,15 @@ const Market = () => {
   const [listPrice, setListPrice] = useState("");
 
   const refresh = useCallback(async () => {
-    const [ls, chars, mi] = await Promise.all([
+    const [ls, chars, mi, charmCatalog] = await Promise.all([
       fetchListings(),
       fetchAllCharacters(),
       fetchMarketInfo(wallet),
+      fetchCharmCatalog(),
     ]);
     setListings(ls);
     setInfo(mi);
+    setCharms(charmCatalog);
     if (wallet) {
       setOwned(chars.filter((c) => c.owner === wallet));
       const prof = await readGameState(`profile/${wallet}`);
@@ -163,15 +172,21 @@ const Market = () => {
   // ---------------------------------------------------------------------
 
   const StatLine = ({ c }: { c: MarketCharacter }) => (
-    <p className="text-[11px] text-gray-400 font-poppins">
-      HP {c.health} · STR {c.strength} · ATK {c.attack} · SPD {c.speed}
+    <div className="mt-1">
+      <StatBars
+        stats={{
+          health: c.health,
+          strength: c.strength,
+          attack: c.attack,
+          speed: c.speed,
+        }}
+      />
       {c.total_battles > 0 && (
-        <span className="text-gray-500">
-          {" "}
-          · {c.total_wins}W/{c.total_losses}L
-        </span>
+        <p className="text-[10px] text-gray-500 font-poppins mt-1">
+          Record: {c.total_wins}W / {c.total_losses}L
+        </p>
       )}
-    </p>
+    </div>
   );
 
   const ElementBadge = ({ c }: { c: MarketCharacter }) => {
@@ -186,9 +201,22 @@ const Market = () => {
     );
   };
 
+  const charmHeld = (charmId: number) =>
+    info?.charm_inventory?.find((c) => c.charm_id === charmId)?.count ?? 0;
+
+  const buyCharm = (charm: CharmDef, currency: "points" | "ctsi") => {
+    if (!requireWallet()) return;
+    send(
+      `${charm.name} added to your satchel!`,
+      { func: "buy_charm", charm_id: charm.id, quantity: 1, currency },
+      charm.id + 20_000,
+    );
+  };
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "trade", label: `Trade (${openListings.length})` },
     { key: "recruit", label: "Recruit new" },
+    { key: "charms", label: "Battle charms" },
     { key: "mine", label: `My listings (${myListings.length})` },
   ];
 
@@ -260,15 +288,11 @@ const Market = () => {
                   return (
                     <div
                       key={l.character_id}
-                      className="rounded-2xl border border-gray-800 bg-myBlack/80 overflow-hidden hover:border-myGreen/60 transition-colors"
+                      className="rounded-2xl border border-gray-800 bg-myBlack/80 overflow-hidden hover:border-myGreen/60 transition-colors lift"
                     >
-                      {c.img && (
-                        <img
-                          src={c.img}
-                          alt={c.name}
-                          className="w-full h-36 object-cover"
-                        />
-                      )}
+                      <div className="card-media">
+                        {c.img && <img src={c.img} alt={c.name} />}
+                      </div>
                       <div className="p-3 space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-belanosima text-white text-sm truncate">
@@ -287,7 +311,7 @@ const Market = () => {
                           <button
                             onClick={() => buyListing(l)}
                             disabled={busyId === l.character_id}
-                            className="rounded-lg bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase text-xs px-4 py-2 disabled:opacity-50"
+                            className="rounded-lg btn-glow font-belanosima uppercase text-xs px-4 py-2 disabled:opacity-50"
                           >
                             {busyId === l.character_id ? "Buying…" : "Buy"}
                           </button>
@@ -337,15 +361,11 @@ const Market = () => {
                   return (
                     <div
                       key={c.id}
-                      className="rounded-2xl border border-gray-800 bg-myBlack/80 overflow-hidden hover:border-myGreen/60 transition-colors"
+                      className="rounded-2xl border border-gray-800 bg-myBlack/80 overflow-hidden hover:border-myGreen/60 transition-colors lift"
                     >
-                      {c.img && (
-                        <img
-                          src={c.img}
-                          alt={c.name}
-                          className="w-full h-36 object-cover"
-                        />
-                      )}
+                      <div className="card-media">
+                        {c.img && <img src={c.img} alt={c.name} />}
+                      </div>
                       <div className="p-3 space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
                           <p className="font-belanosima text-white text-sm truncate">
@@ -375,6 +395,82 @@ const Market = () => {
                             {pCtsi.toFixed(2)} CTSI
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* ------------------------------ CHARMS ----------------------- */}
+          {tab === "charms" && (
+            <>
+              <div className="rounded-xl border border-gray-800 bg-myBlack/60 px-4 py-3 mb-6 text-[12px] font-poppins text-gray-400 space-y-1">
+                <p>
+                  🧿 Charms are <b className="text-white">consumed by the battle</b>{" "}
+                  that uses them — win or lose.
+                </p>
+                <p>
+                  ⚖️ Carry at most <b className="text-myGreen">2 charms</b> into a
+                  battle (no duplicates), and hold at most{" "}
+                  <b className="text-myGreen">5 of each</b> — power can be bought,
+                  but victories still have to be earned.
+                </p>
+              </div>
+              {(!Array.isArray(charms) || charms.length === 0) && (
+                <p className="text-gray-500 font-poppins text-sm py-8 text-center">
+                  The charm catalog isn't available — make sure the backend was
+                  rebuilt (`cartesi build`) and the node restarted.
+                </p>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {(Array.isArray(charms) ? charms : []).map((c) => {
+                  const held = charmHeld(c.id);
+                  const full = held >= c.max_hold;
+                  const busy = busyId === c.id + 20_000;
+                  const meta = c.element ? ELEMENT_META[c.element] : null;
+                  return (
+                    <div
+                      key={c.id}
+                      className="rounded-2xl border border-gray-800 bg-myBlack/80 p-4 hover:border-myGreen/60 transition-colors lift flex flex-col"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <p className="font-belanosima text-white">
+                          {CHARM_EMOJI[c.id] ?? "🧿"} {c.name}
+                        </p>
+                        {meta ? (
+                          <span className={`text-[10px] rounded-full px-2 py-0.5 ${meta.bg} ${meta.color}`}>
+                            {meta.emoji} {c.element}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] rounded-full px-2 py-0.5 bg-gray-700/50 text-gray-300">
+                            ✨ Universal
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-gray-400 font-poppins leading-snug flex-1">
+                        {c.description}
+                      </p>
+                      <p className={`text-[10px] font-belanosima mt-2 ${full ? "text-myYellow" : "text-gray-500"}`}>
+                        Held: {held}/{c.max_hold}
+                        {full && " — satchel full"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <button
+                          onClick={() => buyCharm(c, "points")}
+                          disabled={busy || full}
+                          className="rounded-lg border border-myGreen/60 text-myGreen font-belanosima text-[11px] uppercase px-2 py-2 hover:bg-myGreen hover:text-navBg disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {c.cost_points} pts
+                        </button>
+                        <button
+                          onClick={() => buyCharm(c, "ctsi")}
+                          disabled={busy || full}
+                          className="rounded-lg border border-myYellow/60 text-myYellow font-belanosima text-[11px] uppercase px-2 py-2 hover:bg-myYellow hover:text-navBg disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {Number(c.cost_ctsi).toFixed(2)} CTSI
+                        </button>
                       </div>
                     </div>
                   );
@@ -516,7 +612,7 @@ const Market = () => {
             <div className="flex gap-3">
               <button
                 onClick={submitListing}
-                className="flex-1 rounded-lg bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase text-sm py-3"
+                className="flex-1 rounded-lg btn-glow font-belanosima uppercase text-sm py-3"
               >
                 List for sale
               </button>

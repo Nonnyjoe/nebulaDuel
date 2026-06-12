@@ -23,7 +23,11 @@ import {
   POWER_DESCRIPTIONS,
   STRATEGIES,
   enemyVisual,
+  fetchCharmCatalog,
+  CharmDef,
+  CHARM_EMOJI,
 } from "../../utils/campaign";
+import StatBars from "../shared/StatBars";
 import CampaignBattle from "./CampaignBattle";
 
 type Phase = "loading" | "briefing" | "submitting" | "replay" | "result";
@@ -51,6 +55,8 @@ const LevelArena = () => {
   const [roster, setRoster] = useState<OwnedCharacter[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
   const [strategyId, setStrategyId] = useState<number>(2); // Assassin default
+  const [charmCatalog, setCharmCatalog] = useState<CharmDef[]>([]);
+  const [selectedCharms, setSelectedCharms] = useState<number[]>([]);
   const [report, setReport] = useState<BattleReport | null>(null);
   const [statusText, setStatusText] = useState("");
 
@@ -60,7 +66,10 @@ const LevelArena = () => {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const levels = await fetchCampaignLevels();
+      const [levels, catalog] = await Promise.all([
+        fetchCampaignLevels(),
+        fetchCharmCatalog(),
+      ]);
       const lvl = levels.find((l) => Number(l.id) === lvlNum) ?? null;
 
       let prog: CampaignProgress | null = null;
@@ -90,6 +99,7 @@ const LevelArena = () => {
         setLevel(lvl);
         setProgress(prog);
         setRoster(owned);
+        setCharmCatalog(catalog);
         setPhase("briefing");
       }
     };
@@ -158,7 +168,7 @@ const LevelArena = () => {
     setPhase("submitting");
     try {
       setStatusText("Confirm the transaction in your wallet…");
-      const payload = {
+      const payload: any = {
         func: "play_campaign_level",
         level_id: level.id,
         char_id1: selected[0],
@@ -166,6 +176,8 @@ const LevelArena = () => {
         char_id3: selected[2],
         strategy_id: strategyId,
       };
+      if (selectedCharms[0]) payload.charm_id1 = selectedCharms[0];
+      if (selectedCharms[1]) payload.charm_id2 = selectedCharms[1];
       // signMessages resolves after the Cartesi machine has simulated the
       // whole battle deterministically.
       setStatusText("The Cartesi machine is simulating your battle…");
@@ -218,7 +230,7 @@ const LevelArena = () => {
 
   if (phase === "loading") {
     return (
-      <section className="min-h-screen bg-bodyBg flex items-center justify-center">
+      <section className="min-h-screen flex items-center justify-center">
         <p className="font-belanosima text-myGreen animate-pulse">
           Entering level {levelId}…
         </p>
@@ -228,7 +240,7 @@ const LevelArena = () => {
 
   if (!level || !theme) {
     return (
-      <section className="min-h-screen bg-bodyBg flex flex-col items-center justify-center gap-4">
+      <section className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="font-belanosima text-white">
           Level {levelId} could not be loaded.
         </p>
@@ -243,7 +255,7 @@ const LevelArena = () => {
   }
 
   return (
-    <section className="w-full min-h-screen bg-bodyBg pb-20">
+    <section className="w-full min-h-screen pb-20">
       {/* Biome header */}
       <div
         className={`w-full bg-gradient-to-b ${theme.gradient} border-b`}
@@ -354,9 +366,10 @@ const LevelArena = () => {
                   audio.play("click");
                   setReport(null);
                   setSelected([]);
+                  setSelectedCharms([]);
                   setPhase("briefing");
                 }}
-                className="rounded-xl bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase px-8 py-3"
+                className="rounded-xl btn-glow font-belanosima uppercase px-8 py-3"
               >
                 {report.victory ? "Battle again" : "Retry level"}
               </button>
@@ -441,32 +454,18 @@ const LevelArena = () => {
                         >
                           {e.name}
                         </p>
-                        {/* stat bars */}
-                        <div className="mt-1.5 space-y-1">
-                          {[
-                            { label: "HP", value: e.health, max: 350, color: "bg-myGreen" },
-                            { label: "ATK", value: e.attack, max: 32, color: "bg-red-400" },
-                            { label: "STR", value: e.strength, max: 28, color: "bg-orange-400" },
-                            { label: "SPD", value: e.speed, max: 20, color: "bg-cyan-400" },
-                          ].map((s) => (
-                            <div key={s.label} className="flex items-center gap-2">
-                              <span className="w-7 text-[9px] text-gray-500 font-belanosima">
-                                {s.label}
-                              </span>
-                              <div className="flex-1 h-1.5 rounded bg-gray-800 overflow-hidden">
-                                <div
-                                  className={`h-full ${s.color}`}
-                                  style={{
-                                    width: `${Math.min(100, (s.value / s.max) * 100)}%`,
-                                  }}
-                                />
-                              </div>
-                              <span className="w-8 text-right text-[9px] text-gray-400 font-poppins">
-                                {s.value}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                        {/* stat bars (game-wide standard display) */}
+                        <StatBars
+                          className="mt-1.5"
+                          size="sm"
+                          stats={{
+                            health: e.health,
+                            strength: e.strength,
+                            attack: e.attack,
+                            speed: e.speed,
+                          }}
+                          maxima={{ health: 350, attack: 32, strength: 28, speed: 20 }}
+                        />
                         <p
                           className={`text-[11px] font-poppins mt-1.5 leading-snug ${meta.color}`}
                         >
@@ -547,7 +546,7 @@ const LevelArena = () => {
                             {slot + 1}
                           </span>
                         )}
-                        <div className="w-full h-24 rounded-lg overflow-hidden mb-2 bg-navBg">
+                        <div className="card-media rounded-lg mb-2">
                           {c.img && (
                             <img
                               src={c.img}
@@ -578,9 +577,15 @@ const LevelArena = () => {
                             {score}%
                           </span>
                         </div>
-                        <p className="text-[9px] text-gray-500 font-poppins mt-1">
-                          HP {c.health} · ATK {c.attack} · SPD {c.speed}
-                        </p>
+                        <StatBars
+                          className="mt-1.5"
+                          stats={{
+                            health: c.health,
+                            strength: c.strength,
+                            attack: c.attack,
+                            speed: c.speed,
+                          }}
+                        />
                       </button>
                     );
                   })}
@@ -620,6 +625,92 @@ const LevelArena = () => {
                 ))}
               </div>
 
+              {/* Battle charms loadout */}
+              <div className="flex items-center justify-between mt-7 mb-3">
+                <h2 className="font-belanosima text-white text-lg uppercase tracking-wider">
+                  Battle charms ({selectedCharms.length}/2)
+                </h2>
+                <Link
+                  to="/marketplace"
+                  className="text-[11px] font-belanosima uppercase text-myGreen hover:text-myYellow"
+                >
+                  Buy charms →
+                </Link>
+              </div>
+              {(() => {
+                const inventory = progress?.charm_inventory ?? [];
+                const heldCharms = inventory
+                  .filter((e) => e.count > 0)
+                  .map((e) => ({
+                    entry: e,
+                    def: charmCatalog.find((c) => c.id === e.charm_id),
+                  }))
+                  .filter((x) => x.def);
+                if (!heldCharms.length) {
+                  return (
+                    <p className="text-gray-500 font-poppins text-xs">
+                      Your satchel is empty. Charms are one-battle boosters —
+                      an elemental sigil matching this terrain (
+                      <span className={ELEMENT_META[theme.boosted].color}>
+                        {theme.boosted}
+                      </span>
+                      ) can turn a losing matchup around.
+                    </p>
+                  );
+                }
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {heldCharms.map(({ entry, def }) => {
+                      const charm = def!;
+                      const isSel = selectedCharms.includes(charm.id);
+                      const matchesBiome = charm.element === theme.boosted;
+                      return (
+                        <button
+                          key={charm.id}
+                          onClick={() => {
+                            audio.play("click");
+                            setSelectedCharms((prev) => {
+                              if (prev.includes(charm.id))
+                                return prev.filter((x) => x !== charm.id);
+                              if (prev.length >= 2) {
+                                toast.error("Max 2 charms per battle.", {
+                                  position: "top-right",
+                                });
+                                return prev;
+                              }
+                              return [...prev, charm.id];
+                            });
+                          }}
+                          disabled={locked}
+                          className={`relative text-left rounded-xl border-2 px-3 py-2.5 transition-colors ${
+                            isSel
+                              ? "border-myGreen bg-myGreen/10 shadow-[0_0_12px_rgba(69,248,130,0.35)]"
+                              : matchesBiome
+                                ? "border-myYellow/50 bg-myBlack/80 hover:border-myYellow"
+                                : "border-gray-800 bg-myBlack/80 hover:border-gray-600"
+                          } ${locked ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          {matchesBiome && !isSel && (
+                            <span className="absolute -top-2 right-2 text-[8px] font-belanosima uppercase bg-myYellow text-navBg rounded px-1.5 py-0.5">
+                              Terrain match
+                            </span>
+                          )}
+                          <p
+                            className={`font-belanosima text-xs ${isSel ? "text-myGreen" : "text-white"}`}
+                          >
+                            {CHARM_EMOJI[charm.id] ?? "🧿"} {charm.name}
+                            <span className="text-gray-500"> ×{entry.count}</span>
+                          </p>
+                          <p className="text-[9px] text-gray-400 font-poppins mt-0.5 leading-snug">
+                            {charm.description}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
               <style>{`
                 .nebula-scroll::-webkit-scrollbar { width: 6px; }
                 .nebula-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -631,7 +722,7 @@ const LevelArena = () => {
                 <button
                   onClick={launch}
                   disabled={locked || selected.length !== 3}
-                  className="rounded-xl bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase tracking-wide px-10 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(69,248,130,0.3)]"
+                  className="rounded-xl btn-glow font-belanosima uppercase tracking-wide px-10 py-3.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(69,248,130,0.3)]"
                 >
                   {isRetry
                     ? `Retry (${level.retry_cost} pts)`

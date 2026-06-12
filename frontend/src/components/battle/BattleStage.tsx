@@ -309,6 +309,146 @@ const Fighter: React.FC<{
   );
 };
 
+// ---------------------------------------------------------------------------
+// Procedural arena floor texture (no external assets): layered radial light,
+// concentric battle rings, runic tick marks, cracks and scorch marks — all
+// tinted by the biome.
+// ---------------------------------------------------------------------------
+
+function makeArenaTexture(theme: BiomeTheme): THREE.CanvasTexture {
+  const size = 1024;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  const cx = size / 2;
+
+  // Seeded PRNG so the floor looks identical every render.
+  let seed = 1337;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+
+  // Base: ground color into near-black edges.
+  const base = ctx.createRadialGradient(cx, cx, 0, cx, cx, cx);
+  base.addColorStop(0, theme.ground);
+  base.addColorStop(0.75, theme.fog);
+  base.addColorStop(1, "#000000");
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, size, size);
+
+  // Mottled noise patches for organic ground texture.
+  for (let i = 0; i < 420; i++) {
+    const a = rand() * Math.PI * 2;
+    const r = Math.sqrt(rand()) * cx * 0.96;
+    const x = cx + Math.cos(a) * r;
+    const y = cx + Math.sin(a) * r;
+    const rad = 4 + rand() * 26;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    const light = rand() > 0.5;
+    g.addColorStop(0, light ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.16)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Cracks radiating outward.
+  ctx.strokeStyle = "rgba(0,0,0,0.4)";
+  for (let i = 0; i < 26; i++) {
+    ctx.lineWidth = 1 + rand() * 1.6;
+    let a = rand() * Math.PI * 2;
+    let r = cx * (0.18 + rand() * 0.32);
+    let x = cx + Math.cos(a) * r;
+    let y = cx + Math.sin(a) * r;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    const segs = 4 + Math.floor(rand() * 5);
+    for (let s = 0; s < segs; s++) {
+      a += (rand() - 0.5) * 0.9;
+      r += 18 + rand() * 36;
+      x = cx + Math.cos(a) * r;
+      y = cx + Math.sin(a) * r;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Scorch marks near the middle (old battles).
+  for (let i = 0; i < 7; i++) {
+    const a = rand() * Math.PI * 2;
+    const r = rand() * cx * 0.45;
+    const x = cx + Math.cos(a) * r;
+    const y = cx + Math.sin(a) * r;
+    const rad = 22 + rand() * 46;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    g.addColorStop(0, "rgba(0,0,0,0.5)");
+    g.addColorStop(0.6, "rgba(0,0,0,0.22)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, rad, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Concentric accent rings.
+  const rings = [0.22, 0.5, 0.78, 0.95];
+  rings.forEach((f, i) => {
+    ctx.strokeStyle = `${theme.accent}${i === rings.length - 1 ? "66" : "2e"}`;
+    ctx.lineWidth = i === rings.length - 1 ? 5 : 2;
+    ctx.beginPath();
+    ctx.arc(cx, cx, cx * f, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+
+  // Runic tick marks around the outer ring.
+  ctx.strokeStyle = `${theme.accent}59`;
+  ctx.lineWidth = 3;
+  for (let i = 0; i < 48; i++) {
+    const a = (i / 48) * Math.PI * 2;
+    const r0 = cx * 0.9;
+    const r1 = cx * (i % 4 === 0 ? 0.84 : 0.875);
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * r0, cx + Math.sin(a) * r0);
+    ctx.lineTo(cx + Math.cos(a) * r1, cx + Math.sin(a) * r1);
+    ctx.stroke();
+  }
+
+  // Center sigil: hexagram + inner circle.
+  ctx.strokeStyle = `${theme.accent}40`;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(cx, cx, cx * 0.13, 0, Math.PI * 2);
+  ctx.stroke();
+  for (const offset of [0, Math.PI / 6]) {
+    ctx.beginPath();
+    for (let i = 0; i <= 6; i++) {
+      const a = offset + (i / 3) * Math.PI;
+      const x = cx + Math.cos(a) * cx * 0.2;
+      const y = cx + Math.sin(a) * cx * 0.2;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Faction halves: subtle green tint on the player side.
+  const half = ctx.createLinearGradient(0, 0, size, 0);
+  half.addColorStop(0, "rgba(69,248,130,0.06)");
+  half.addColorStop(0.5, "rgba(0,0,0,0)");
+  half.addColorStop(1, `${theme.accent}12`);
+  ctx.fillStyle = half;
+  ctx.fillRect(0, 0, size, size);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.anisotropy = 4;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 function StageLoader() {
   const { progress } = useProgress();
   return (
@@ -583,6 +723,10 @@ const BattleStage: React.FC<Props> = ({
         if (!skipRef.current) audio.play("shield");
         addFloat(ev.actor_id, "🛡 SHIELD", "#67e8f9");
       }
+      if (ev.effect === "warded") {
+        if (!skipRef.current) audio.play("shield");
+        addFloat(ev.target_id, "🛡 WARDED — HALVED", "#67e8f9");
+      }
       patch(ev.actor_id, { hp: ev.actor_hp });
       await sleep(IMPACT_MS);
       if (cancelled.current) return;
@@ -703,20 +847,8 @@ const BattleStage: React.FC<Props> = ({
           <directionalLight position={[-6, 6, -4]} intensity={2.2} />
           <pointLight position={[0, 5, 0]} intensity={1.4} color={theme.accent} />
 
-          {/* arena floor */}
-          <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0]} receiveShadow>
-            <circleGeometry args={[9.5, 48]} />
-            <meshStandardMaterial color={theme.ground} roughness={0.85} />
-          </mesh>
-          <mesh rotation-x={-Math.PI / 2} position={[0, 0.01, 0]}>
-            <ringGeometry args={[8.9, 9.2, 48]} />
-            <meshBasicMaterial color={theme.accent} transparent opacity={0.45} />
-          </mesh>
-          {/* center sigil */}
-          <mesh rotation-x={-Math.PI / 2} position={[0, 0.015, 0]}>
-            <ringGeometry args={[1.1, 1.22, 40]} />
-            <meshBasicMaterial color={theme.accent} transparent opacity={0.3} />
-          </mesh>
+          {/* arena floor — procedural biome-themed battleground */}
+          <ArenaFloor theme={theme} />
 
           <Suspense fallback={<StageLoader />}>
             {allUnits.map((u) => {
@@ -740,6 +872,25 @@ const BattleStage: React.FC<Props> = ({
         </Canvas>
       </div>
     </div>
+  );
+};
+
+/** Arena floor with a memoised procedural texture + glow ring. */
+const ArenaFloor: React.FC<{ theme: BiomeTheme }> = ({ theme }) => {
+  const texture = useMemo(() => makeArenaTexture(theme), [theme]);
+  useEffect(() => () => texture.dispose(), [texture]);
+  return (
+    <>
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0]} receiveShadow>
+        <circleGeometry args={[9.5, 64]} />
+        <meshStandardMaterial map={texture} roughness={0.92} metalness={0.05} />
+      </mesh>
+      {/* outer glow ring floats just above the texture */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.012, 0]}>
+        <ringGeometry args={[9.05, 9.3, 64]} />
+        <meshBasicMaterial color={theme.accent} transparent opacity={0.5} />
+      </mesh>
+    </>
   );
 };
 

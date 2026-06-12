@@ -42,7 +42,7 @@ const Team = () => {
         <section className="w-full h-auto bg-navBg">
             <main className="w-full py-32 px-6 flex flex-col items-center gap-4">
                 <Text as="h4" className="text-center text-myGreen font-semibold">OUR TEAM MEMBER</Text>
-                <Text as="h2" className="font-bold text-center uppercase lg:text-5xl md:text-4xl text-2xl font-barlow">ACTIVE TEAM MEMBERS</Text>
+                <Text as="h2" className="reveal-up text-center">ACTIVE TEAM MEMBERS</Text>
                 <div className="w-20 h-1.5 bg-myGreen"></div>
 
                 <section className="w-full h-auto mt-20 grid lg:grid-cols-4 md:grid-cols-2 gap-5">

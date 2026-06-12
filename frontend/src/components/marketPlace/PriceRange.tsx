@@ -75,8 +75,8 @@ const PriceRange = () => {
                 />
             </div>
             <div className="w-full flex justify-between ">
-                <Text as="span" className="text-gray-200 font-barlow font-bold">FILTER</Text>
-                <Text as="span" className="text-gray-400 font-barlow font-medium tracking-widest">{`$${minPrice} - $${maxPrice}`}</Text>
+                <Text as="span" className="text-gray-200 font-poppins font-bold">FILTER</Text>
+                <Text as="span" className="text-gray-400 font-poppins font-medium tracking-widest">{`$${minPrice} - $${maxPrice}`}</Text>
             </div>
         </>
 

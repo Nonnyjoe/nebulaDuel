@@ -191,17 +191,17 @@ const UserProfile = () => {
 
 
   return (
-    <section className="w-full h-auto bg-bodyBg">
-      <main className="w-full lg:py-32 md:py-24 py-20 px-6 flex flex-col items-center gap-4">
+    <section className="w-full h-auto">
+      <main className="container-game section flex flex-col items-center gap-4">
         <Text
           as="h2"
-          className="font-bold text-center uppercase lg:text-5xl md:text-4xl text-2xl font-barlow"
+          className="reveal-up text-center"
         >
           { profileData != null && profileData != undefined ? "Update your profile" : "Create your profile"}
         </Text>
         <Text
           as="p"
-          className="font-bold text-center text-lg text-gray-400 font-barlow"
+          className="reveal-up d2 text-center text-base text-gray-400 font-poppins"
         >
           Are you ready to be a Gamer? Create your profile and let's get started
         </Text>
@@ -238,43 +238,47 @@ const UserProfile = () => {
                   Player
                 </span>
               </div>
-              <div className="mt-4 flex flex-col gap-1">
-                <Text
-                  as="p"
-                  className="text-gray-400 text-base font-belanosima"
-                >
-                  No of Characters:{" "}
-                  <Text
-                    as="span"
-                    className="text-myGreen/70 font-poppins"
+              <div className="mt-5 grid grid-cols-2 gap-2 text-left">
+                {[
+                  {
+                    label: "Warriors",
+                    value: `${getArrayLength(profileData.characters) || 0}`,
+                  },
+                  { label: "Points", value: `${profileData.points || 0}` },
+                  {
+                    label: "CTSI balance",
+                    value: Number(profileData.cartesi_token_balance || 0).toFixed(2),
+                  },
+                  {
+                    label: "Campaign",
+                    value: `Lv ${profileData.campaign_progress ?? 0} / 20`,
+                  },
+                  {
+                    label: "Duels",
+                    value: `${profileData.total_wins ?? 0}W / ${profileData.total_losses ?? 0}L`,
+                  },
+                  {
+                    label: "Rank",
+                    value:
+                      (Array.isArray(profileData.campaign_titles) &&
+                        profileData.campaign_titles[
+                          profileData.campaign_titles.length - 1
+                        ]) ||
+                      "Nebula Initiate",
+                  },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded-xl border border-gray-800 bg-myBlack/70 px-3 py-2"
                   >
-                    {getArrayLength(profileData.characters) || 0}
-                  </Text>
-                </Text>
-                <Text
-                  as="p"
-                  className="text-gray-400 text-base font-belanosima"
-                >
-                  Game Points:{" "}
-                  <Text
-                    as="span"
-                    className="text-myGreen/70 font-poppins"
-                  >
-                    {profileData.points || 0} pts
-                  </Text>
-                </Text>
-                <Text
-                  as="p"
-                  className="text-gray-400 text-base font-belanosima"
-                >
-                  Nebula Balance:{" "}
-                  <Text
-                    as="span"
-                    className="text-myGreen/70 font-poppins"
-                  >
-                    {profileData.cartesi_token_balance || 0} $Neb
-                  </Text>
-                </Text>
+                    <p className="text-[9px] uppercase tracking-widest text-gray-500 font-belanosima">
+                      {s.label}
+                    </p>
+                    <p className="text-myGreen font-belanosima text-sm truncate">
+                      {s.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

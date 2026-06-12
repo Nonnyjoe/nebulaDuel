@@ -10,7 +10,7 @@ const ProductList = ({ data }: { data: typeof charactersdata }) => {
   return (
     <main className="w-full flex-1 flex flex-col gap-4 order-1 md:order-2 ">
       <div className="w-full flex justify-end">
-        <Text as="h3" className="text-gray-400 uppercase font-bold font-barlow">
+        <Text as="h3" className="text-gray-400 uppercase font-bold font-poppins">
           SHOWING 1 - {data.length} OF {data.length + 15} RESULTS
         </Text>
       </div>
@@ -39,7 +39,7 @@ const ProductList = ({ data }: { data: typeof charactersdata }) => {
                   </Text>
                   <Text
                     as="span"
-                    className="text-myGreen font-barlow font-bold"
+                    className="text-myGreen font-poppins font-bold"
                   >
                     {item.price} Points
                   </Text>

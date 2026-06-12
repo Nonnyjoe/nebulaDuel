@@ -63,7 +63,7 @@ const ConnectButton2 = () => {
   }, [status, activeAccount?.address, profile?.wallet_address, setProfile]);
 
   return (
-    <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-barlow px-4 py-2 flex justify-center items-center">
+    <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-poppins px-4 py-2 flex justify-center items-center">
       <ConnectButton client={client} theme={customTheme} chain={localChain} />
     </Button>
   );

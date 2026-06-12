@@ -2,6 +2,7 @@ pub mod admin_functions;
 pub mod ai_battle;
 pub mod battle_challenge;
 pub mod campaign;
+pub mod charms;
 pub mod game_characters;
 pub mod market_place;
 pub mod players_profile;

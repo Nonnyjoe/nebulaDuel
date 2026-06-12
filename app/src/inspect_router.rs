@@ -62,6 +62,10 @@ pub fn inspect_router(payload: &str, storage: &mut Storage) {
             println!("Fetching marketplace info");
             handle_fetch_market_info(&new_payload, storage)
         }
+        "charm_catalog" => {
+            println!("Fetching charm catalog");
+            Ok(crate::charms::catalog_to_json(storage.points_rate))
+        }
         other => Err(format!("Inspect route '{}' not implemented", other)),
     };
 
@@ -188,6 +192,7 @@ fn handle_fetch_market_info(
             // Example: premium-adjusted price for a base price of 100.
             j["points_price_per_100_base"] =
                 (points_price_for(player, 100) as u64).into();
+            j["charm_inventory"] = crate::charms::inventory_to_json(player);
         }
     }
     Ok(j.dump())

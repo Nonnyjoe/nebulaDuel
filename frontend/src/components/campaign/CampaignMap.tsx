@@ -88,18 +88,18 @@ const CampaignMap = () => {
   );
 
   return (
-    <section className="w-full min-h-screen bg-bodyBg pb-24">
+    <section className="w-full min-h-screen pb-24">
       {/* Hero */}
       <div className="relative w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-indigo-950/80 via-bodyBg to-bodyBg" />
         <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 pt-14 pb-10 text-center">
-          <p className="font-belanosima uppercase tracking-[0.4em] text-myGreen text-xs md:text-sm mb-3 animate-pulse">
+          <p className="reveal-up d1 font-belanosima uppercase tracking-[0.4em] text-myGreen text-xs md:text-sm mb-3">
             The Nebula Gauntlet
           </p>
-          <h1 className="font-belanosima text-4xl md:text-6xl text-white mb-4">
-            Campaign
+          <h1 className="reveal-up d2 font-belanosima uppercase text-4xl md:text-6xl text-white mb-4">
+            The <span className="text-aurora">Campaign</span>
           </h1>
-          <p className="font-poppins text-gray-400 text-sm md:text-base max-w-2xl mx-auto">
+          <p className="reveal-up d3 font-poppins text-gray-400 text-sm md:text-base max-w-2xl mx-auto">
             Twenty levels across six hostile realms. Every map favors an
             element — and every enemy wields a power of its own. Read the
             terrain, pick your warriors, and march on the Throne of Eternity.
@@ -110,7 +110,7 @@ const CampaignMap = () => {
             {stats.map((s) => (
               <div
                 key={s.label}
-                className="rounded-xl border border-gray-800 bg-myBlack/70 backdrop-blur px-4 py-3"
+                className="glass-card rounded-xl px-4 py-3 lift"
               >
                 <p className="text-[10px] uppercase tracking-widest text-gray-500 font-belanosima">
                   {s.label}
@@ -145,7 +145,7 @@ const CampaignMap = () => {
       {/* Leaderboard */}
       {showLeaderboard && (
         <div className="max-w-3xl mx-auto px-4 mb-10">
-          <div className="rounded-2xl border border-gray-800 bg-myBlack/80 overflow-hidden">
+          <div className="glass-card rounded-2xl overflow-hidden">
             <div className="px-5 py-3 border-b border-gray-800 font-belanosima text-myGreen uppercase text-sm tracking-wider">
               Hall of Champions
             </div>

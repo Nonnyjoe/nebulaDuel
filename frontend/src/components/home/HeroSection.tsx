@@ -162,29 +162,28 @@ const HeroSection = () => {
       {/* Start Shape */}
 
       <main className="w-full h-full absolute top-0 inset-x-0 bg-gradient-to-b from-[#0f161b]/60 z-[10]">
-        <div className="w-full h-full max-w-[1368px] mx-auto flex md:flex-row flex-col-reverse items-center lg:px-20 md:px-6 px-4">
+        <div className="w-full h-full max-w-[1500px] mx-auto flex md:flex-row flex-col-reverse items-center lg:px-20 md:px-6 px-4">
         <aside className="flex-1 flex flex-col -mt-10 md:mt-0 justify-center md:items-start items-center lg:gap-6 gap-4">
           <Text
             as="h3"
-            className="uppercase bg-gradient-to-r from-myGreen/30 text-myGreen px-8 py-3 rounded-md font-barlow font-bold tracking-widest lg:text-2xl md:text-lg text-base"
+            className="reveal-up d1 uppercase border border-myGreen/40 bg-myGreen/10 backdrop-blur text-myGreen px-6 py-2.5 rounded-full font-belanosima tracking-[0.35em] lg:text-base md:text-sm text-xs"
           >
             Live Gaming
           </Text>
           <Text
             as="h1"
-            className="uppercase lg:text-8xl md:text-5xl text-4xl leading-[0.8] font-bold drop-shadow-[-1px_5px_0px_rgba(69,248,130,0.66)]
-                         sm:drop-shadow-[-1px_5px_0px_rgba(69,248,130,0.66)] font-belanosima "
+            className="reveal-up d2 uppercase lg:text-8xl md:text-5xl text-4xl leading-[0.9] font-bold font-belanosima"
           >
-            nebula duel
+            nebula <span className="text-aurora">duel</span>
           </Text>
           <Text
             as="h5"
-            className="uppercase font-poppins tracking-widest text-lg lg:text-2xl md:text-lg font-bold"
+            className="reveal-up d3 uppercase font-poppins tracking-widest text-base lg:text-xl md:text-lg text-gray-300"
           >
             Redefining single player games
           </Text>
           <Button
-            className="slider-cta-btn text-gray-100 md:text-base text-sm font-bold font-barlow px-4 py-2 flex justify-center items-center"
+            className="reveal-up d4 btn-glow rounded-xl font-belanosima uppercase tracking-wide md:text-base text-sm px-10 py-3.5 flex justify-center items-center"
             onClick={playgameButton}
           >
             {submiting ? (

@@ -48,6 +48,12 @@ export interface CampaignLevel {
   enemies: CampaignEnemy[];
 }
 
+export interface CharmInventoryEntry {
+  charm_id: number;
+  count: number;
+  name?: string;
+}
+
 export interface CampaignProgress {
   wallet_address: string;
   campaign_progress: number;
@@ -55,6 +61,7 @@ export interface CampaignProgress {
   campaign_losses: number;
   titles: string[];
   attempts: { level: number; attempts: number }[];
+  charm_inventory?: CharmInventoryEntry[];
 }
 
 export interface BattleUnit {
@@ -101,20 +108,61 @@ export interface BattleReport {
   enemy_squad: BattleUnit[];
   events: BattleEvent[];
   rewards: { points: number; stat_boost: boolean; title?: string };
+  charms_used?: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Battle charms
+// ---------------------------------------------------------------------------
+
+export interface CharmDef {
+  id: number;
+  name: string;
+  description: string;
+  element?: ElementName;
+  cost_points: number;
+  cost_ctsi: number;
+  max_hold: number;
+}
+
+export const CHARM_EMOJI: Record<number, string> = {
+  1: "⚡",
+  2: "🔥",
+  3: "🌿",
+  4: "💧",
+  5: "🔮",
+  6: "🌑",
+  7: "🧪",
+  8: "🔋",
+  9: "🛡️",
+  10: "📯",
+  11: "🍀",
+};
+
+export async function fetchCharmCatalog(): Promise<CharmDef[]> {
+  const { ok, reports } = await inspectState("charm_catalog");
+  return parseArrayReport<CharmDef>(ok, reports);
 }
 
 // ---------------------------------------------------------------------------
 // Fetchers
 // ---------------------------------------------------------------------------
 
-export async function fetchCampaignLevels(): Promise<CampaignLevel[]> {
-  const { ok, reports } = await inspectState("campaign_levels");
+/** Parse an inspect report that must be a JSON array; anything else
+ * (backend error object, old machine without the route) yields []. */
+function parseArrayReport<T>(ok: boolean, reports: string[]): T[] {
   if (!ok || !reports.length) return [];
   try {
-    return JSON.parse(reports[0]);
+    const parsed = JSON.parse(reports[0]);
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
+}
+
+export async function fetchCampaignLevels(): Promise<CampaignLevel[]> {
+  const { ok, reports } = await inspectState("campaign_levels");
+  return parseArrayReport<CampaignLevel>(ok, reports);
 }
 
 export async function fetchCampaignProgress(
@@ -123,7 +171,12 @@ export async function fetchCampaignProgress(
   const { ok, reports } = await inspectState(`campaign/${wallet.toLowerCase()}`);
   if (!ok || !reports.length) return null;
   try {
-    return JSON.parse(reports[0]);
+    const parsed = JSON.parse(reports[0]);
+    // Must be the progress object, not a backend error payload.
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && !parsed.error) {
+      return parsed as CampaignProgress;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -141,12 +194,7 @@ export interface LeaderboardRow {
 
 export async function fetchCampaignLeaderboard(): Promise<LeaderboardRow[]> {
   const { ok, reports } = await inspectState("campaign_leaderboard");
-  if (!ok || !reports.length) return [];
-  try {
-    return JSON.parse(reports[0]);
-  } catch {
-    return [];
-  }
+  return parseArrayReport<LeaderboardRow>(ok, reports);
 }
 
 /** Latest battle report for a player + level (post-fight replay source). */

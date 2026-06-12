@@ -15,7 +15,7 @@ function App() {
 
   return (
     <ProfileProvider>
-      <main className='w-full min-h-screen bg-bodyBg text-gray-100'>
+      <main className='nebula-app w-full min-h-screen text-gray-100'>
         <Header />
         <Suspense fallback={<Preloader />}>
           <Routes>

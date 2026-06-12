@@ -76,7 +76,7 @@ const Container = () => {
         <div className="w-full grid grid-rows-2 border border-gray-500/60 h-28 rounded-md overflow-hidden">
           <Text
             as={`h3`}
-            className="w-full flex font-barlow pl-3 font-bold text-lg text-gray-100 gap-1 items-center uppercase"
+            className="w-full flex font-poppins pl-3 font-bold text-lg text-gray-100 gap-1 items-center uppercase"
           >
             <FaCaretRight className=" text-myGreen" />
             Search
@@ -100,7 +100,7 @@ const Container = () => {
         <div className="w-full grid grid-rows-5 border border-gray-500/60 h-40 rounded-md overflow-hidden">
           <Text
             as={`h3`}
-            className="w-full row-span-2 flex font-barlow pl-3 font-bold text-lg text-gray-100 gap-1 uppercase items-center"
+            className="w-full row-span-2 flex font-poppins pl-3 font-bold text-lg text-gray-100 gap-1 uppercase items-center"
           >
             <FaCaretRight className=" text-myGreen" />
             Filter by price
@@ -114,7 +114,7 @@ const Container = () => {
         <div className="w-full border border-gray-500/60 rounded-md overflow-hidden">
           <Text
             as={`h3`}
-            className="w-full flex font-barlow pl-3 py-5 font-bold text-lg text-gray-100 gap-1 uppercase items-center"
+            className="w-full flex font-poppins pl-3 py-5 font-bold text-lg text-gray-100 gap-1 uppercase items-center"
           >
             <FaCaretRight className=" text-myGreen" />
             categories

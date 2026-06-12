@@ -173,6 +173,7 @@ pub async fn router(
         "play_campaign_level" => {
             handle_play_campaign_level(payload, msg_sender.to_string(), storage, time_stamp).await
         }
+        "buy_charm" => handle_buy_charm(payload, msg_sender.to_string(), storage).await,
         _ => Err(format!("Method '{}' does not exist", function)),
     };
 
@@ -747,6 +748,52 @@ pub async fn handle_purchase_single_character(
     Ok(())
 }
 
+// {"func": "buy_charm", "charm_id": 7, "quantity": 1, "currency": "points" | "ctsi"}
+pub async fn handle_buy_charm(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) -> Result<(), String> {
+    let obj = as_object(payload)?;
+    let charm_id = get_u128(obj, "charm_id")?;
+    let quantity = obj
+        .get("quantity")
+        .and_then(|v| v.as_u64())
+        .map(|v| v as u128)
+        .unwrap_or(1);
+    let currency_str = get_str(obj, "currency").unwrap_or_else(|_| "points".to_string());
+    let pay_with_ctsi = matches!(
+        game_characters::decode_currency(&currency_str)?,
+        game_characters::MintCurrency::Ctsi
+    );
+
+    crate::charms::buy_charm(
+        &mut storage.all_players,
+        msg_sender.clone(),
+        charm_id,
+        quantity,
+        pay_with_ctsi,
+        storage.points_rate,
+        &mut storage.profit_from_points_purchase,
+    )?;
+
+    storage.record_tx(
+        String::from("buy_charm"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+
+    let json_data = players_profile_to_json(storage.all_players.to_vec());
+    structure_notice(
+        String::from("buy_charm"),
+        &mut storage.total_transactions,
+        msg_sender,
+        json_data,
+        &mut storage.server_addr,
+    );
+    Ok(())
+}
+
 // {"func": "delist_character", "character_id": 1}
 pub async fn handle_delist_character(
     payload: &JsonValue,
@@ -1251,6 +1298,16 @@ pub async fn handle_play_campaign_level(
         None => AllStrategies::LowestHealthToMax,
     };
 
+    // Optional battle charms (max 2, validated in campaign::play_level).
+    let mut charm_ids: Vec<u128> = Vec::new();
+    for key in ["charm_id1", "charm_id2"] {
+        if let Some(v) = obj.get(key).and_then(|v| v.as_u64()) {
+            if v > 0 {
+                charm_ids.push(v as u128);
+            }
+        }
+    }
+
     let result = campaign::play_level(
         &mut storage.all_players,
         &mut storage.all_characters,
@@ -1259,6 +1316,7 @@ pub async fn handle_play_campaign_level(
         char_ids,
         time_stamp,
         strategy,
+        charm_ids,
     )?;
 
     storage.record_tx(

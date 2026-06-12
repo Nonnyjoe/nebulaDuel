@@ -21,6 +21,8 @@ import { useEffect } from 'react';
 import signMessages from "../../utils/relayTransaction.tsx"
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import readGameState from "../../utils/readState.tsx";
+import StatBars from "../shared/StatBars";
+import { ELEMENT_META, powerToElement } from "../../utils/campaign";
 
 interface Character {
   id: number;
@@ -234,11 +236,11 @@ const PurchaseCharacter = () => {
   }
 
   return (
-    <section className="w-full min-h-screen bg-bodyBg">
-      <main className="w-full max-w-[1368px] mx-auto py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    <section className="w-full min-h-screen">
+      <main className="w-full max-w-[1500px] mx-auto py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <Text
           as="h1"
-          className="font-bold text-center uppercase font-belanosima text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
+          className="reveal-up font-belanosima text-center uppercase text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
         >
           Select characters to purchase
         </Text>
@@ -272,12 +274,12 @@ const PurchaseCharacter = () => {
                         : "border-gray-700/80 hover:border-gray-600"
                     }`}
                   >
-                    <div className="aspect-[4/3] w-full bg-gray-800/50 relative overflow-hidden">
+                    <div className="card-media rounded-lg">
                       <ImageWrap
                         image={item.img}
                         className="w-full h-full"
                         alt={item.name}
-                        objectStatus="object-contain"
+                        objectStatus="object-cover object-top"
                       />
                       {selected && (
                         <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-myGreen flex items-center justify-center text-navBg text-xs font-bold">
@@ -286,24 +288,34 @@ const PurchaseCharacter = () => {
                       )}
                     </div>
                     <div className="p-3 sm:p-4 flex flex-col gap-2">
-                      <Text as="span" className="font-belanosima text-white text-base sm:text-lg truncate">
-                        {item.name}
-                      </Text>
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          HP {item.health}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          ATK {item.attack}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          STR {item.strength}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                          SPD {item.speed}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <Text as="span" className="font-belanosima text-white text-base sm:text-lg truncate">
+                          {item.name}
+                        </Text>
+                        {(() => {
+                          const element = powerToElement(item.super_power);
+                          const meta = ELEMENT_META[element];
+                          return (
+                            <span
+                              className={`shrink-0 text-[10px] rounded-full px-2 py-0.5 ${meta.bg} ${meta.color}`}
+                              title={item.super_power}
+                            >
+                              {meta.emoji} {element}
+                            </span>
+                          );
+                        })()}
                       </div>
-                      <span className="text-myYellow font-poppins text-xs font-semibold">
+                      <StatBars
+                        size="sm"
+                        stats={{
+                          health: item.health,
+                          strength: item.strength,
+                          attack: item.attack,
+                          speed: item.speed,
+                        }}
+                        maxima={{ health: 100, strength: 14, attack: 18, speed: 11 }}
+                      />
+                      <span className="text-myYellow font-belanosima text-xs">
                         {item.price} pts
                       </span>
                     </div>
@@ -341,7 +353,7 @@ const PurchaseCharacter = () => {
                               image={character.img}
                               className="w-full h-full"
                               alt={character.name}
-                              objectStatus="object-contain"
+                              objectStatus="object-cover object-top"
                             />
                           </div>
                           <Text as="span" className="font-belanosima text-white text-xs sm:text-sm truncate w-full text-center">
@@ -378,7 +390,7 @@ const PurchaseCharacter = () => {
 
             <Button
               type="button"
-              className="w-full text-navBg uppercase font-bold font-barlow text-sm sm:text-base tracking-wide py-3.5 sm:py-4 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full text-navBg uppercase font-bold font-poppins text-sm sm:text-base tracking-wide py-3.5 sm:py-4 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={handlePurchaseCharacter}
               disabled={submiting}
             >

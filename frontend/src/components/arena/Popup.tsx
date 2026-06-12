@@ -55,7 +55,7 @@ const Popup: React.FC<PopupProps> = ({ winnerAddress, onClose }) => {
         </div>
 
         <button
-          className="relative z-10 mt-2 w-full inline-flex items-center justify-center rounded-xl bg-myGreen hover:bg-myYellow text-navBg font-belanosima uppercase tracking-wide py-3 sm:py-3.5 text-sm sm:text-base"
+          className="relative z-10 mt-2 w-full inline-flex items-center justify-center rounded-xl btn-glow font-belanosima uppercase tracking-wide py-3 sm:py-3.5 text-sm sm:text-base"
           onClick={onClose}
         >
           Close

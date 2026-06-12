@@ -13,7 +13,7 @@ const HeroSection = () => {
             <main className="w-full h-full absolute top-0 inset-x-0 bg-gradient-to-b from-[#0f161b]/60 z-[10] flex flex-row justify-center items-center lg:px-10 md:px-6 px-4">
                 <aside className="w-full flex flex-col -mt-10 md:mt-0 justify-center items-center lg:gap-4 gap-4">
 
-                    <Text as="h1" className="uppercase lg:text-5xl md:text-4xl text-4xl leading-[0.8] font-extrabold text-center font-barlow ">Gaming Item Collections</Text>
+                    <Text as="h1" className="uppercase lg:text-5xl md:text-4xl text-4xl leading-[0.8] font-extrabold text-center font-poppins ">Gaming Item Collections</Text>
                     <ul className="flex gap-3 justify-start items-center">
                         <li className="text-myGreen font-medium text-lg tracking-wide font-belanosima">
                             <Link to="/">Home</Link>

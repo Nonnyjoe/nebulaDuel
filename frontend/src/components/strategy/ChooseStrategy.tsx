@@ -16,6 +16,8 @@ import { useNavigate } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
 // import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
+import StatBars from "../shared/StatBars";
+import { ELEMENT_META, powerToElement, STRATEGIES } from "../../utils/campaign";
 // import readGameState from "../../utils/readState.tsx";
 
 interface StrategyInterface {
@@ -341,10 +343,10 @@ const ChooseStrategy = () => {
   // }
 
   return (
-    <main className="w-full min-h-screen bg-bodyBg flex flex-col items-center py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
+    <main className="w-full min-h-screen flex flex-col items-center py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8">
       <Text
         as="h1"
-        className="font-belanosima font-bold text-center uppercase text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
+        className="reveal-up font-belanosima text-center uppercase text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
       >
         Choose your strategy
       </Text>
@@ -372,35 +374,41 @@ const ChooseStrategy = () => {
                 key={index}
                 className="w-full rounded-xl border-2 border-gray-700/80 bg-myBlack/80 backdrop-blur-sm flex flex-col overflow-hidden p-3 sm:p-4"
               >
-                <div className="aspect-[4/3] w-full bg-gray-800/50">
+                <div className="card-media rounded-lg">
                   <ImageWrap
                     image={item.img}
                     className="w-full h-full"
                     alt={item.name}
-                    objectStatus="object-contain"
+                    objectStatus="object-cover object-top"
                   />
                 </div>
                 <div className="mt-3 flex flex-col gap-2">
-                  <Text
-                    as="span"
-                    className="font-belanosima text-white text-sm sm:text-base truncate"
-                  >
-                    {item.name}
-                  </Text>
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                      HP {item.health}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                      ATK {item.attack}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                      STR {item.strength}
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                      SPD {item.speed}
-                    </span>
+                  <div className="flex items-center justify-between gap-2">
+                    <Text
+                      as="span"
+                      className="font-belanosima text-white text-sm sm:text-base truncate"
+                    >
+                      {item.name}
+                    </Text>
+                    {(() => {
+                      const element = powerToElement(item.super_power);
+                      const meta = ELEMENT_META[element];
+                      return (
+                        <span className={`shrink-0 text-[10px] rounded-full px-2 py-0.5 ${meta.bg} ${meta.color}`}>
+                          {meta.emoji} {element}
+                        </span>
+                      );
+                    })()}
                   </div>
+                  <StatBars
+                    size="sm"
+                    stats={{
+                      health: item.health,
+                      strength: item.strength,
+                      attack: item.attack,
+                      speed: item.speed,
+                    }}
+                  />
                 </div>
               </div>
             ))}
@@ -426,35 +434,41 @@ const ChooseStrategy = () => {
                   key={index}
                   className="w-full rounded-xl border-2 border-gray-700/80 bg-myBlack/80 backdrop-blur-sm flex flex-col overflow-hidden p-3 sm:p-4"
                 >
-                  <div className="aspect-[4/3] w-full bg-gray-800/50">
+                  <div className="card-media rounded-lg">
                     <ImageWrap
                       image={item.img}
                       className="w-full h-full"
                       alt={item.name}
-                      objectStatus="object-contain"
+                      objectStatus="object-cover object-top"
                     />
                   </div>
                   <div className="mt-3 flex flex-col gap-2">
-                    <Text
-                      as="span"
-                      className="font-belanosima text-white text-sm sm:text-base truncate"
-                    >
-                      {item.name}
-                    </Text>
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                        HP {item.health}
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                        ATK {item.attack}
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                        STR {item.strength}
-                      </span>
-                      <span className="px-2 py-0.5 rounded bg-gray-700/80 text-gray-300 text-xs font-poppins">
-                        SPD {item.speed}
-                      </span>
+                    <div className="flex items-center justify-between gap-2">
+                      <Text
+                        as="span"
+                        className="font-belanosima text-white text-sm sm:text-base truncate"
+                      >
+                        {item.name}
+                      </Text>
+                      {(() => {
+                        const element = powerToElement(item.super_power);
+                        const meta = ELEMENT_META[element];
+                        return (
+                          <span className={`shrink-0 text-[10px] rounded-full px-2 py-0.5 ${meta.bg} ${meta.color}`}>
+                            {meta.emoji} {element}
+                          </span>
+                        );
+                      })()}
                     </div>
+                    <StatBars
+                      size="sm"
+                      stats={{
+                        health: item.health,
+                        strength: item.strength,
+                        attack: item.attack,
+                        speed: item.speed,
+                      }}
+                    />
                   </div>
                 </div>
               ))}
@@ -496,16 +510,20 @@ const ChooseStrategy = () => {
                 onClick={() => toggleStrategySelection(item)}
                 className={`w-full rounded-xl border-2 px-3 py-3 sm:px-4 sm:py-4 bg-myBlack/80 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-myGreen focus-visible:ring-offset-2 focus-visible:ring-offset-bodyBg ${
                   selected
-                    ? "border-myGreen bg-myGreen/10 shadow-md shadow-myGreen/20"
+                    ? "border-myGreen bg-myGreen/10 shadow-[0_0_12px_rgba(69,248,130,0.35)]"
                     : "border-gray-700/80 hover:border-gray-500 hover:bg-gray-900/60"
                 }`}
               >
                 <Text
                   as="span"
-                  className="font-belanosima text-sm sm:text-base text-white"
+                  className={`font-belanosima text-sm sm:text-base ${selected ? "text-myGreen" : "text-white"}`}
                 >
-                  {item.name}
+                  {STRATEGIES.find((s) => s.id === item.id)?.emoji ?? "⚔️"}{" "}
+                  {STRATEGIES.find((s) => s.id === item.id)?.name ?? item.name}
                 </Text>
+                <p className="text-[10px] text-gray-400 font-poppins mt-1 leading-snug">
+                  {STRATEGIES.find((s) => s.id === item.id)?.description ?? ""}
+                </p>
               </button>
             );
           })}
@@ -514,7 +532,7 @@ const ChooseStrategy = () => {
         <div className="flex gap-3 items-center mt-2 sm:mt-4">
           <Button
             type="button"
-            className="w-full sm:w-auto text-navBg uppercase font-bold font-barlow text-sm sm:text-base tracking-wide py-3.5 sm:py-4 px-8 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto text-navBg uppercase font-bold font-poppins text-sm sm:text-base tracking-wide py-3.5 sm:py-4 px-8 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             onClick={handleStrategySelection}
             disabled={submiting}
           >

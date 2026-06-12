@@ -9,7 +9,7 @@ const Footer = () => {
     return (
         <footer className="w-full">
             <div className="pt-20 pb-[30px] md:px-6 px-5 border-t-[#151d23] border-t border-solid">
-                <div className="w-full max-w-[1368px] mx-auto">
+                <div className="w-full max-w-[1500px] mx-auto">
                     <div className="w-full grid lg:grid-cols-4 md:grid-cols-2 gap-8">
 
                         <div className=" mt-0 mb-[50px] mx-0 ">
@@ -90,7 +90,7 @@ const Footer = () => {
                 </div>
             </div>
             <div className="px-4 py-6 bg-[#090d10]">
-                <div className="w-full max-w-[1368px] mx-auto">
+                <div className="w-full max-w-[1500px] mx-auto">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-2">
                         <p className="md:text-[14px] text-xs font-semibold uppercase text-[#9f9f9f] m-0 font-poppins text-center md:text-left">
                             Copyright © 2023 - All Rights Reserved By{" "}

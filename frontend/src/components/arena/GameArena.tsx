@@ -7,11 +7,11 @@ import bg from "/NebulaArena2.jpeg"
 
 const GameArena = () => {
   return (
-    <section className="w-full lg:py-24 md:py-24 py-20 px-3 md:px-5 grid lg:grid-cols-5 md:gap-6 gap-3 grid-cols-2">
+    <section className="container-game section grid lg:grid-cols-5 md:gap-6 gap-3 grid-cols-2">
       <aside className="flex order-2 lg:order-1 flex-col gap-4">
         <Text
           as="h3"
-          className="md:text-xl text-base mt-6 font-medium font-barlow text-center"
+          className="md:text-xl text-base mt-6 font-medium font-poppins text-center"
         >
           Your Character
         </Text>
@@ -69,7 +69,7 @@ const GameArena = () => {
                 </div>
             </main>
             <aside className="flex order-3 lg:order-3 flex-col gap-4">
-                <Text as="h3" className="md:text-xl text-base mt-6 font-medium font-barlow text-center">Your Opponent</Text>
+                <Text as="h3" className="md:text-xl text-base mt-6 font-medium font-poppins text-center">Your Opponent</Text>
 
         <main className="w-full grid md:gap-6 gap-3">
           {data.slice(4, 7).map((item, index) => (

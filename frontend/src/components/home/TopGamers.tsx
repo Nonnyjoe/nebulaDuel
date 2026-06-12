@@ -178,9 +178,9 @@ const TopGamers = () => {
                                         <div className="w-full flex-wrap flex h-full flex-col">
                                             <section className="w-full grid md:grid-cols-5 gap-3">
                                                 <div className="flex flex-col md:col-span-3">
-                                                    <Text as="h4" className="uppercase font-bold font-barlow text-[30px] mt-0 mb-0.5 mx-0">{tab.title}</Text>
+                                                    <Text as="h4" className="uppercase font-bold font-poppins text-[30px] mt-0 mb-0.5 mx-0">{tab.title}</Text>
                                                     <Text as={`span`}
-                                                        className="uppercase font-barlow block text-[20px] font-semibold text-[#ffbe18] mt-0 mb-[18px] mx-0 font-Barlow">rate{" "}{tab.rate}</Text>
+                                                        className="uppercase font-poppins block text-[20px] font-semibold text-[#ffbe18] mt-0 mb-[18px] mx-0 font-Barlow">rate{" "}{tab.rate}</Text>
                                                     <Text as="p" className="m-0">{tab.text}</Text>
                                                 </div>
                                                 <div className="md:col-span-2">

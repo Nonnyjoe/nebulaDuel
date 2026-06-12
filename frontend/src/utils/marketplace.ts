@@ -41,6 +41,7 @@ export interface MarketInfo {
   point_purchase_count?: number;
   last_point_purchase_time?: number;
   starter_team_claimed?: boolean;
+  charm_inventory?: { charm_id: number; count: number; name?: string }[];
 }
 
 function decorate(c: any): MarketCharacter {
