@@ -37,15 +37,6 @@ interface WarriorInfo {
   model?: string;
 }
 
-interface LogSnapshot {
-  character_id: number;
-  name: string;
-  health: number;
-  strength: number;
-  attack: number;
-  owner: string;
-}
-
 const shortAddress = (addr?: string) => {
   if (!addr) return "";
   if (addr.length <= 12) return addr;
@@ -183,96 +174,70 @@ const GameLayout = () => {
     loadNames();
   }, [duelData]);
 
-  // ----- battle log -> stage events ---------------------------------------
+  // ----- rich battle report -> stage events -------------------------------
 
-  const parseBattleLog = (raw: any): [LogSnapshot, LogSnapshot][] => {
+  /** The backend now resolves duels on the SAME engine as the campaign and
+   * emits a rich `battle_events` report (elements, powers, crits, energy).
+   * We map it straight onto BattleStage, exactly like CampaignBattle does, so
+   * a warrior looks and fights identically everywhere. */
+  const parseReport = (duel: any): any | null => {
+    const raw = duel?.battle_events;
+    if (!raw) return null;
     try {
-      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-      if (!Array.isArray(parsed)) return [];
-      return parsed.filter(
-        (r: any) => Array.isArray(r) && r.length >= 2,
-      ) as [LogSnapshot, LogSnapshot][];
+      const report = typeof raw === "string" ? JSON.parse(raw) : raw;
+      return report && Array.isArray(report.events) ? report : null;
     } catch {
-      return [];
+      return null;
     }
   };
 
-  /** Convert the on-chain duel battle log (post-round stat snapshots) into
-   * replayable StageEvents, deriving per-hit damage from HP deltas. */
   const buildStageData = (
     duel: any,
-    creators: WarriorInfo[],
-    opponents: WarriorInfo[],
   ): {
     events: StageEvent[];
     units: StageUnit[];
     rounds: number;
     victorySide: "player" | "enemy";
-  } => {
-    const log = parseBattleLog(duel.battle_log);
-    const everyone = [...creators, ...opponents];
+  } | null => {
+    const report = parseReport(duel);
+    if (!report) return null;
 
-    const hp = new Map<number, number>();
-    for (const w of everyone) hp.set(w.id, w.health);
-
-    const elementOf = (name: string) => {
-      const meta = charactersdata.find((d) => d.name === name);
-      return powerToElement(meta?.super_power ?? "");
-    };
-
-    const events: StageEvent[] = [];
-    log.forEach(([attacker, victim], step) => {
-      const prevVictimHp = hp.get(Number(victim.character_id)) ?? Number(victim.health);
-      const damage = Math.max(0, prevVictimHp - Number(victim.health));
-      hp.set(Number(victim.character_id), Number(victim.health));
-      hp.set(Number(attacker.character_id), Number(attacker.health));
-
-      events.push({
-        round: step + 1,
-        actor_id: Number(attacker.character_id),
-        target_id: Number(victim.character_id),
-        action: "attack",
-        element: elementOf(attacker.name),
-        damage,
-        crit: false,
-        effective: "normal",
-        actor_hp: Number(attacker.health),
-        target_hp: Number(victim.health),
-        target_ko: Number(victim.health) <= 0,
-      });
+    const toUnit = (u: any, side: "player" | "enemy"): StageUnit => ({
+      id: Number(u.id),
+      side,
+      name: u.name,
+      element: u.element ?? powerToElement(u.power ?? ""),
+      model: charactersdata.find((c) => c.name === u.name)?.model,
+      maxHealth: Number(u.max_health ?? u.health),
     });
 
     const units: StageUnit[] = [
-      ...creators.map((w) => ({
-        id: w.id,
-        side: "player" as const,
-        name: w.name,
-        element: powerToElement(w.super_power),
-        model: w.model,
-        maxHealth: w.health,
-      })),
-      ...opponents.map((w) => ({
-        id: w.id,
-        side: "enemy" as const,
-        name: w.name,
-        element: powerToElement(w.super_power),
-        model: w.model,
-        maxHealth: w.health,
-      })),
+      ...(report.player_squad ?? []).map((u: any) => toUnit(u, "player")),
+      ...(report.enemy_squad ?? []).map((u: any) => toUnit(u, "enemy")),
     ];
 
-    const victorySide: "player" | "enemy" =
-      (duel.duel_winner ?? "").toLowerCase() ===
-      (duel.duel_creator ?? "").toLowerCase()
-        ? "player"
-        : "enemy";
+    const events: StageEvent[] = (report.events ?? []).map((e: any) => ({
+      round: e.round,
+      actor_id: e.actor_id,
+      target_id: e.target_id,
+      action: e.action,
+      power: e.power,
+      element: e.element,
+      damage: e.damage,
+      heal: e.heal,
+      crit: e.crit,
+      effective: e.effective,
+      effect: e.effect,
+      actor_hp: e.actor_hp,
+      target_hp: e.target_hp,
+      target_ko: e.target_ko,
+    }));
 
-    return { events, units, rounds: events.length, victorySide };
+    const victorySide: "player" | "enemy" = report.victory ? "player" : "enemy";
+    return { events, units, rounds: Number(report.rounds) || events.length, victorySide };
   };
 
-  const [stage, setStage] = useState<ReturnType<typeof buildStageData> | null>(
-    null,
-  );
+  const [stage, setStage] = useState<ReturnType<typeof buildStageData>>(null);
 
   const startBattle = async () => {
     if (!duelData) return;
@@ -289,28 +254,32 @@ const GameLayout = () => {
     setIsBusy(true);
     try {
       let duel = duelData;
-      let creators = creatorWarriors;
-      let opponents = opponentWarriors;
 
-      if (!parseBattleLog(duel.battle_log).length) {
+      if (!parseReport(duel)) {
         toast.info("Submitting fight to the Cartesi machine…", {
           position: "top-right",
         });
         await signMessages({ func: "fight", duel_id: Number(duelId) });
         const reloaded = await loadDuel();
-        if (!reloaded || !parseBattleLog(reloaded.duel.battle_log).length) {
-          toast.error("Battle submitted but no battle log yet — try again shortly.", {
+        if (!reloaded || !parseReport(reloaded.duel)) {
+          toast.error("Battle submitted but no result yet — try again shortly.", {
             position: "top-right",
           });
           setIsBusy(false);
           return;
         }
         duel = reloaded.duel;
-        creators = reloaded.creators;
-        opponents = reloaded.opponents;
       }
 
-      setStage(buildStageData(duel, creators, opponents));
+      const data = buildStageData(duel);
+      if (!data) {
+        toast.error("Could not read the battle result — try again shortly.", {
+          position: "top-right",
+        });
+        setIsBusy(false);
+        return;
+      }
+      setStage(data);
       setReplaying(true);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to start battle", {
@@ -326,7 +295,7 @@ const GameLayout = () => {
   };
 
   const hasLog = useMemo(
-    () => (duelData ? parseBattleLog(duelData.battle_log).length > 0 : false),
+    () => (duelData ? parseReport(duelData) != null : false),
     [duelData],
   );
 

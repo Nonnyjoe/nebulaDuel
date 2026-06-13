@@ -1,5 +1,5 @@
 use crate::battle_challenge::{Difficulty, Duel};
-use crate::game_characters::{Character, MinimalCharacter, SuperPower};
+use crate::game_characters::{Character, SuperPower};
 use crate::market_place::SaleDetails;
 use crate::players_profile::{Player, UserTransaction};
 use crate::strategy_simulation::AllStrategies;
@@ -176,11 +176,29 @@ pub struct TransactionData {
     pub status: TransactionStatus,
 }
 
+
+/// Anti-front-running: a committed strategy is only revealed once BOTH sides
+/// have committed (or the duel is complete). Before that, an opponent could
+/// read it via inspect/notices and join staked duels they're guaranteed to
+/// win. "Hidden" still tells the UI a choice was made.
+fn strategy_for_serialization(duel: &Duel, mine: &AllStrategies, theirs: &AllStrategies) -> String {
+    let both_committed = *mine != AllStrategies::YetToSelect && *theirs != AllStrategies::YetToSelect;
+    if duel.is_completed || both_committed {
+        decode_strategy_json(mine.clone())
+    } else if *mine == AllStrategies::YetToSelect {
+        String::from("Yet_to_select")
+    } else {
+        String::from("Hidden")
+    }
+}
+
 pub fn duels_to_json(all_duels: Vec<Duel>) -> String {
     let mut json_array = JsonValue::new_array();
 
     for duel in all_duels {
         let mut tx_json = JsonValue::new_object();
+        let cs = strategy_for_serialization(&duel, &duel.creators_strategy, &duel.opponents_strategy);
+        let os = strategy_for_serialization(&duel, &duel.opponents_strategy, &duel.creators_strategy);
 
         tx_json["duel_id"] = (duel.duel_id as u64).into();
         tx_json["is_active"] = (duel.is_active).into();
@@ -194,23 +212,35 @@ pub fn duels_to_json(all_duels: Vec<Duel>) -> String {
         };
         tx_json["duel_creator"] = duel.duel_creator.into();
         tx_json["creator_warriors"] = vec_of_id_to_json(duel.creator_warriors).into();
-        tx_json["creators_strategy"] = decode_strategy_json(duel.creators_strategy).into();
+        tx_json["creators_strategy"] = cs.into();
         tx_json["duel_opponent"] = duel.duel_opponent.into();
         tx_json["opponent_warriors"] = vec_of_id_to_json(duel.opponent_warriors).into();
-        tx_json["opponents_strategy"] = decode_strategy_json(duel.opponents_strategy).into();
-        tx_json["battle_log"] = (decode_battle_log_json(duel.battle_log)).into();
+        tx_json["opponents_strategy"] = os.into();
+        tx_json["battle_events"] = battle_events_json(&duel.battle_events);
         tx_json["duel_winner"] = duel.duel_winner.into();
         tx_json["duel_loser"] = duel.duel_loser.into();
         tx_json["creation_time"] = (duel.creation_time as u64).into();
 
-        json_array.push(tx_json).expect("JSON ERROR");
+        json_array.push(tx_json).ok();
     }
 
     json_array.dump()
 }
 
+/// Parse the stored rich battle report into a JSON value (or null when the
+/// duel has not been fought yet).
+fn battle_events_json(raw: &str) -> JsonValue {
+    if raw.is_empty() {
+        JsonValue::Null
+    } else {
+        json::parse(raw).unwrap_or(JsonValue::Null)
+    }
+}
+
 pub fn single_duel_to_json(duel: Duel) -> String {
     let mut tx_json = JsonValue::new_object();
+    let cs = strategy_for_serialization(&duel, &duel.creators_strategy, &duel.opponents_strategy);
+    let os = strategy_for_serialization(&duel, &duel.opponents_strategy, &duel.creators_strategy);
 
     tx_json["duel_id"] = (duel.duel_id as u64).into();
     tx_json["is_active"] = (duel.is_active).into();
@@ -224,40 +254,16 @@ pub fn single_duel_to_json(duel: Duel) -> String {
     };
     tx_json["duel_creator"] = duel.duel_creator.into();
     tx_json["creator_warriors"] = vec_of_id_to_json(duel.creator_warriors).into();
-    tx_json["creators_strategy"] = decode_strategy_json(duel.creators_strategy).into();
+    tx_json["creators_strategy"] = cs.into();
     tx_json["duel_opponent"] = duel.duel_opponent.into();
     tx_json["opponent_warriors"] = vec_of_id_to_json(duel.opponent_warriors).into();
-    tx_json["opponents_strategy"] = decode_strategy_json(duel.opponents_strategy).into();
-    tx_json["battle_log"] = (decode_battle_log_json(duel.battle_log)).into();
+    tx_json["opponents_strategy"] = os.into();
+    tx_json["battle_events"] = battle_events_json(&duel.battle_events);
     tx_json["duel_winner"] = duel.duel_winner.into();
     tx_json["duel_loser"] = duel.duel_loser.into();
     tx_json["creation_time"] = (duel.creation_time as u64).into();
 
     return tx_json.to_string();
-}
-
-pub fn decode_battle_log_json(battle_log: Vec<Vec<MinimalCharacter>>) -> String {
-    let mut json_array = JsonValue::new_array();
-
-    for duel in battle_log {
-        let mut json_array1 = JsonValue::new_array();
-
-        for round in duel {
-            let mut tx_json = JsonValue::new_object();
-
-            tx_json["character_id"] = (round.id as u64).into();
-            tx_json["name"] = (round.name).into();
-            tx_json["health"] = (round.health as u64).into();
-            tx_json["strength"] = (round.strength as u64).into();
-            tx_json["attack"] = (round.attack as u64).into();
-            tx_json["owner"] = (round.owner).into();
-
-            json_array1.push(tx_json).expect("JSON ERROR2");
-        }
-        json_array.push(json_array1).expect("JSON ERROR3");
-    }
-
-    json_array.dump()
 }
 
 pub fn decode_strategy_json(strategy: AllStrategies) -> String {
@@ -279,7 +285,7 @@ pub fn listed_character_json(listed_characters: Vec<SaleDetails>) -> String {
         tx_json["character_id"] = (character.character_id as u64).into();
         tx_json["price"] = (character.price).into();
         tx_json["seller"] = (character.seller).into();
-        json_array.push(tx_json).expect("JSON ERROR5");
+        json_array.push(tx_json).ok();
     }
 
     json_array.dump()
@@ -303,7 +309,7 @@ pub fn character_to_json(all_characters: Vec<Character>) -> String {
         tx_json["total_losses"] = (character.total_losses as u64).into();
         tx_json["price"] = (character.price as u64).into();
         tx_json["owner"] = (character.owner).into();
-        json_array.push(tx_json).expect("JSON ERROR4");
+        json_array.push(tx_json).ok();
     }
 
     json_array.dump()
@@ -372,7 +378,7 @@ pub fn players_profile_to_json(all_players: Vec<Player>) -> String {
         tx_json["campaign_titles"] = campaign_titles_to_json(&player.campaign_titles);
         tx_json["transaction_history"] =
             player_transactions_to_json(player.transaction_history).into() ;
-        json_array.push(tx_json).expect("JSON ERROR6");
+        json_array.push(tx_json).ok();
     }
 
     json_array.dump()
@@ -384,7 +390,7 @@ pub fn vec_of_id_to_json(all_ids: Vec<u128>) -> String {
     for id in all_ids {
         let mut tx_json = JsonValue::new_object();
         tx_json["char_id"] = (id as u64).into();
-        json_array.push(tx_json).expect("JSON ERROR7");
+        json_array.push(tx_json).ok();
     }
 
     json_array.dump()
@@ -398,7 +404,7 @@ pub fn player_transactions_to_json(transactions: Vec<UserTransaction>) -> String
         tx_json["transaction_id"] = (transaction.transaction_id as u64).into();
         tx_json["method_called"] = (transaction.method_called).into();
 
-        json_array.push(tx_json).expect("JSON ERROR8");
+        json_array.push(tx_json).ok();
     }
 
     json_array.dump()

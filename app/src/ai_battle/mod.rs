@@ -83,7 +83,7 @@ pub fn create_ai_duel(
         duel_opponent: String::from(AI_ADDRESS),
         opponent_warriors: Vec::new(),
         opponents_strategy: AllStrategies::YetToSelect,
-        battle_log: Vec::new(),
+        battle_events: String::new(),
         duel_winner: String::new(),
         duel_loser: String::new(),
         creation_time: time_stamp,

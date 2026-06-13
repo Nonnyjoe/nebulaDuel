@@ -1,10 +1,13 @@
-use crate::game_characters::{select_fighters, Character, MinimalCharacter};
+use crate::campaign::simulate_duel;
+use crate::charms::build_loadout;
+use crate::game_characters::{select_fighters, Character, SuperPower};
 use crate::players_profile::{get_profile, Player};
-use crate::strategy_simulation::{decicde_victim, AllStrategies};
+use crate::strategy_simulation::AllStrategies;
 
-/// Hard cap on battle rounds so a single input can never loop forever
-/// (bounded computation requirement for Cartesi machine execution).
-const MAX_BATTLE_ROUNDS: u32 = 500;
+/// Winning any duel (P2P or AI) now pays points — the core mode finally has
+/// a progression loop instead of being reward-free.
+pub const DUEL_WIN_REWARD_POINTS: u128 = 40;
+pub const AI_ADDRESS: &str = "0xnebula";
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Difficulty {
@@ -27,38 +30,14 @@ pub struct Duel {
     pub duel_opponent: String,
     pub opponent_warriors: Vec<u128>,
     pub opponents_strategy: AllStrategies,
-    pub battle_log: Vec<Vec<MinimalCharacter>>,
+    /// Rich, campaign-format battle report (events + final squads) emitted by
+    /// the unified engine. Empty until the duel is fought. Serialized to the
+    /// frontend as `battle_events` so the 3D replay shows elements, powers and
+    /// crits exactly like the campaign.
+    pub battle_events: String,
     pub duel_winner: String,
     pub duel_loser: String,
     pub creation_time: u128,
-}
-
-struct TurnsTracker {
-    turn_number: usize,
-}
-
-impl TurnsTracker {
-    fn new() -> TurnsTracker {
-        TurnsTracker { turn_number: 0 }
-    }
-
-    /// Advance to the next turn, wrapping around team size.
-    fn advance(&mut self, team_size: usize) {
-        if team_size == 0 {
-            self.turn_number = 0;
-        } else {
-            self.turn_number = (self.turn_number + 1) % team_size;
-        }
-    }
-
-    /// Index of the warrior whose turn it is, always within bounds.
-    fn current(&self, team_size: usize) -> usize {
-        if team_size == 0 {
-            0
-        } else {
-            self.turn_number % team_size
-        }
-    }
 }
 
 pub fn create_duel(
@@ -112,7 +91,7 @@ pub fn create_duel(
         duel_opponent: String::new(),
         opponent_warriors: Vec::new(),
         opponents_strategy: AllStrategies::YetToSelect,
-        battle_log: Vec::new(),
+        battle_events: String::new(),
         duel_winner: String::new(),
         duel_loser: String::new(),
         creation_time: time_stamp,
@@ -230,6 +209,12 @@ pub fn set_strategy(
     }
 }
 
+/// Resolve a duel using the UNIFIED combat engine (the same one the campaign
+/// uses): elements, super-powers, energy, crits and charms all apply, so a
+/// warrior fights identically in P2P, AI and campaign battles. The arena is
+/// neutral (no biome bias) to keep staked duels environmentally fair. The
+/// result is stored as a rich `battle_events` report the frontend replays in
+/// full 3D, then win/loss/stake settlement runs.
 pub fn fight(
     all_duels: &mut Vec<Duel>,
     all_characters: &mut Vec<Character>,
@@ -238,94 +223,59 @@ pub fn fight(
     available_duels: &mut Vec<Duel>,
     profit_from_stake: &mut f64,
 ) -> Result<Duel, String> {
-    let mut creator_turn_tracker = TurnsTracker::new();
-    let mut opponent_turn_tracker = TurnsTracker::new();
+    // Phase 1: read-only validation + snapshot the inputs we need.
+    let (creator_strategy, opponent_strategy, creator_ids, opponent_ids, seed) = {
+        let duel = find_duel(all_duels, duel_id)
+            .ok_or_else(|| format!("Duel with id {} not found", duel_id))?;
+        if duel.is_completed {
+            return Ok(duel.clone());
+        }
+        if !duel.is_active {
+            return Err("Duel not active".to_string());
+        }
+        if duel.creators_strategy == AllStrategies::YetToSelect
+            || duel.opponents_strategy == AllStrategies::YetToSelect
+        {
+            return Err("Both players must select a strategy before fighting".to_string());
+        }
+        (
+            duel.creators_strategy.clone(),
+            duel.opponents_strategy.clone(),
+            duel.creator_warriors.clone(),
+            duel.opponent_warriors.clone(),
+            // Deterministic, replay-safe seed from on-chain duel data.
+            duel.creation_time
+                .wrapping_add(duel_id.wrapping_mul(7919))
+                .wrapping_add(1),
+        )
+    };
 
+    // Phase 2: run the simulation (no duel borrow held).
+    let creator_squad = squad_spec(all_characters, &creator_ids)?;
+    let opponent_squad = squad_spec(all_characters, &opponent_ids)?;
+    // Duels carry no charms yet, so both sides use an empty loadout.
+    let empty = build_loadout(&[])?;
+    let battle = simulate_duel(
+        creator_squad,
+        opponent_squad,
+        creator_strategy,
+        opponent_strategy,
+        seed,
+        &empty,
+        &empty,
+    );
+
+    // Phase 3: record the outcome.
     let duel = find_duel(all_duels, duel_id)
         .ok_or_else(|| format!("Duel with id {} not found", duel_id))?;
-
-    if duel.is_completed {
-        return Ok(duel.clone());
-    }
-    if !duel.is_active {
-        return Err("Duel not active".to_string());
-    }
-    if duel.creators_strategy == AllStrategies::YetToSelect
-        || duel.opponents_strategy == AllStrategies::YetToSelect
-    {
-        return Err("Both players must select a strategy before fighting".to_string());
-    }
-
-    let creators_strategy = duel.creators_strategy.clone();
-    let opponents_strategy = duel.opponents_strategy.clone();
-    let mut creators_warriors = get_warriors_clone(all_characters, &duel.creator_warriors)?;
-    let mut opponent_warriors = get_warriors_clone(all_characters, &duel.opponent_warriors)?;
-
-    let mut rounds: u32 = 0;
-    while !creators_warriors.is_empty() && !opponent_warriors.is_empty() {
-        rounds += 1;
-        if rounds > MAX_BATTLE_ROUNDS {
-            // Deterministic tie-break: side with most total health remaining wins.
-            let creator_health: u128 = creators_warriors.iter().map(|c| c.health).sum();
-            let opponent_health: u128 = opponent_warriors.iter().map(|c| c.health).sum();
-            if creator_health >= opponent_health {
-                opponent_warriors.clear();
-            } else {
-                creators_warriors.clear();
-            }
-            break;
-        }
-
-        // --- Creator attacks first ---
-        {
-            let attacker_index = creator_turn_tracker.current(creators_warriors.len());
-            // Clone attacker stats so we can mutate both sides without aliasing.
-            let mut attacker = creators_warriors[attacker_index].clone();
-            let victim = decicde_victim(&creators_strategy, &mut opponent_warriors)
-                .ok_or("Invalid strategy while deciding victim")?;
-            single_duel(&mut attacker, victim);
-            duel.battle_log.push(new_vec(&attacker, victim));
-            let victim_dead = victim.is_dead();
-            let victim_id = victim.id;
-            creators_warriors[attacker_index] = attacker;
-
-            if victim_dead {
-                opponent_warriors.retain(|c| c.id != victim_id);
-            }
-        }
-
-        if opponent_warriors.is_empty() {
-            break;
-        }
-
-        // --- Opponent attacks second ---
-        {
-            let attacker_index = opponent_turn_tracker.current(opponent_warriors.len());
-            let mut attacker = opponent_warriors[attacker_index].clone();
-            let victim = decicde_victim(&opponents_strategy, &mut creators_warriors)
-                .ok_or("Invalid strategy while deciding victim")?;
-            single_duel(&mut attacker, victim);
-            duel.battle_log.push(new_vec(&attacker, victim));
-            let victim_dead = victim.is_dead();
-            let victim_id = victim.id;
-            opponent_warriors[attacker_index] = attacker;
-
-            if victim_dead {
-                creators_warriors.retain(|c| c.id != victim_id);
-            }
-        }
-
-        creator_turn_tracker.advance(creators_warriors.len());
-        opponent_turn_tracker.advance(opponent_warriors.len());
-    }
-
-    if creators_warriors.is_empty() {
-        duel.duel_winner = duel.duel_opponent.clone();
-        duel.duel_loser = duel.duel_creator.clone();
-    } else {
+    if battle.winner_side == 0 {
         duel.duel_winner = duel.duel_creator.clone();
         duel.duel_loser = duel.duel_opponent.clone();
+    } else {
+        duel.duel_winner = duel.duel_opponent.clone();
+        duel.duel_loser = duel.duel_creator.clone();
     }
+    duel.battle_events = battle.report.dump();
     duel.is_completed = true;
     let completed_duel = duel.clone();
 
@@ -344,6 +294,34 @@ pub fn fight(
     Ok(completed_duel)
 }
 
+/// Build a `(id, name, power, health, strength, attack, speed)` spec tuple for
+/// each of the three character ids, for the unified engine to consume.
+fn squad_spec(
+    all_characters: &[Character],
+    ids: &[u128],
+) -> Result<Vec<(u128, String, SuperPower, u128, u128, u128, u128)>, String> {
+    if ids.len() != 3 {
+        return Err("Each side must have exactly 3 characters".to_string());
+    }
+    let mut out = Vec::new();
+    for id in ids {
+        let c = all_characters
+            .iter()
+            .find(|c| c.id == *id)
+            .ok_or_else(|| format!("Character with id {} not found", id))?;
+        out.push((
+            c.id,
+            c.name.clone(),
+            c.super_power.clone(),
+            c.health,
+            c.strength,
+            c.attack,
+            c.speed,
+        ));
+    }
+    Ok(out)
+}
+
 fn register_battle_details(
     all_players: &mut Vec<Player>,
     all_characters: &mut Vec<Character>,
@@ -357,14 +335,38 @@ fn register_battle_details(
         duel_winner, duel_looser
     );
 
+    let is_ai_duel = duel.duel_creator == AI_ADDRESS || duel.duel_opponent == AI_ADDRESS;
+    let winner_fighters = if duel.duel_creator.to_lowercase() == duel_winner.to_lowercase() {
+        duel.creator_warriors.clone()
+    } else {
+        duel.opponent_warriors.clone()
+    };
+    let loser_fighters = if duel.duel_creator.to_lowercase() == duel_looser.to_lowercase() {
+        duel.creator_warriors.clone()
+    } else {
+        duel.opponent_warriors.clone()
+    };
+
     if let Some(winner) = get_profile(all_players, duel_winner.clone()) {
-        winner.register_win(all_characters);
+        winner.register_win(all_characters, &winner_fighters);
+        if winner.wallet_address != AI_ADDRESS {
+            // Core-loop reward: winning duels earns points.
+            winner.points += DUEL_WIN_REWARD_POINTS;
+            if is_ai_duel {
+                winner.total_ai_battles += 1;
+                winner.ai_battles_won += 1;
+            }
+        }
     } else {
         println!("winner profile not found");
     }
 
     if let Some(looser) = get_profile(all_players, duel_looser) {
-        looser.register_loss(all_characters);
+        looser.register_loss(all_characters, &loser_fighters);
+        if looser.wallet_address != AI_ADDRESS && is_ai_duel {
+            looser.total_ai_battles += 1;
+            looser.ai_battles_losses += 1;
+        }
     } else {
         println!("loser profile not found");
     }
@@ -378,64 +380,6 @@ fn register_battle_details(
             println!("Could not release stake: winner profile missing");
         }
     }
-}
-
-fn new_vec(attacker: &Character, opponent: &Character) -> Vec<MinimalCharacter> {
-    vec![
-        attacker.character_to_minimal_character(),
-        opponent.character_to_minimal_character(),
-    ]
-}
-
-/// One attack round. All arithmetic is saturating so malformed/extreme stats
-/// can never underflow u128 and halt the machine. Damage has a floor of 1 so
-/// battles always converge.
-fn single_duel(attacker: &mut Character, opponent: &mut Character) {
-    println!(
-        "new battle round: {} attacks {}",
-        attacker.id, opponent.id
-    );
-    let raw_damage = attacker
-        .strength
-        .saturating_add(attacker.attack / 2)
-        .saturating_sub(opponent.speed / 4);
-    let damage = raw_damage.max(1);
-
-    opponent.health = opponent.health.saturating_sub(damage);
-    opponent.speed = opponent.speed.saturating_sub(1);
-
-    // Attacker fatigue: stats decay slightly but never below a floor of 5.
-    let decayed_attack = attacker.attack.saturating_sub(damage / 5);
-    if decayed_attack >= 5 {
-        attacker.attack = decayed_attack;
-    }
-    let decayed_strength = attacker.strength.saturating_sub(damage / 7);
-    if decayed_strength >= 5 {
-        attacker.strength = decayed_strength;
-    }
-
-    println!(
-        "round complete, attacker_id: {}, attacker_strength: {}, opponent_id: {}, opponent_health: {}",
-        attacker.id, attacker.strength, opponent.id, opponent.health
-    );
-}
-
-fn get_warriors_clone(
-    all_characters: &mut Vec<Character>,
-    selected_characters: &Vec<u128>,
-) -> Result<Vec<Character>, String> {
-    if selected_characters.len() != 3 {
-        return Err("Each side must have exactly 3 characters".to_string());
-    }
-    let mut warriors: Vec<Character> = Vec::new();
-    for character_id in selected_characters {
-        let character = all_characters
-            .iter()
-            .find(|c| c.id == *character_id)
-            .ok_or_else(|| format!("Character with id {} not found", character_id))?;
-        warriors.push(character.clone());
-    }
-    Ok(warriors)
 }
 
 pub fn reveal_both_warriors(all_duels: &mut Vec<Duel>, duel_id: u128) -> Option<Vec<Vec<u128>>> {

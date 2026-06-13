@@ -154,13 +154,13 @@ fn element_multiplier(attacker: Element, defender: Element) -> u128 {
 }
 
 /// Biome modifier (percent) applied to an attacker of the given element.
-fn biome_multiplier(biome: &Biome, attacker: Element) -> u128 {
-    if attacker == biome.boosted() {
-        125
-    } else if attacker == biome.dampened() {
-        85
-    } else {
-        100
+/// `None` means a neutral arena (used by PvP duels) where no element is
+/// boosted or dampened, keeping staked matches environmentally fair.
+fn biome_multiplier(biome: Option<&Biome>, attacker: Element) -> u128 {
+    match biome {
+        Some(b) if attacker == b.boosted() => 125,
+        Some(b) if attacker == b.dampened() => 85,
+        _ => 100,
     }
 }
 
@@ -513,79 +513,67 @@ fn apply_damage(unit: &mut Unit, dmg: u128) {
     unit.health = unit.health.saturating_sub(dmg);
 }
 
-/// Simulate the full battle. Returns the outcome with a frontend-replayable
-/// event log.
-pub fn simulate(
-    level: &LevelDef,
-    player_units: Vec<(u128, String, SuperPower, u128, u128, u128, u128)>,
-    seed: u128,
-    player_strategy: AllStrategies,
+/// Build a combat unit from raw stats, applying a charm loadout. With the
+/// default (empty) loadout this reproduces a vanilla unit, so the same builder
+/// serves campaign enemies (no loadout) and both sides of a PvP duel.
+#[allow(clippy::too_many_arguments)]
+fn make_unit(
+    id: u128,
+    name: String,
+    power: SuperPower,
+    health: u128,
+    strength: u128,
+    attack: u128,
+    speed: u128,
+    side: u8,
     loadout: &Loadout,
-) -> BattleOutcome {
+) -> Unit {
+    let element = power_element(&power);
+    let health = health * (100 + loadout.hp_pct) / 100;
+    let strength = strength * (100 + loadout.strength_pct) / 100;
+    let sigil_bonus = match loadout.dmg_element {
+        Some((e, pct)) if e == element => pct,
+        _ => 0,
+    };
+    Unit {
+        id,
+        name,
+        side,
+        power,
+        element,
+        max_health: health,
+        health,
+        strength,
+        attack,
+        speed,
+        energy: loadout.start_energy,
+        burn_rounds: 0,
+        stunned: false,
+        shielded: false,
+        ward: loadout.first_hit_ward,
+        crit_chance: if loadout.crit_chance > 0 {
+            loadout.crit_chance
+        } else {
+            10
+        },
+        sigil_bonus,
+    }
+}
+
+/// Core deterministic battle loop, shared by campaign and PvP duels. Each side
+/// targets using `strategies[side]`; `biome` is `None` for a neutral PvP arena.
+/// Mutates `units` to their final state and returns (event log, rounds).
+fn run_engine(
+    units: &mut [Unit],
+    biome: Option<&Biome>,
+    strategies: [AllStrategies; 2],
+    seed: u128,
+) -> (JsonValue, u32) {
     let mut rng = Lcg::new(seed);
-    let biome = level.biome;
-
-    let mut units: Vec<Unit> = Vec::new();
-    for (id, name, power, health, strength, attack, speed) in player_units {
-        let element = power_element(&power);
-        // Apply the charm loadout to player units only.
-        let health = health * (100 + loadout.hp_pct) / 100;
-        let strength = strength * (100 + loadout.strength_pct) / 100;
-        let sigil_bonus = match loadout.dmg_element {
-            Some((e, pct)) if e == element => pct,
-            _ => 0,
-        };
-        units.push(Unit {
-            id,
-            name,
-            side: 0,
-            power,
-            element,
-            max_health: health,
-            health,
-            strength,
-            attack,
-            speed,
-            energy: loadout.start_energy,
-            burn_rounds: 0,
-            stunned: false,
-            shielded: false,
-            ward: loadout.first_hit_ward,
-            crit_chance: if loadout.crit_chance > 0 {
-                loadout.crit_chance
-            } else {
-                10
-            },
-            sigil_bonus,
-        });
-    }
-    for (slot, e) in level.enemies.iter().enumerate() {
-        let element = power_element(&e.power);
-        units.push(Unit {
-            id: 100_000 + level.id * 10 + slot as u128,
-            name: e.name.to_string(),
-            side: 1,
-            power: e.power.clone(),
-            element,
-            max_health: e.health,
-            health: e.health,
-            strength: e.strength,
-            attack: e.attack,
-            speed: e.speed,
-            energy: 0,
-            burn_rounds: 0,
-            stunned: false,
-            shielded: false,
-            ward: false,
-            crit_chance: 10,
-            sigil_bonus: 0,
-        });
-    }
-
     let mut events = JsonValue::new_array();
     let mut round: u32 = 0;
 
-    while side_alive(&units, 0) && side_alive(&units, 1) && round < MAX_ROUNDS {
+    while side_alive(units, 0) && side_alive(units, 1) && round < MAX_ROUNDS {
         round += 1;
 
         // Burn ticks at the start of each round.
@@ -615,7 +603,7 @@ pub fn simulate(
             if !units[idx].alive() {
                 continue;
             }
-            if !side_alive(&units, 0) || !side_alive(&units, 1) {
+            if !side_alive(units, 0) || !side_alive(units, 1) {
                 break;
             }
             if units[idx].stunned {
@@ -629,14 +617,8 @@ pub fn simulate(
             }
 
             let enemy_side = 1 - units[idx].side;
-            // The player targets according to their chosen strategy; enemies
-            // always hunt the weakest (lowest health) player unit.
-            let strategy = if units[idx].side == 0 {
-                player_strategy.clone()
-            } else {
-                AllStrategies::LowestHealthToMax
-            };
-            let target_idx = match pick_target_with_strategy(&units, enemy_side, &strategy) {
+            let strategy = strategies[units[idx].side as usize].clone();
+            let target_idx = match pick_target_with_strategy(units, enemy_side, &strategy) {
                 Some(t) => t,
                 None => break,
             };
@@ -645,12 +627,64 @@ pub fn simulate(
             let cast_power = units[idx].energy >= ENERGY_FULL;
             if cast_power {
                 units[idx].energy = 0;
-                execute_power(&mut units, idx, target_idx, &biome, round, &mut rng, &mut events);
+                execute_power(units, idx, target_idx, biome, round, &mut rng, &mut events);
             } else {
-                execute_attack(&mut units, idx, target_idx, &biome, round, &mut rng, &mut events);
+                execute_attack(units, idx, target_idx, biome, round, &mut rng, &mut events);
             }
         }
     }
+
+    (events, round)
+}
+
+/// Split the final unit list into player/enemy JSON squads for the replay.
+fn squads_json(units: &[Unit]) -> (JsonValue, JsonValue) {
+    let mut player_squad = JsonValue::new_array();
+    let mut enemy_squad = JsonValue::new_array();
+    for u in units {
+        if u.side == 0 {
+            let _ = player_squad.push(unit_json(u));
+        } else {
+            let _ = enemy_squad.push(unit_json(u));
+        }
+    }
+    (player_squad, enemy_squad)
+}
+
+/// Simulate a campaign level. Returns the outcome with a frontend-replayable
+/// event log.
+pub fn simulate(
+    level: &LevelDef,
+    player_units: Vec<(u128, String, SuperPower, u128, u128, u128, u128)>,
+    seed: u128,
+    player_strategy: AllStrategies,
+    loadout: &Loadout,
+) -> BattleOutcome {
+    let mut units: Vec<Unit> = Vec::new();
+    for (id, name, power, health, strength, attack, speed) in player_units {
+        units.push(make_unit(id, name, power, health, strength, attack, speed, 0, loadout));
+    }
+    let enemy_loadout = Loadout::default();
+    for (slot, e) in level.enemies.iter().enumerate() {
+        units.push(make_unit(
+            100_000 + level.id * 10 + slot as u128,
+            e.name.to_string(),
+            e.power.clone(),
+            e.health,
+            e.strength,
+            e.attack,
+            e.speed,
+            1,
+            &enemy_loadout,
+        ));
+    }
+
+    let (events, round) = run_engine(
+        &mut units,
+        Some(&level.biome),
+        [player_strategy, AllStrategies::LowestHealthToMax],
+        seed,
+    );
 
     // Timeout tie-break: higher remaining total health wins.
     let player_hp: u128 = units.iter().filter(|u| u.side == 0).map(|u| u.health).sum();
@@ -663,22 +697,82 @@ pub fn simulate(
         player_hp >= enemy_hp
     };
 
-    let mut player_squad = JsonValue::new_array();
-    let mut enemy_squad = JsonValue::new_array();
-    for u in &units {
-        if u.side == 0 {
-            let _ = player_squad.push(unit_json(u));
-        } else {
-            let _ = enemy_squad.push(unit_json(u));
-        }
-    }
-
+    let (player_squad, enemy_squad) = squads_json(&units);
     BattleOutcome {
         victory,
         rounds: round,
         events,
         player_squad,
         enemy_squad,
+    }
+}
+
+/// Outcome of a PvP duel run on the unified engine.
+pub struct DuelBattle {
+    /// 0 = creator (player side) won, 1 = opponent (enemy side) won.
+    pub winner_side: u8,
+    pub rounds: u32,
+    /// Campaign-format battle report: { events, player_squad, enemy_squad,
+    /// rounds, victory } — the creator is the "player" side.
+    pub report: JsonValue,
+}
+
+type SquadSpec = Vec<(u128, String, SuperPower, u128, u128, u128, u128)>;
+
+/// Simulate a player-vs-player duel using the same engine as the campaign:
+/// elements, super-powers, crits, energy and charms all apply. The arena is
+/// neutral (no biome bias) to keep staked duels environmentally fair. The
+/// creator occupies side 0 ("player"), the opponent side 1 ("enemy").
+#[allow(clippy::too_many_arguments)]
+pub fn simulate_duel(
+    creator_units: SquadSpec,
+    opponent_units: SquadSpec,
+    creator_strategy: AllStrategies,
+    opponent_strategy: AllStrategies,
+    seed: u128,
+    creator_loadout: &Loadout,
+    opponent_loadout: &Loadout,
+) -> DuelBattle {
+    let mut units: Vec<Unit> = Vec::new();
+    for (id, name, power, health, strength, attack, speed) in creator_units {
+        units.push(make_unit(id, name, power, health, strength, attack, speed, 0, creator_loadout));
+    }
+    for (id, name, power, health, strength, attack, speed) in opponent_units {
+        units.push(make_unit(
+            id, name, power, health, strength, attack, speed, 1, opponent_loadout,
+        ));
+    }
+
+    let (events, rounds) =
+        run_engine(&mut units, None, [creator_strategy, opponent_strategy], seed);
+
+    let creator_alive = side_alive(&units, 0);
+    let opponent_alive = side_alive(&units, 1);
+    let creator_hp: u128 = units.iter().filter(|u| u.side == 0).map(|u| u.health).sum();
+    let opponent_hp: u128 = units.iter().filter(|u| u.side == 1).map(|u| u.health).sum();
+    let winner_side: u8 = if creator_alive && !opponent_alive {
+        0
+    } else if !creator_alive {
+        1
+    } else if creator_hp >= opponent_hp {
+        0
+    } else {
+        1
+    };
+
+    let (player_squad, enemy_squad) = squads_json(&units);
+    let mut report = JsonValue::new_object();
+    report["events"] = events;
+    report["player_squad"] = player_squad;
+    report["enemy_squad"] = enemy_squad;
+    report["rounds"] = rounds.into();
+    report["victory"] = (winner_side == 0).into();
+    report["biome"] = "Arena".into();
+
+    DuelBattle {
+        winner_side,
+        rounds,
+        report,
     }
 }
 
@@ -696,7 +790,7 @@ fn execute_attack(
     units: &mut [Unit],
     attacker_idx: usize,
     target_idx: usize,
-    biome: &Biome,
+    biome: Option<&Biome>,
     round: u32,
     rng: &mut Lcg,
     events: &mut JsonValue,
@@ -753,7 +847,7 @@ fn execute_power(
     units: &mut [Unit],
     attacker_idx: usize,
     target_idx: usize,
-    biome: &Biome,
+    biome: Option<&Biome>,
     round: u32,
     rng: &mut Lcg,
     events: &mut JsonValue,
@@ -1136,4 +1230,125 @@ pub fn leaderboard_to_json(all_players: &[Player]) -> String {
         let _ = arr.push(j);
     }
     arr.dump()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::charms::build_loadout;
+
+    #[test]
+    fn element_triangles_are_consistent() {
+        // strong -> 130, reverse -> 75, neutral -> 100
+        assert_eq!(element_multiplier(Element::Fire, Element::Nature), 130);
+        assert_eq!(element_multiplier(Element::Nature, Element::Fire), 75);
+        assert_eq!(element_multiplier(Element::Water, Element::Fire), 130);
+        assert_eq!(element_multiplier(Element::Shadow, Element::Storm), 130);
+        assert_eq!(element_multiplier(Element::Neutral, Element::Fire), 100);
+        assert_eq!(element_multiplier(Element::Fire, Element::Fire), 100);
+    }
+
+    #[test]
+    fn biome_boosts_and_dampens() {
+        assert_eq!(biome_multiplier(Some(&Biome::VolcanicForge), Element::Fire), 125);
+        assert_eq!(biome_multiplier(Some(&Biome::VolcanicForge), Element::Nature), 85);
+        assert_eq!(biome_multiplier(Some(&Biome::VolcanicForge), Element::Water), 100);
+        // Neutral PvP arena: no element is boosted or dampened.
+        assert_eq!(biome_multiplier(None, Element::Fire), 100);
+    }
+
+    #[test]
+    fn all_twenty_levels_exist_and_scale() {
+        for id in 1..=TOTAL_LEVELS {
+            let level = get_level(id).expect("level must exist");
+            assert_eq!(level.id, id);
+            assert_eq!(level.enemies.len(), 3);
+        }
+        assert!(get_level(0).is_none());
+        assert!(get_level(21).is_none());
+        // Difficulty must ramp: the final boss outclasses level 1 fodder.
+        let first = get_level(1).unwrap();
+        let last = get_level(20).unwrap();
+        assert!(last.enemies[2].health > first.enemies[2].health * 2);
+    }
+
+    #[test]
+    fn simulate_is_deterministic() {
+        let level = get_level(1).unwrap();
+        let squad = || vec![
+            (1u128, "A".to_string(), SuperPower::Flamethrower, 90u128, 12u128, 13u128, 9u128),
+            (2u128, "B".to_string(), SuperPower::WaterGun, 85, 10, 12, 8),
+            (3u128, "C".to_string(), SuperPower::Thunderbolt, 88, 11, 12, 10),
+        ];
+        let loadout = build_loadout(&[]).unwrap();
+        let a = simulate(&level, squad(), 12345, AllStrategies::LowestHealthToMax, &loadout);
+        let b = simulate(&level, squad(), 12345, AllStrategies::LowestHealthToMax, &loadout);
+        assert_eq!(a.victory, b.victory);
+        assert_eq!(a.rounds, b.rounds);
+        assert_eq!(a.events.dump(), b.events.dump());
+        // Different seed may differ, but must still terminate within cap.
+        let c = simulate(&level, squad(), 99999, AllStrategies::LowestHealthToMax, &loadout);
+        assert!(c.rounds <= 60);
+    }
+
+    fn duel_squad(offset: u128) -> SquadSpec {
+        vec![
+            (offset + 1, "A".into(), SuperPower::Flamethrower, 90, 12, 13, 9),
+            (offset + 2, "B".into(), SuperPower::WaterGun, 85, 10, 12, 8),
+            (offset + 3, "C".into(), SuperPower::Thunderbolt, 88, 11, 12, 10),
+        ]
+    }
+
+    #[test]
+    fn duel_engine_is_deterministic_and_terminates() {
+        let empty = build_loadout(&[]).unwrap();
+        let run = || {
+            simulate_duel(
+                duel_squad(0),
+                duel_squad(100),
+                AllStrategies::LowestHealthToMax,
+                AllStrategies::MaxStrengthToLowest,
+                42,
+                &empty,
+                &empty,
+            )
+        };
+        let a = run();
+        let b = run();
+        assert_eq!(a.winner_side, b.winner_side);
+        assert_eq!(a.rounds, b.rounds);
+        assert_eq!(a.report.dump(), b.report.dump());
+        assert!(a.rounds <= MAX_ROUNDS);
+        // report carries a replayable event log + both squads.
+        assert!(a.report["events"].is_array());
+        assert_eq!(a.report["player_squad"].len(), 3);
+        assert_eq!(a.report["enemy_squad"].len(), 3);
+    }
+
+    #[test]
+    fn duel_engine_is_mirror_fair() {
+        // Identical squads + identical strategy: the engine must still resolve
+        // to one winner within the round cap (no infinite loop), and the
+        // neutral arena means neither element is environmentally favoured.
+        let empty = build_loadout(&[]).unwrap();
+        let out = simulate_duel(
+            duel_squad(0),
+            duel_squad(100),
+            AllStrategies::LowestHealthToMax,
+            AllStrategies::LowestHealthToMax,
+            7,
+            &empty,
+            &empty,
+        );
+        assert!(out.winner_side == 0 || out.winner_side == 1);
+        assert!(out.rounds >= 1 && out.rounds <= MAX_ROUNDS);
+    }
+
+    #[test]
+    fn neutral_arena_has_no_biome_bias() {
+        // A Fire attacker gets the biome boost only inside a volcanic level,
+        // never in a duel's neutral arena.
+        assert_eq!(biome_multiplier(Some(&Biome::VolcanicForge), Element::Fire), 125);
+        assert_eq!(biome_multiplier(None, Element::Fire), 100);
+    }
 }
