@@ -44,8 +44,6 @@ const HeroSection = () => {
   // fetchNotices("all_duels");
 
   const playgameButton = async () => {
-    console.log(activeAccount?.address);
-    console.log(profile?.wallet_address);
     if (activeAccount?.address) {
       setSubmiting(true);
       // const {Status, request_payload} = await fetchprofile();
@@ -70,13 +68,11 @@ const HeroSection = () => {
               (character: any) =>
                 character.owner == activeAccount?.address.toLowerCase()
             );
-            console.log("Players characters: " + request_payload);
             // setPlayersCharacters(request_payload);
             if (request_payload.length >= 3) {
               // navigate('/selectWarriors');
               setIsStartBattle(true);
             } else {
-              console.log("You have less than 3 characters");
               navigate("/profile/purchasecharacter");
             }
             setSubmiting(false);
@@ -87,15 +83,12 @@ const HeroSection = () => {
             navigate("/profile/purchasecharacter/");
           }
         } catch (e: any) {
-          console.log("Error: " + e.message);
           navigate("/profile/purchasecharacter");
           setSubmiting(false);
         }
       }
     } else {
-      console.log("Connected account is not found");
-      const wallet = await connect({ client }); // opens the connect modal
-      console.log("connected to", wallet);
+      await connect({ client }); // opens the connect modal
       setSubmiting(false);
     }
   };

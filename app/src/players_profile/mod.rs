@@ -12,7 +12,9 @@ pub struct Player {
     pub id: u128,
     pub points: u128,
     pub nebula_token_balance: u128,
-    pub cartesi_token_balance: f64,
+    /// CTSI balance in integer base units (wei) — never f64, so fees, stakes
+    /// and splits can't drift or truncate.
+    pub cartesi_token_balance: u128,
     pub total_battles: u128,
     pub total_wins: u128,
     pub total_losses: u128,
@@ -38,7 +40,17 @@ pub struct Player {
     pub starter_team_claimed: bool,
     /// Battle charm inventory: (charm_id, count) pairs.
     pub charm_inventory: Vec<(u128, u128)>,
+    // --- Daily return loop ---
+    /// UTC-day index (block_timestamp / 86400) of the last claimed daily
+    /// reward. 0 = never claimed.
+    pub last_daily_claim_day: u128,
+    /// Consecutive-day streak length (drives the escalating reward).
+    pub daily_streak: u128,
 }
+
+/// Seconds in a day — the daily reward bucket is derived deterministically
+/// from the block timestamp, so it needs no wall clock.
+pub const SECONDS_PER_DAY: u128 = 86_400;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UserTransaction {
@@ -49,7 +61,7 @@ pub struct UserTransaction {
 }
 
 impl Player {
-    pub fn reduce_cartesi_token_balance(&mut self, amount: f64) {
+    pub fn reduce_cartesi_token_balance(&mut self, amount: u128) {
         if self.cartesi_token_balance >= amount {
             self.cartesi_token_balance -= amount;
         } else {
@@ -57,8 +69,8 @@ impl Player {
         }
     }
 
-    pub fn increase_cartesi_token_balance(&mut self, amount: f64) {
-        self.cartesi_token_balance += amount;
+    pub fn increase_cartesi_token_balance(&mut self, amount: u128) {
+        self.cartesi_token_balance = self.cartesi_token_balance.saturating_add(amount);
     }
 
     pub fn remove_character(&mut self, character_id: u128) {
@@ -76,25 +88,29 @@ impl Player {
         self.characters.push(character_id);
     }
 
-    pub fn register_win(&mut self, all_characters: &mut Vec<Character>) -> &mut Self {
+    /// Credits ONLY the fighters that actually fought (not the whole roster).
+    pub fn register_win(&mut self, all_characters: &mut Vec<Character>, fighters: &[u128]) -> &mut Self {
         self.total_battles += 1;
         self.total_wins += 1;
-        for characters in self.characters.iter() {
-            if let Some(character_details) = get_character_details(all_characters, *characters) {
+        for id in fighters {
+            if let Some(character_details) = get_character_details(all_characters, *id) {
                 character_details.total_wins += 1;
                 character_details.total_battles += 1;
+                character_details.award_battle_xp(true);
             }
         }
         return self;
     }
 
-    pub fn register_loss(&mut self, all_characters: &mut Vec<Character>) -> &mut Self {
+    /// Credits ONLY the fighters that actually fought (not the whole roster).
+    pub fn register_loss(&mut self, all_characters: &mut Vec<Character>, fighters: &[u128]) -> &mut Self {
         self.total_battles += 1;
         self.total_losses += 1;
-        for characters in self.characters.iter() {
-            if let Some(character_details) = get_character_details(all_characters, *characters) {
+        for id in fighters {
+            if let Some(character_details) = get_character_details(all_characters, *id) {
                 character_details.total_losses += 1;
                 character_details.total_battles += 1;
+                character_details.award_battle_xp(false);
             }
         }
         return self;
@@ -128,6 +144,31 @@ impl Player {
         {
             entry.1 = entry.1.saturating_sub(1);
         }
+    }
+
+    /// Claim today's daily reward. Rewards escalate with a consecutive-day
+    /// streak (capped) and reset if a day is missed. Deterministic in the block
+    /// timestamp; can only be claimed once per UTC day.
+    pub fn claim_daily(&mut self, time_stamp: u128) -> Result<(u128, u128), String> {
+        if time_stamp == 0 {
+            return Err("Daily reward needs a block timestamp".to_string());
+        }
+        let today = time_stamp / SECONDS_PER_DAY;
+        if self.last_daily_claim_day == today {
+            return Err("You already claimed today's reward — come back tomorrow".to_string());
+        }
+        // Continue the streak only if the previous claim was exactly yesterday.
+        if self.last_daily_claim_day != 0 && self.last_daily_claim_day + 1 == today {
+            self.daily_streak += 1;
+        } else {
+            self.daily_streak = 1;
+        }
+        self.last_daily_claim_day = today;
+        // 50 base, +25 per consecutive day, capped at a 7-day streak (200).
+        let tier = self.daily_streak.min(7);
+        let reward = 50 + (tier - 1) * 25;
+        self.points += reward;
+        Ok((reward, self.daily_streak))
     }
 
     pub fn campaign_attempt_count(&self, level_id: u128) -> u128 {
@@ -164,6 +205,45 @@ impl Player {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn blank_player() -> Player {
+        let mut players = Vec::new();
+        let mut total = 0;
+        create_player("p".into(), "0xabc".into(), "".into(), &mut players, &mut total).unwrap()
+    }
+
+    #[test]
+    fn daily_streak_escalates_resets_and_blocks_double_claim() {
+        let mut p = blank_player();
+        // Day 10: first claim -> streak 1, reward 50.
+        let (r1, s1) = p.claim_daily(10 * SECONDS_PER_DAY).unwrap();
+        assert_eq!((r1, s1), (50, 1));
+        // Same day -> rejected.
+        assert!(p.claim_daily(10 * SECONDS_PER_DAY + 500).is_err());
+        // Next day -> streak 2, reward 75.
+        let (r2, s2) = p.claim_daily(11 * SECONDS_PER_DAY).unwrap();
+        assert_eq!((r2, s2), (75, 2));
+        // Skip a day -> streak resets to 1.
+        let (r3, s3) = p.claim_daily(13 * SECONDS_PER_DAY).unwrap();
+        assert_eq!((r3, s3), (50, 1));
+    }
+
+    #[test]
+    fn daily_reward_caps_at_seven_day_streak() {
+        let mut p = blank_player();
+        let mut last = 0u128;
+        for day in 1..=9u128 {
+            let (reward, _) = p.claim_daily(day * SECONDS_PER_DAY).unwrap();
+            last = reward;
+        }
+        // 7-day cap => 50 + 6*25 = 200, held for day 8 and 9.
+        assert_eq!(last, 200);
+    }
+}
+
 pub fn find_player(all_players: &mut Vec<Player>, wallet_address: String) -> Option<&mut Player> {
     for player in all_players {
         if (player.wallet_address).to_lowercase() == wallet_address.to_lowercase() {
@@ -195,7 +275,7 @@ pub fn create_player(
                 id: *total_players,
                 points: 1050,
                 nebula_token_balance: 0,
-                cartesi_token_balance: 0.0,
+                cartesi_token_balance: 0,
                 total_battles: 0,
                 total_wins: 0,
                 total_losses: 0,
@@ -212,6 +292,8 @@ pub fn create_player(
                 last_point_purchase_time: 0,
                 starter_team_claimed: false,
                 charm_inventory: Vec::new(),
+                last_daily_claim_day: 0,
+                daily_streak: 0,
             };
 
             if player.wallet_address == String::from("0xnebula") {

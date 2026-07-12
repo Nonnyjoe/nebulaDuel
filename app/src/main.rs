@@ -191,13 +191,35 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if response.status() == hyper::StatusCode::ACCEPTED {
             println!("No pending rollup request, trying again");
         } else {
-            let body = hyper::body::to_bytes(response).await?;
-            let utf = std::str::from_utf8(&body)?;
-            let req = json::parse(utf)?;
+            // A malformed response from the rollup server must never kill the
+            // dapp process — log, reject, and keep the finish loop alive.
+            let req = match hyper::body::to_bytes(response).await {
+                Ok(body) => match std::str::from_utf8(&body)
+                    .map_err(|e| e.to_string())
+                    .and_then(|utf| json::parse(utf).map_err(|e| e.to_string()))
+                {
+                    Ok(req) => req,
+                    Err(e) => {
+                        eprintln!("Could not parse rollup request: {}", e);
+                        status = "reject";
+                        continue;
+                    }
+                },
+                Err(e) => {
+                    eprintln!("Could not read rollup response body: {}", e);
+                    status = "reject";
+                    continue;
+                }
+            };
 
-            let request_type = req["request_type"]
-                .as_str()
-                .ok_or("request_type is not a string")?;
+            let request_type = match req["request_type"].as_str() {
+                Some(t) => t,
+                None => {
+                    eprintln!("request_type is not a string");
+                    status = "reject";
+                    continue;
+                }
+            };
             status = match request_type {
                 "advance_state" => {
                     handle_advance(&client, &server_addr[..], req, &mut storage).await

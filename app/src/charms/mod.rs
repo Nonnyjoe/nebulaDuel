@@ -7,7 +7,7 @@
 //!   * every charm is consumed by the battle that uses it (win or lose)
 //!   * inventory is capped per charm type (max_hold) so nobody stockpiles
 //!   * effects are modest gap-closers (<= 20%), not steamrollers
-use crate::campaign::{power_element, Element};
+use crate::campaign::Element;
 use crate::players_profile::{find_player, Player};
 use json::JsonValue;
 
@@ -118,7 +118,7 @@ pub fn buy_charm(
     quantity: u128,
     pay_with_ctsi: bool,
     points_rate: f64,
-    profit_from_points_purchase: &mut f64,
+    profit_from_points_purchase: &mut u128,
 ) -> Result<(), String> {
     if quantity == 0 {
         return Err("Quantity must be at least 1".to_string());
@@ -136,20 +136,20 @@ pub fn buy_charm(
     }
 
     if pay_with_ctsi {
-        let unit_price = if points_rate > 0.0 {
-            charm.cost_points as f64 / points_rate
+        let unit_price: u128 = if points_rate > 0.0 {
+            (charm.cost_points as f64 / points_rate) as u128
         } else {
-            charm.cost_points as f64
+            charm.cost_points
         };
-        let total = unit_price * quantity as f64;
+        let total = unit_price.saturating_mul(quantity);
         if player.cartesi_token_balance < total {
             return Err(format!(
-                "{} x{} costs {:.2} CTSI — you have {:.2}",
+                "{} x{} costs {} CTSI (base units) — you have {}",
                 charm.name, quantity, total, player.cartesi_token_balance
             ));
         }
         player.cartesi_token_balance -= total;
-        *profit_from_points_purchase += total;
+        *profit_from_points_purchase = profit_from_points_purchase.saturating_add(total);
     } else {
         let total = charm.cost_points * quantity;
         if player.points < total {
@@ -222,4 +222,33 @@ pub fn inventory_to_json(player: &Player) -> JsonValue {
         let _ = arr.push(j);
     }
     arr
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn loadout_rules_enforced() {
+        assert!(build_loadout(&[]).is_ok());
+        assert!(build_loadout(&[7, 9]).is_ok());
+        // max 2 charms
+        assert!(build_loadout(&[7, 9, 10]).is_err());
+        // no duplicates
+        assert!(build_loadout(&[7, 7]).is_err());
+        // only one elemental sigil
+        assert!(build_loadout(&[1, 2]).is_err());
+        // unknown charm
+        assert!(build_loadout(&[99]).is_err());
+    }
+
+    #[test]
+    fn loadout_effects_mapped() {
+        let l = build_loadout(&[2, 11]).unwrap();
+        assert_eq!(l.dmg_element, Some((crate::campaign::Element::Fire, 20)));
+        assert_eq!(l.crit_chance, 20);
+        let l2 = build_loadout(&[7, 10]).unwrap();
+        assert_eq!(l2.hp_pct, 15);
+        assert_eq!(l2.strength_pct, 10);
+    }
 }

@@ -34,7 +34,7 @@ const customTheme = darkTheme({
 
 const ConnectButton2 = () => {
   const activeAccount = useActiveAccount();
-  const { profile, setProfile } = useProfileContext();
+  const { setProfile } = useProfileContext();
   const status = useActiveWalletConnectionStatus();
 
   useEffect(() => {
@@ -42,8 +42,6 @@ const ConnectButton2 = () => {
       const walletAddress = activeAccount?.address?.toLowerCase();
       if (status !== "connected" || !walletAddress) return;
 
-      const currentProfileAddress = profile?.wallet_address?.toLowerCase();
-      if (currentProfileAddress === walletAddress) return;
 
       let request_payload = await fetchNotices("all_profiles");
       if (!request_payload || !Array.isArray(request_payload)) {
@@ -60,7 +58,7 @@ const ConnectButton2 = () => {
     };
 
     syncProfile();
-  }, [status, activeAccount?.address, profile?.wallet_address, setProfile]);
+  }, [status, activeAccount?.address, setProfile]);
 
   return (
     <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-poppins px-4 py-2 flex justify-center items-center">

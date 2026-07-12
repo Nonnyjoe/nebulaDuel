@@ -75,8 +75,7 @@ const UserActivity = () => {
         return;
       }
       toast.info("Executing Voucher, please wait...");
-      const receipt = await executeVoucherOnchain(DAPP, voucher, signer);
-      console.log(receipt);
+      await executeVoucherOnchain(DAPP, voucher, signer);
       toast.success("Voucher executed successfully!");
       const data: Voucher[] = await fetchVouchers();
       setVouchers(data);
@@ -102,12 +101,10 @@ const UserActivity = () => {
       );
       if (request_payload.length > 0) {
         setProfileData(request_payload[0]);
-        console.log(request_payload[0], "user profile data");
         // setProfileData(request_payload[0]);
         // setCreatedProfile(true);
       } else {
         // setCreatedProfile(false);
-        console.log("ERROR FETCHING USER PROFILE DATA");
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -124,11 +121,11 @@ const UserActivity = () => {
     };
 
     getAllData();
-  }, [userAccount, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userAccount]);
 
   const handleDeposit = async (e: FormEvent) => {
     e.preventDefault();
-    console.log("Attempting to deposit transaction");
     try {
       if (!depositAmount || isNaN(Number(depositAmount))) {
         toast.info("Please enter a valid amount.");
@@ -139,7 +136,6 @@ const UserActivity = () => {
       const abi1 = ["function approve(address receiver, uint256 amount)"];
       const erc20 = new ethers.Contract(CTSI, abi1, signer);
       const tx = await erc20.approve(ERC20Portal, toWei(depositAmount));
-      console.log(tx);
       toast.info("Granting Approval please wait...");
       await tx.wait();
 
@@ -154,7 +150,6 @@ const UserActivity = () => {
         depositAmount,
         "0x00000000"
       );
-      console.log(tx2);
       await tx2.wait();
       setIsGrantingApproval(false);
       setIsDepositModalOpen(false);
@@ -634,6 +629,18 @@ const UserActivity = () => {
           >
             Your CTSI token detail on Nebula
           </Text>
+          <p className="text-[11px] text-gray-500 font-poppins">
+            Need testnet gas?{" "}
+            <a
+              href="https://www.alchemy.com/faucets/base-sepolia"
+              target="_blank"
+              rel="noreferrer"
+              className="text-myGreen underline hover:text-myYellow"
+            >
+              Get free Base Sepolia ETH from a faucet →
+            </a>{" "}
+            Every game action is an on-chain transaction and needs a little gas.
+          </p>
           <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             <div className="w-full bg-navBg py-4 px-4 flex flex-col gap-2 items-start rounded-md">
               <Text as="h6" className="text-gray-400 text-sm">

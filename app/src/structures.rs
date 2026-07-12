@@ -204,7 +204,7 @@ pub fn duels_to_json(all_duels: Vec<Duel>) -> String {
         tx_json["is_active"] = (duel.is_active).into();
         tx_json["is_completed"] = duel.is_completed.into();
         tx_json["has_stake"] = duel.has_stake.into();
-        tx_json["stake_amount"] = duel.stake_amount.into();
+        tx_json["stake_amount"] = (duel.stake_amount as u64).into();
         tx_json["difficulty"] = match duel.difficulty {
             Difficulty::Easy => String::from("Easy").into(),
             Difficulty::P2P => String::from("P2P").into(),
@@ -216,6 +216,8 @@ pub fn duels_to_json(all_duels: Vec<Duel>) -> String {
         tx_json["duel_opponent"] = duel.duel_opponent.into();
         tx_json["opponent_warriors"] = vec_of_id_to_json(duel.opponent_warriors).into();
         tx_json["opponents_strategy"] = os.into();
+        tx_json["creator_committed"] = (!duel.creators_commit.is_empty()).into();
+        tx_json["opponent_committed"] = (!duel.opponents_commit.is_empty()).into();
         tx_json["battle_events"] = battle_events_json(&duel.battle_events);
         tx_json["duel_winner"] = duel.duel_winner.into();
         tx_json["duel_loser"] = duel.duel_loser.into();
@@ -246,7 +248,7 @@ pub fn single_duel_to_json(duel: Duel) -> String {
     tx_json["is_active"] = (duel.is_active).into();
     tx_json["is_completed"] = duel.is_completed.into();
     tx_json["has_stake"] = duel.has_stake.into();
-    tx_json["stake_amount"] = duel.stake_amount.into();
+    tx_json["stake_amount"] = (duel.stake_amount as u64).into();
     tx_json["difficulty"] = match duel.difficulty {
         Difficulty::Easy => String::from("Easy").into(),
         Difficulty::P2P => String::from("P2P").into(),
@@ -258,6 +260,8 @@ pub fn single_duel_to_json(duel: Duel) -> String {
     tx_json["duel_opponent"] = duel.duel_opponent.into();
     tx_json["opponent_warriors"] = vec_of_id_to_json(duel.opponent_warriors).into();
     tx_json["opponents_strategy"] = os.into();
+    tx_json["creator_committed"] = (!duel.creators_commit.is_empty()).into();
+    tx_json["opponent_committed"] = (!duel.opponents_commit.is_empty()).into();
     tx_json["battle_events"] = battle_events_json(&duel.battle_events);
     tx_json["duel_winner"] = duel.duel_winner.into();
     tx_json["duel_loser"] = duel.duel_loser.into();
@@ -272,6 +276,8 @@ pub fn decode_strategy_json(strategy: AllStrategies) -> String {
         AllStrategies::LowestStrengthToMax => String::from("Lowest_to_highest_strength"),
         AllStrategies::MaxHealthToLowest => String::from("Highest_to_lowest_health"),
         AllStrategies::MaxStrengthToLowest => String::from("Highest_to_lowest_strength"),
+        AllStrategies::MaxAttackToLowest => String::from("Highest_to_lowest_attack"),
+        AllStrategies::LowestSpeedToMax => String::from("Lowest_to_highest_speed"),
         AllStrategies::YetToSelect => String::from("Yet_to_select"),
     }
 }
@@ -283,7 +289,7 @@ pub fn listed_character_json(listed_characters: Vec<SaleDetails>) -> String {
         let mut tx_json = JsonValue::new_object();
 
         tx_json["character_id"] = (character.character_id as u64).into();
-        tx_json["price"] = (character.price).into();
+        tx_json["price"] = (character.price as u64).into();
         tx_json["seller"] = (character.seller).into();
         json_array.push(tx_json).ok();
     }
@@ -309,6 +315,10 @@ pub fn character_to_json(all_characters: Vec<Character>) -> String {
         tx_json["total_losses"] = (character.total_losses as u64).into();
         tx_json["price"] = (character.price as u64).into();
         tx_json["owner"] = (character.owner).into();
+        tx_json["rarity"] = (character.rarity).into();
+        tx_json["level"] = (character.level as u64).into();
+        tx_json["xp"] = (character.xp as u64).into();
+        tx_json["xp_to_next"] = (crate::game_characters::xp_to_next_level(character.level) as u64).into();
         json_array.push(tx_json).ok();
     }
 
@@ -330,6 +340,10 @@ pub fn single_character_to_json(character: Character) -> String {
     tx_json["total_losses"] = (character.total_losses as u64).into();
     tx_json["price"] = (character.price as u64).into();
     tx_json["owner"] = (character.owner).into();
+    tx_json["rarity"] = (character.rarity).into();
+    tx_json["level"] = (character.level as u64).into();
+    tx_json["xp"] = (character.xp as u64).into();
+    tx_json["xp_to_next"] = (crate::game_characters::xp_to_next_level(character.level) as u64).into();
 
     return tx_json.to_string();
 }
@@ -365,7 +379,7 @@ pub fn players_profile_to_json(all_players: Vec<Player>) -> String {
         tx_json["id"] = (player.id as u64).into();
         tx_json["points"] = (player.points as u64).into();
         tx_json["nebula_token_balance"] = (player.nebula_token_balance as u64).into();
-        tx_json["cartesi_token_balance"] = player.cartesi_token_balance.into();
+        tx_json["cartesi_token_balance"] = (player.cartesi_token_balance as u64).into();
         tx_json["total_battles"] = (player.total_battles as u64).into();
         tx_json["total_wins"] = (player.total_wins as u64).into();
         tx_json["total_losses"] = (player.total_losses as u64).into();
@@ -376,6 +390,8 @@ pub fn players_profile_to_json(all_players: Vec<Player>) -> String {
         tx_json["campaign_wins"] = (player.campaign_wins as u64).into();
         tx_json["campaign_losses"] = (player.campaign_losses as u64).into();
         tx_json["campaign_titles"] = campaign_titles_to_json(&player.campaign_titles);
+        tx_json["daily_streak"] = (player.daily_streak as u64).into();
+        tx_json["last_daily_claim_day"] = (player.last_daily_claim_day as u64).into();
         tx_json["transaction_history"] =
             player_transactions_to_json(player.transaction_history).into() ;
         json_array.push(tx_json).ok();
@@ -420,7 +436,7 @@ pub fn single_player_profile_to_json(player: &mut Player) -> String {
     tx_json["id"] = (player.id as u64).into();
     tx_json["points"] = (player.points as u64).into();
     tx_json["nebula_token_balance"] = (player.nebula_token_balance as u64).into();
-    tx_json["cartesi_token_balance"] = player.cartesi_token_balance.into();
+    tx_json["cartesi_token_balance"] = (player.cartesi_token_balance as u64).into();
     tx_json["total_battles"] = (player.total_battles as u64).into();
     tx_json["total_wins"] = (player.total_wins as u64).into();
     tx_json["total_losses"] = (player.total_losses as u64).into();
@@ -431,10 +447,58 @@ pub fn single_player_profile_to_json(player: &mut Player) -> String {
     tx_json["campaign_wins"] = (player.campaign_wins as u64).into();
     tx_json["campaign_losses"] = (player.campaign_losses as u64).into();
     tx_json["campaign_titles"] = campaign_titles_to_json(&player.campaign_titles);
+    tx_json["daily_streak"] = (player.daily_streak as u64).into();
+    tx_json["last_daily_claim_day"] = (player.last_daily_claim_day as u64).into();
     tx_json["transaction_history"] =
         player_transactions_to_json(player.transaction_history.clone()).into() ;
 
     return tx_json.to_string();
+}
+
+/// Simple deterministic battle rating from win/loss record. Floors at 100 so
+/// the number never goes negative or wraps.
+pub fn pvp_rating(wins: u128, losses: u128) -> u128 {
+    let base = 1000u128;
+    let up = wins.saturating_mul(20);
+    let down = losses.saturating_mul(10);
+    base.saturating_add(up).saturating_sub(down).max(100)
+}
+
+/// Global PvP/AI duel leaderboard: every player with at least one battle,
+/// ranked by rating (wins up, losses down), then win count, then fewer losses.
+/// The AI account is excluded. Top 50.
+pub fn pvp_leaderboard_to_json(all_players: &[Player]) -> String {
+    let mut ranked: Vec<&Player> = all_players
+        .iter()
+        .filter(|p| p.total_battles > 0 && p.wallet_address.to_lowercase() != "0xnebula")
+        .collect();
+    ranked.sort_by(|a, b| {
+        pvp_rating(b.total_wins, b.total_losses)
+            .cmp(&pvp_rating(a.total_wins, a.total_losses))
+            .then(b.total_wins.cmp(&a.total_wins))
+            .then(a.total_losses.cmp(&b.total_losses))
+    });
+
+    let mut arr = JsonValue::new_array();
+    for (rank, p) in ranked.iter().take(50).enumerate() {
+        let mut j = JsonValue::new_object();
+        j["rank"] = ((rank + 1) as u64).into();
+        j["monika"] = p.monika.clone().into();
+        j["wallet_address"] = p.wallet_address.clone().into();
+        j["rating"] = (pvp_rating(p.total_wins, p.total_losses) as u64).into();
+        j["total_wins"] = (p.total_wins as u64).into();
+        j["total_losses"] = (p.total_losses as u64).into();
+        j["total_battles"] = (p.total_battles as u64).into();
+        let win_rate = if p.total_battles > 0 {
+            (p.total_wins * 100 / p.total_battles) as u64
+        } else {
+            0
+        };
+        j["win_rate"] = win_rate.into();
+        j["avatar_url"] = p.avatar_url.clone().into();
+        let _ = arr.push(j);
+    }
+    arr.dump()
 }
 
 fn campaign_titles_to_json(titles: &[String]) -> JsonValue {
@@ -460,3 +524,16 @@ fn campaign_titles_to_json(titles: &[String]) -> JsonValue {
 // }
 
 // const result = JSON.stringify({"method": "all_Players", "txId": totalTransactions, "target": data.metadata.msg_sender, "data": allPlayers });
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pvp_rating_rewards_wins_and_floors() {
+        assert_eq!(pvp_rating(0, 0), 1000);
+        assert_eq!(pvp_rating(5, 2), 1000 + 100 - 20);
+        // Never underflows below the floor, even with a terrible record.
+        assert_eq!(pvp_rating(0, 100_000), 100);
+    }
+}

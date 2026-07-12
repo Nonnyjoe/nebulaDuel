@@ -489,6 +489,8 @@ fn pick_target_with_strategy(
                     }
                     AllStrategies::MaxStrengthToLowest => u.strength > units[b].strength,
                     AllStrategies::LowestStrengthToMax => u.strength < units[b].strength,
+                    AllStrategies::MaxAttackToLowest => u.attack > units[b].attack,
+                    AllStrategies::LowestSpeedToMax => u.speed < units[b].speed,
                 };
                 if better { Some(i) } else { Some(b) }
             }
@@ -1200,6 +1202,61 @@ pub fn progress_to_json(player: &Player) -> String {
     j.dump()
 }
 
+/// All elements in catalog order — the single source of truth shared with the
+/// frontend via the `element_table` inspect route (kills the Rust/TS drift).
+pub const ALL_ELEMENTS: [Element; 7] = [
+    Element::Storm,
+    Element::Fire,
+    Element::Nature,
+    Element::Water,
+    Element::Psychic,
+    Element::Shadow,
+    Element::Neutral,
+];
+
+/// Serialize the full attacker×defender damage-multiplier matrix (percent) plus
+/// the per-biome boost/dampen elements, so the frontend never hard-codes its
+/// own copy of the matchup rules.
+pub fn element_table_to_json() -> String {
+    let mut root = JsonValue::new_object();
+
+    let mut matchups = JsonValue::new_object();
+    for atk in ALL_ELEMENTS {
+        let mut row = JsonValue::new_object();
+        for def in ALL_ELEMENTS {
+            row[def.as_str()] = (element_multiplier(atk, def) as u64).into();
+        }
+        matchups[atk.as_str()] = row;
+    }
+    root["matchups"] = matchups;
+
+    let biomes = [
+        Biome::VerdantWilds,
+        Biome::VolcanicForge,
+        Biome::AbyssalDepths,
+        Biome::StormSpire,
+        Biome::AstralPlane,
+        Biome::VoidNexus,
+    ];
+    let mut biome_arr = JsonValue::new_array();
+    for b in biomes {
+        let mut j = JsonValue::new_object();
+        j["biome"] = b.as_str().into();
+        j["boosts"] = b.boosted().as_str().into();
+        j["boost_pct"] = 125u64.into();
+        j["dampens"] = b.dampened().as_str().into();
+        j["dampen_pct"] = 85u64.into();
+        let _ = biome_arr.push(j);
+    }
+    root["biomes"] = biome_arr;
+    root["strong_pct"] = 130u64.into();
+    root["weak_pct"] = 75u64.into();
+    root["neutral_pct"] = 100u64.into();
+    // Duels are fought in a neutral arena (no biome bias).
+    root["duel_arena_biome"] = JsonValue::Null;
+    root.dump()
+}
+
 pub fn leaderboard_to_json(all_players: &[Player]) -> String {
     let mut ranked: Vec<&Player> = all_players
         .iter()
@@ -1342,6 +1399,41 @@ mod tests {
         );
         assert!(out.winner_side == 0 || out.winner_side == 1);
         assert!(out.rounds >= 1 && out.rounds <= MAX_ROUNDS);
+    }
+
+    #[test]
+    fn new_strategies_resolve_without_panic() {
+        // Berserker (attack focus) vs Tactician (speed focus): the engine must
+        // handle the new targeting heuristics and still terminate.
+        let empty = build_loadout(&[]).unwrap();
+        let out = simulate_duel(
+            duel_squad(0),
+            duel_squad(100),
+            AllStrategies::MaxAttackToLowest,
+            AllStrategies::LowestSpeedToMax,
+            99,
+            &empty,
+            &empty,
+        );
+        assert!(out.winner_side == 0 || out.winner_side == 1);
+        assert!(out.rounds >= 1 && out.rounds <= MAX_ROUNDS);
+    }
+
+    #[test]
+    fn element_table_serializes_full_matrix() {
+        let dump = element_table_to_json();
+        let j = json::parse(&dump).unwrap();
+        // Every attacker has a row covering every defender.
+        for atk in ALL_ELEMENTS {
+            for def in ALL_ELEMENTS {
+                assert!(j["matchups"][atk.as_str()][def.as_str()].is_number());
+            }
+        }
+        // Matches the engine's own multipliers (single source of truth).
+        assert_eq!(j["matchups"]["Fire"]["Nature"], 130);
+        assert_eq!(j["matchups"]["Nature"]["Fire"], 75);
+        assert_eq!(j["biomes"].len(), 6);
+        assert!(j["duel_arena_biome"].is_null());
     }
 
     #[test]

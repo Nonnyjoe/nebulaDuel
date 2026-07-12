@@ -179,7 +179,6 @@ const PurchaseCharacter = () => {
       return;
     }
 
-    console.log("selected id's are: ", selectedCharactersId);
     setSubmiting(true);
     const dataObject = {
       func: "purchase_team",
@@ -187,7 +186,6 @@ const PurchaseCharacter = () => {
       char_id2: selectedCharactersId[1] - 1,
       char_id3: selectedCharactersId[2] - 1,
     };
-    console.log("data Obj", dataObject);
     const txhash = await signMessages(dataObject);
 
     if (txhash) {

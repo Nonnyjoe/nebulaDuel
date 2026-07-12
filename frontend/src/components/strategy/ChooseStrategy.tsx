@@ -59,7 +59,6 @@ interface CharacterDetails {
 
 const ChooseStrategy = () => {
   const { duelId } = useParams();
-  console.log("setting strategy for duel id: ", duelId);
   const [selectedStrategy, setSelectedStrategy] = useState<
     StrategyInterface | undefined
   >();
@@ -86,14 +85,11 @@ const ChooseStrategy = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      delay(4000);
       let dPayload = await fetchNotices("all_duels");
-      console.log(dPayload);
       dPayload = dPayload.filter(
         (Payload: any) => Number(Payload.duel_id) == Number(duelId)
       );
       if (dPayload.length == 0) {
-        console.log("PAYLOADDDDDDDD ", dPayload.length);
         let ai_duels = await fetchNotices("ai_duels");
         ai_duels = ai_duels.filter(
           (Payload: any) => Number(Payload.duel_id) == Number(duelId)
@@ -101,27 +97,21 @@ const ChooseStrategy = () => {
         if (ai_duels.length != 0) {
           dPayload = ai_duels[0];
         }
-        console.log("AI DUELS HERE: ", dPayload);
       } else {
         dPayload = dPayload[0];
-        console.log("dPayload as gotten: ", dPayload);
       }
       if (dPayload != undefined && dPayload != null) {
-        console.log(dPayload, "dPayload");
         setDuelCreator(dPayload.duel_creator);
         setDuelJoiner(dPayload.duel_opponent);
         setDuelType(dPayload.difficulty);
         if (activeAccount?.address?.toLowerCase() == dPayload.duel_creator) {
-          console.log("You are the creator!!");
         } else if (
           activeAccount?.address?.toLowerCase() == dPayload.duel_opponent
         ) {
-          console.log("You are the joiner!!");
         } else {
           if (dPayload.is_complete == true) {
             navigate(`/duels/${duelId}`);
           } else {
-            console.log("Invalid position in duel! " + dPayload);
             // navigate(`/joinduel/${duelId}`);
           }
         }
@@ -133,7 +123,6 @@ const ChooseStrategy = () => {
             character.id == JSON.parse(dPayload.creator_warriors)[1].char_id ||
             character.id == JSON.parse(dPayload.creator_warriors)[2].char_id
         );
-        console.log("creator characters: " + request_payload);
 
         // const {Status: cStatus, request_payload: cPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_creator}`); // Call your function
         // console.log(cPayload, "cPayload");
@@ -144,7 +133,6 @@ const ChooseStrategy = () => {
           const characterData = charactersdata.find(
             (character) => character.name === cPayload[i].name
           );
-          console.log(characterData, "characterData");
           const details = {
             ...cPayload[i],
             img: characterData ? characterData.img : undefined,
@@ -162,16 +150,13 @@ const ChooseStrategy = () => {
             character.id == JSON.parse(dPayload.opponent_warriors)[1].char_id ||
             character.id == JSON.parse(dPayload.opponent_warriors)[2].char_id
         );
-        console.log("participant characters: " + request_payload);
 
         // const {Status: pStatus, request_payload: pPayload} = await readGameState(`get_duel_characters/${duelId}/${dPayload.duel_opponent}`); // Call your function
-        console.log(pPayload, "pPayload");
 
         for (let i = 0; i < pPayload.length; i++) {
           const characterData = charactersdata.find(
             (character) => character.name === pPayload[i].name
           );
-          console.log(characterData, "characterData");
           const details = {
             ...pPayload[i],
             img: characterData ? characterData.img : undefined,
@@ -208,8 +193,6 @@ const ChooseStrategy = () => {
 
   const handleStrategySelection = async (e: any) => {
     e.preventDefault();
-    console.log(selectedStrategy?.id);
-    console.log(duelJoiner);
   
     if (opponentCharacterDetails.length !== 3) {
       toast.error(
@@ -239,8 +222,6 @@ const ChooseStrategy = () => {
       duel_id: Number(duelId),
     };
   
-    console.log(dataObject1, "dataObject");
-    console.log("...........", duelType);
   
     setSubmiting(true);
   
@@ -588,5 +569,15 @@ const strategy: StrategyType[] = [
     id: 4,
     name: "LowestStrength To MaxStrength",
     code: "l2MS",
+  },
+  {
+    id: 5,
+    name: "MaxAttack To LowestAttack",
+    code: "M2LA",
+  },
+  {
+    id: 6,
+    name: "LowestSpeed To MaxSpeed",
+    code: "L2MSp",
   },
 ];

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 // import DuelCard from "./DuelCard1.js";
 import DuelCard from "./DuelCard.js";
 import PageHero from "../shared/PageHero";
-import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 // import { useActiveAccount } from "thirdweb/react";
 import fetchNotices from "../../utils/readSubgraph.js";
@@ -53,7 +52,6 @@ const ListDuels = () => {
   const [allDuels, setAllDuels] = useState<Duel[]>([]);
   const [availableDuels, setAvailableDuels] = useState<Duel[]>([]);
   const [allPlayers, setAllPlayers] = useState<ProfileData[]>([]);
-  const location = useLocation();
   // const activeAccount = useActiveAccount();
   const navigate = useNavigate();
 
@@ -71,7 +69,6 @@ const ListDuels = () => {
           : [];
       setAllPlayers(list);
     } catch (error) {
-      console.log("error", error);
       setAllPlayers([]);
     }
   };
@@ -84,7 +81,6 @@ const ListDuels = () => {
       await fetchAllPlayers();
       try {
           const resDuels = await fetchNotices("all_duels");
-          console.log(resDuels, "all the total duels");
 
           // Treat only non-AI duels (difficulty === 'P2P') as P2P duels
           const p2pDuels: Duel[] = (resDuels || []).filter((duel: Duel) =>
@@ -101,21 +97,21 @@ const ListDuels = () => {
 
           setAvailableDuels(allAvailableP2P);
           setAllDuels(p2pDuels);
-          console.log(allAvailableP2P, "all available P2P duels");
 
           const aiDuelsRes = await fetchNotices("ai_duels");
-          console.log(aiDuelsRes, "ai duels");
           setAIDuels(aiDuelsRes || []);
           setDuels(allAvailableP2P);
       } catch (e: any) {
-        console.log("error:", e);
       }
     }
 
   useEffect(() => {
-
     getDuels();
-  }, [location]);
+    // Live lobby: refresh every 30s so new duels/joins appear without a reload.
+    const poll = setInterval(getDuels, 30_000);
+    return () => clearInterval(poll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (activeTab === "open") {

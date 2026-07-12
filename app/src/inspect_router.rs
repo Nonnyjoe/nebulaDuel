@@ -58,6 +58,14 @@ pub fn inspect_router(payload: &str, storage: &mut Storage) {
             println!("Fetching campaign leaderboard");
             Ok(campaign::leaderboard_to_json(&storage.all_players))
         }
+        "pvp_leaderboard" => {
+            println!("Fetching global PvP leaderboard");
+            Ok(pvp_leaderboard_to_json(&storage.all_players))
+        }
+        "element_table" => {
+            println!("Fetching element matchup table");
+            Ok(campaign::element_table_to_json())
+        }
         "market_info" => {
             println!("Fetching marketplace info");
             handle_fetch_market_info(&new_payload, storage)
@@ -65,6 +73,10 @@ pub fn inspect_router(payload: &str, storage: &mut Storage) {
         "charm_catalog" => {
             println!("Fetching charm catalog");
             Ok(crate::charms::catalog_to_json(storage.points_rate))
+        }
+        "achievements" => {
+            println!("Fetching achievements");
+            handle_fetch_achievements(&new_payload, storage)
         }
         other => Err(format!("Inspect route '{}' not implemented", other)),
     };
@@ -196,6 +208,26 @@ fn handle_fetch_market_info(
         }
     }
     Ok(j.dump())
+}
+
+fn handle_fetch_achievements(
+    new_payload: &Vec<&str>,
+    storage: &mut Storage,
+) -> Result<String, String> {
+    if new_payload.len() < 2 || new_payload[1].is_empty() {
+        return Err("Usage: achievements/<wallet_address>".to_string());
+    }
+    let wallet = new_payload[1].to_string();
+    let player = find_player(&mut storage.all_players, wallet)
+        .ok_or_else(|| format!("Player {} not found", new_payload[1]))?;
+    let char_ids = player.characters.clone();
+    // Disjoint field borrow: `player` holds all_players, this holds all_characters.
+    let owned = storage
+        .all_characters
+        .iter()
+        .filter(|c| char_ids.contains(&c.id))
+        .collect::<Vec<_>>();
+    Ok(crate::achievements::to_json(player, &owned))
 }
 
 fn handle_fetch_campaign_progress(

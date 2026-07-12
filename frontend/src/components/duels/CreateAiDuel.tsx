@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Text } from "../atom/Text";
 import { Button } from "../atom/Button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 // import readGameState from "../../utils/readState.js"
 import signMessages from "../../utils/relayTransaction.tsx";
@@ -80,6 +80,13 @@ const CreateAiDuel = () => {
     return array;
   }
 
+  // Shuffle once per roster load — not on every render.
+  const shuffledRoster = useMemo(
+    () => shuffleArray(characterDetails),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [characterDetails],
+  );
+
   useEffect(() => {
     async function rigPage() {
       if (initialised) return;
@@ -95,7 +102,6 @@ const CreateAiDuel = () => {
       const wallet = activeAccount.address.toLowerCase();
 
       // First, confirm profile exists using has_profile
-      console.log("Checking profile existence for wallet: ", wallet);
       const hasProfileResp = await readGameState(`has_profile/${wallet}`);
       if (!hasProfileResp.Status || hasProfileResp.request_payload !== true) {
         toast.error("You don't have a profile. Please create one.", {
@@ -138,7 +144,6 @@ const CreateAiDuel = () => {
               }
             })()
           : [];
-      console.log("AI duel - players characters from inspect:", rawCharacters);
 
       const enriched: CharacterDetails[] = rawCharacters.map((ch) => {
         const meta = charactersdata.find((c) => c.name === ch.name);
@@ -241,12 +246,9 @@ const CreateAiDuel = () => {
       difficulty_id: difficulty == "easy" ? 1 : 2,
     };
 
-    console.log(dataObject, "dataObject");
-    console.log("active account:", activeAccount?.address);
 
     setSubmiting(true);
     const txhash = await signMessages(dataObject);
-    console.log("txHash", txhash);
 
     if (!txhash) {
       toast.error("Transaction failed or was rejected. Please try again.", {
@@ -258,9 +260,7 @@ const CreateAiDuel = () => {
 
     // signMessages waits for the node to process the input — the new duel is
     // already queryable.
-    console.log("Fetching AI duels");
     let request_payload = await fetchNotices("ai_duels");
-    console.log("Request payload: ", request_payload);
 
     if (!Array.isArray(request_payload)) {
       toast.error(
@@ -435,7 +435,7 @@ const CreateAiDuel = () => {
               </Text>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 p-1.5 -m-1.5">
-              {shuffleArray(characterDetails).map((item, index) => (
+              {shuffledRoster.map((item, index) => (
                 <WarriorPickCard
                   key={`${item.id}-${index}`}
                   warrior={item}

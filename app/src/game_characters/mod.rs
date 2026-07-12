@@ -31,41 +31,99 @@ pub struct Character {
     pub total_losses: u128,
     pub price: u128,
     pub owner: String,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct MinimalCharacter {
-    pub id: u128,
-    pub name: String,
-    pub health: u128,
-    pub strength: u128,
-    pub attack: u128,
-    pub owner: String,
+    /// Seeded rarity tier rolled once at mint ("Common".."Legendary"). Drives
+    /// the stat variance below, so two copies of the same template are no
+    /// longer identical — and a well-rolled veteran is worth buying.
+    pub rarity: String,
+    /// Per-character progression earned by fighting. Levels grant small
+    /// permanent stat boosts, so used characters accrue real value.
+    pub level: u128,
+    pub xp: u128,
 }
 
 impl Character {
-    pub fn character_to_minimal_character(&self) -> MinimalCharacter {
-        MinimalCharacter {
-            id: self.id,
-            name: self.name.clone(),
-            health: self.health,
-            strength: self.strength,
-            attack: self.attack,
-            owner: self.owner.clone(),
-        }
-    }
-
-    pub fn is_dead(&self) -> bool {
-        if self.health < 1 {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     pub fn buy_character(&mut self, buyer_address: String) {
         self.owner = buyer_address;
     }
+
+    /// Award XP for a battle (win pays more than a loss) and apply any level
+    /// ups. Each level grants a small permanent stat boost. Deterministic and
+    /// bounded — purely a function of current stats.
+    pub fn award_battle_xp(&mut self, won: bool) {
+        let gain = if won { XP_PER_WIN } else { XP_PER_LOSS };
+        self.xp = self.xp.saturating_add(gain);
+        while self.xp >= xp_to_next_level(self.level) {
+            self.xp -= xp_to_next_level(self.level);
+            self.level += 1;
+            // Modest, predictable growth so leveling rewards play without
+            // breaking the economy.
+            self.health = self.health.saturating_add(4);
+            self.strength = self.strength.saturating_add(1);
+            self.attack = self.attack.saturating_add(1);
+            if self.level % 3 == 0 {
+                self.speed = self.speed.saturating_add(1);
+            }
+        }
+    }
+}
+
+pub const XP_PER_WIN: u128 = 50;
+pub const XP_PER_LOSS: u128 = 20;
+
+/// XP required to advance FROM the given level. Gently escalating curve.
+pub fn xp_to_next_level(level: u128) -> u128 {
+    100 + level.saturating_sub(1).saturating_mul(40)
+}
+
+// ---------------------------------------------------------------------------
+// Rarity rolls
+//
+// At mint each character rolls a per-stat multiplier in [90%, 110%] from a
+// deterministic seed, and its rarity tier is derived from how lucky those
+// rolls were. This makes duplicate templates differ and gives the marketplace
+// a real reason to exist (buy a Legendary roll instead of gambling a mint).
+// ---------------------------------------------------------------------------
+
+fn rarity_from_avg(avg_pct: u128) -> &'static str {
+    if avg_pct >= 108 {
+        "Legendary"
+    } else if avg_pct >= 104 {
+        "Epic"
+    } else if avg_pct >= 100 {
+        "Rare"
+    } else if avg_pct >= 96 {
+        "Uncommon"
+    } else {
+        "Common"
+    }
+}
+
+/// Apply a deterministic rarity roll to a freshly minted character, mutating
+/// its stats and setting its rarity tier. Same seed -> same roll (replay-safe).
+pub fn apply_rarity_roll(character: &mut Character, seed: u128) {
+    let mut state = seed
+        .wrapping_mul(6364136223846793005)
+        .wrapping_add(1442695040888963407);
+    let mut roll = || -> u128 {
+        state = state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        // multiplier in [90, 110]
+        90 + ((state >> 33) % 21)
+    };
+
+    let hp = roll();
+    let st = roll();
+    let at = roll();
+    let sp = roll();
+
+    character.health = (character.health * hp / 100).max(1);
+    character.strength = (character.strength * st / 100).max(1);
+    character.attack = (character.attack * at / 100).max(1);
+    character.speed = (character.speed * sp / 100).max(1);
+
+    let avg = (hp + st + at + sp) / 4;
+    character.rarity = rarity_from_avg(avg).to_string();
 }
 
 //Function to sort a players character choice from the inputed character ID
@@ -284,6 +342,9 @@ fn model_character(
         total_losses: 0,
         price,
         owner: String::from(" "),
+        rarity: String::from("Common"),
+        level: 1,
+        xp: 0,
     };
     return Some(character);
 }
@@ -329,12 +390,14 @@ pub fn points_price_for(player: &Player, base_price: u128) -> u128 {
     base_price * (100 + premium) / 100
 }
 
-/// CTSI price for a base points price at the given points rate.
-pub fn ctsi_price_for(base_price: u128, points_rate: f64) -> f64 {
+/// CTSI price (integer base units) for a base points price at the given points
+/// rate. `points_rate` is a config multiplier, not money, so flooring the
+/// division is intentional and deterministic.
+pub fn ctsi_price_for(base_price: u128, points_rate: f64) -> u128 {
     if points_rate <= 0.0 {
-        return base_price as f64;
+        return base_price;
     }
-    base_price as f64 / points_rate
+    (base_price as f64 / points_rate) as u128
 }
 
 /// Internal mint that bypasses economics — used for AI setup only.
@@ -357,6 +420,8 @@ pub fn mint_character_unchecked(
     character.owner = wallet_address;
     *total_characters += 1;
     character.id = *total_characters;
+    let seed = character.id;
+    apply_rarity_roll(&mut character, seed);
     player.characters.push(character.id);
     all_characters.push(character);
     Ok(())
@@ -406,6 +471,10 @@ pub fn purchase_team(
     character2.id = *total_characters + 2;
     character3.id = *total_characters + 3;
     *total_characters += 3;
+    let (s1, s2, s3) = (character1.id, character2.id, character3.id);
+    apply_rarity_roll(&mut character1, s1);
+    apply_rarity_roll(&mut character2, s2);
+    apply_rarity_roll(&mut character3, s3);
 
     player.characters.push(character1.id);
     player.characters.push(character2.id);
@@ -431,7 +500,7 @@ pub fn purchase_single_character(
     currency: MintCurrency,
     points_rate: f64,
     time_stamp: u128,
-    profit_from_points_purchase: &mut f64,
+    profit_from_points_purchase: &mut u128,
 ) -> Result<(), String> {
     let mut character = sort_characters(character_id)
         .ok_or_else(|| format!("Invalid character id: {}", character_id))?;
@@ -468,18 +537,21 @@ pub fn purchase_single_character(
             let price = ctsi_price_for(base_price, points_rate);
             if player.cartesi_token_balance < price {
                 return Err(format!(
-                    "This recruit costs {:.2} CTSI — you have {:.2}. Deposit more tokens first",
+                    "This recruit costs {} CTSI (base units) — you have {}. Deposit more tokens first",
                     price, player.cartesi_token_balance
                 ));
             }
             player.cartesi_token_balance -= price;
-            *profit_from_points_purchase += price;
+            *profit_from_points_purchase = profit_from_points_purchase.saturating_add(price);
         }
     }
 
     character.owner = wallet_address.clone();
     *total_characters += 1;
     character.id = *total_characters;
+    // Fold the timestamp into the seed so points/CTSI mints vary over time.
+    let seed = character.id.wrapping_add(time_stamp);
+    apply_rarity_roll(&mut character, seed);
 
     player.characters.push(character.id);
     all_characters.push(character);
@@ -566,4 +638,89 @@ pub fn get_character_details(
     character_id: u128,
 ) -> Option<&mut Character> {
     all_characters.iter_mut().find(|c| c.id == character_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn points_premium_escalates_and_caps() {
+        let mut p = crate::players_profile::Player {
+            monika: "t".into(), wallet_address: "0x1".into(), avatar_url: "".into(),
+            characters: vec![], id: 1, points: 0, nebula_token_balance: 0,
+            cartesi_token_balance: 0, total_battles: 0, total_wins: 0,
+            total_losses: 0, total_ai_battles: 0, ai_battles_won: 0,
+            ai_battles_losses: 0, transaction_history: vec![],
+            campaign_progress: 0, campaign_wins: 0, campaign_losses: 0,
+            campaign_titles: vec![], campaign_attempts: vec![],
+            point_purchase_count: 0, last_point_purchase_time: 0,
+            starter_team_claimed: false, charm_inventory: vec![],
+            last_daily_claim_day: 0, daily_streak: 0,
+        };
+        assert_eq!(points_price_for(&p, 100), 100);
+        p.point_purchase_count = 2;
+        assert_eq!(points_price_for(&p, 100), 130); // +15% each
+        p.point_purchase_count = 1000;
+        assert_eq!(points_price_for(&p, 100), 400); // capped at +300%
+    }
+
+    #[test]
+    fn ctsi_price_uses_points_rate() {
+        assert_eq!(ctsi_price_for(300, 100.0), 3); // integer base units
+        assert_eq!(ctsi_price_for(300, 0.0), 300); // degenerate rate guard
+    }
+
+    fn template(id: u128) -> Character {
+        let mut c = sort_characters(id).unwrap();
+        c.id = id + 1;
+        c
+    }
+
+    #[test]
+    fn rarity_roll_is_deterministic_and_bounded() {
+        let base = template(8); // Bone Collector: 93/12/15/8
+        let mut a = base.clone();
+        let mut b = base.clone();
+        apply_rarity_roll(&mut a, 12345);
+        apply_rarity_roll(&mut b, 12345);
+        // Same seed -> identical roll (replay-safe).
+        assert_eq!(a, b);
+        // Stats stay within +/-10% of base, never zero.
+        assert!(a.health >= base.health * 90 / 100 && a.health <= base.health * 110 / 100);
+        assert!(a.strength >= 1 && a.attack >= 1 && a.speed >= 1);
+        assert!(matches!(
+            a.rarity.as_str(),
+            "Common" | "Uncommon" | "Rare" | "Epic" | "Legendary"
+        ));
+    }
+
+    #[test]
+    fn rarity_roll_varies_by_seed() {
+        // Two different seeds should (across a spread) produce different stat
+        // totals — proving duplicate templates are no longer identical.
+        let base = template(5);
+        let total = |seed: u128| {
+            let mut c = base.clone();
+            apply_rarity_roll(&mut c, seed);
+            c.health + c.strength + c.attack + c.speed
+        };
+        let distinct: std::collections::HashSet<u128> =
+            (0..40u128).map(total).collect();
+        assert!(distinct.len() > 1);
+    }
+
+    #[test]
+    fn xp_levels_up_and_boosts_stats() {
+        let mut c = template(0);
+        let (h0, s0, lvl0) = (c.health, c.strength, c.level);
+        assert_eq!(lvl0, 1);
+        // Two wins = 100 XP = exactly one level (xp_to_next(1) == 100).
+        c.award_battle_xp(true);
+        c.award_battle_xp(true);
+        assert_eq!(c.level, 2);
+        assert!(c.health > h0 && c.strength > s0);
+        // A loss grants less XP than a win.
+        assert_eq!(XP_PER_LOSS < XP_PER_WIN, true);
+    }
 }

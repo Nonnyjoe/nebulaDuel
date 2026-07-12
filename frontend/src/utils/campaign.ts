@@ -197,6 +197,56 @@ export async function fetchCampaignLeaderboard(): Promise<LeaderboardRow[]> {
   return parseArrayReport<LeaderboardRow>(ok, reports);
 }
 
+export interface PvpLeaderboardRow {
+  rank: number;
+  monika: string;
+  wallet_address: string;
+  rating: number;
+  total_wins: number;
+  total_losses: number;
+  total_battles: number;
+  win_rate: number;
+  avatar_url: string;
+}
+
+/** Global P2P/AI duel standings (rating = wins up, losses down). */
+export async function fetchPvpLeaderboard(): Promise<PvpLeaderboardRow[]> {
+  const { ok, reports } = await inspectState("pvp_leaderboard");
+  return parseArrayReport<PvpLeaderboardRow>(ok, reports);
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  earned: boolean;
+  progress: number;
+}
+
+export interface Achievements {
+  wallet_address: string;
+  earned: number;
+  total: number;
+  badges: Badge[];
+}
+
+/** Achievements/badges for a wallet (recomputed server-side from live state). */
+export async function fetchAchievements(
+  wallet: string,
+): Promise<Achievements | null> {
+  const { ok, reports } = await inspectState(
+    `achievements/${wallet.toLowerCase()}`,
+  );
+  if (!ok || !reports.length) return null;
+  try {
+    const parsed = JSON.parse(reports[0]);
+    if (parsed && Array.isArray(parsed.badges)) return parsed as Achievements;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** Latest battle report for a player + level (post-fight replay source). */
 export async function fetchLatestBattleReport(
   wallet: string,
@@ -470,6 +520,18 @@ export const STRATEGIES: {
     name: "Opportunist",
     description: "Pick off the FRAILEST fighters — exploit low strength mercilessly.",
     emoji: "🎯",
+  },
+  {
+    id: 5,
+    name: "Berserker",
+    description: "Charge the HARDEST hitter — silence their highest-attack threat first.",
+    emoji: "💥",
+  },
+  {
+    id: 6,
+    name: "Tactician",
+    description: "Target the SLOWEST enemy — they strike back last, so end them first.",
+    emoji: "🧭",
   },
 ];
 

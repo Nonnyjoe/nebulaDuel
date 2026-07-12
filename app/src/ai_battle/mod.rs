@@ -75,7 +75,7 @@ pub fn create_ai_duel(
         is_active: true,
         is_completed: false,
         has_stake: false,
-        stake_amount: 0.0,
+        stake_amount: 0,
         difficulty,
         duel_creator: creators_address.clone(),
         creator_warriors: creators_warriors.clone(),
@@ -83,6 +83,8 @@ pub fn create_ai_duel(
         duel_opponent: String::from(AI_ADDRESS),
         opponent_warriors: Vec::new(),
         opponents_strategy: AllStrategies::YetToSelect,
+        creators_commit: String::new(),
+        opponents_commit: String::new(),
         battle_events: String::new(),
         duel_winner: String::new(),
         duel_loser: String::new(),
@@ -147,7 +149,7 @@ pub fn select_ai_battle_strategy(
         duel_id,
         all_players,
         all_ai_duels,
-        &mut 0.0,
+        &mut 0,
     )
 }
 

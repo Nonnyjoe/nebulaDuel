@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Text } from "../atom/Text";
 import { Button } from "../atom/Button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 // import readGameState from "../../utils/readState.js"
 import signMessages from "../../utils/relayTransaction.tsx";
@@ -85,8 +85,14 @@ const SelectWarriors = () => {
     return array;
   }
 
+  // Shuffle once per roster load — not on every render.
+  const shuffledRoster = useMemo(
+    () => shuffleArray(characterDetails),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [characterDetails],
+  );
+
   useEffect(() => {
-    console.log("Selecting warriors!!!!!!!!!!!!!!!!!!!!!!!!!");
     async function rigPage() {
       if (initialised) return;
       if (!activeAccount?.address) {
@@ -133,7 +139,6 @@ const SelectWarriors = () => {
               }
             })()
           : [];
-      console.log("Players characters from inspect:", rawCharacters);
 
       const enriched: CharacterDetails[] = rawCharacters.map((ch) => {
         const meta = charactersdata.find((c) => c.name === ch.name);
@@ -170,9 +175,10 @@ const SelectWarriors = () => {
   //   return highestIdDuel;
   // }
 
-  if (!profileData) {
-    navigate("/profile");
-  }
+  // Redirect must happen in an effect, never during render.
+  useEffect(() => {
+    if (!profileData) navigate("/profile");
+  }, [profileData, navigate]);
 
   if (!profileData?.characters) {
     return (
@@ -230,8 +236,6 @@ const SelectWarriors = () => {
       has_staked: acceptStake,
       stake_amount: stakeAmount ? stakeAmount : 0,
     };
-    console.log(dataObject, "dataObject");
-    console.log("active account:", activeAccount?.address);
 
     setSubmiting(true);
     try {
@@ -268,7 +272,6 @@ const SelectWarriors = () => {
         );
       }
     } catch (err: any) {
-      console.log(err);
       toast.error(err?.message ?? "Transaction failed. Try again later.", {
         position: "top-right",
       });
@@ -331,7 +334,7 @@ const SelectWarriors = () => {
               Your Characters
             </Text>
             <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-5 p-1.5 -m-1.5">
-              {shuffleArray(characterDetails).map((item, index) => (
+              {shuffledRoster.map((item, index) => (
                 <WarriorPickCard
                   key={`${item.id}-${index}`}
                   warrior={item}

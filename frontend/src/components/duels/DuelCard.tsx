@@ -100,13 +100,11 @@ const DuelCard: React.FC<DisplayDataProps> = ({
       if ( difficulty != "P2P") {
         const { request_payload} = await readGameState(`duels/${duel_id}`);
         const is_completed = request_payload.is_completed
-        console.log("is_completed", request_payload);
         if (is_completed) {
           return `/duels/${duel_id}`;
         }
       }
     } catch (err) {
-      console.log("Error", err);
     }
 
     const lowerCreator = typeof duel_creator === "string" ? duel_creator.toLowerCase() : "";
@@ -140,7 +138,6 @@ const DuelCard: React.FC<DisplayDataProps> = ({
 
 
   const handleDuelClicked = async () => {
-    console.log("Duel Card clicked: ", duel_id);
     navigate(await decideRoute());
   }
 

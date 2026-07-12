@@ -266,7 +266,39 @@ export interface InspectResult {
   error?: string;
 }
 
+// Lightweight read cache: identical inspect calls within TTL share one result,
+// and concurrent identical calls are de-duplicated into a single request. This
+// cuts the RPC chatter from pages that fetch on mount across multiple
+// components. Writes should call `clearInspectCache()` to force fresh reads.
+const INSPECT_TTL_MS = 4000;
+const inspectCache = new Map<string, { at: number; value: InspectResult }>();
+const inspectInflight = new Map<string, Promise<InspectResult>>();
+
+/** Drop all cached inspect results (call after a state-changing input). */
+export function clearInspectCache(): void {
+  inspectCache.clear();
+  inspectInflight.clear();
+}
+
 export async function inspectState(path: string): Promise<InspectResult> {
+  const cached = inspectCache.get(path);
+  if (cached && Date.now() - cached.at < INSPECT_TTL_MS) {
+    return cached.value;
+  }
+  const inflight = inspectInflight.get(path);
+  if (inflight) return inflight;
+
+  const req = inspectStateUncached(path).then((value) => {
+    // Only cache successful reads; errors should be retried freely.
+    if (value.ok) inspectCache.set(path, { at: Date.now(), value });
+    inspectInflight.delete(path);
+    return value;
+  });
+  inspectInflight.set(path, req);
+  return req;
+}
+
+async function inspectStateUncached(path: string): Promise<InspectResult> {
   if (!APPLICATION_ADDRESS) {
     return { ok: false, reports: [], error: "VITE_DAPP_ADDRESS is not set" };
   }

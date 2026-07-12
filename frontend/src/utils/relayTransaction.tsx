@@ -7,6 +7,7 @@ import {
   CHAIN_NAME,
   getProcessedInputCount,
   waitForInputProcessed,
+  clearInspectCache,
 } from "./cartesi";
 
 declare global {
@@ -156,13 +157,12 @@ async function sendInputToCartesi(message: any): Promise<SendInputResult> {
  */
 export default async function signMessages(message: any): Promise<string> {
   try {
-    const { txHash, processed } = await sendInputToCartesi(message);
-    console.log(
-      `Input sent to Cartesi InputBox. Tx: ${txHash}, processed by node: ${processed}`,
-    );
+    const { txHash } = await sendInputToCartesi(message);
+    // The machine state just changed — drop cached reads so the next fetch
+    // reflects it.
+    clearInspectCache();
     return txHash;
   } catch (err: any) {
-    console.log(err.message);
     throw err;
   }
 }

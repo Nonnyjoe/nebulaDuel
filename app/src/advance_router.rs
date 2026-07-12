@@ -48,6 +48,18 @@ fn get_f64(obj: &Object, key: &str) -> Result<f64, String> {
         .ok_or_else(|| format!("Missing or invalid field '{}'", key))
 }
 
+/// Read a CTSI amount as integer base units (wei). The frontend may send a
+/// JSON number; we floor any fractional part so the internal economy stays in
+/// pure integers (no float drift). Negative inputs are rejected as 0/invalid by
+/// the downstream "must be positive" checks.
+fn get_amount_wei(obj: &Object, key: &str) -> Result<u128, String> {
+    let v = get_f64(obj, key)?;
+    if v < 0.0 || !v.is_finite() {
+        return Err(format!("Field '{}' must be a non-negative amount", key));
+    }
+    Ok(v as u128)
+}
+
 fn get_bool(obj: &Object, key: &str) -> Result<bool, String> {
     obj.get(key)
         .and_then(|v| v.as_bool())
@@ -142,6 +154,12 @@ pub async fn router(
         }
         "join_duel" => handle_join_duel(payload, msg_sender.to_string(), storage).await,
         "set_strategy" => handle_set_strategy(payload, msg_sender.to_string(), storage).await,
+        "commit_strategy" => {
+            handle_commit_strategy(payload, msg_sender.to_string(), storage).await
+        }
+        "reveal_strategy" => {
+            handle_reveal_strategy(payload, msg_sender.to_string(), storage).await
+        }
         "fight" => handle_fight(payload, msg_sender.to_string(), storage).await,
         "purchase_team" => handle_purchase_team(payload, msg_sender.to_string(), storage).await,
         "transfer_tokens" => {
@@ -174,6 +192,12 @@ pub async fn router(
             handle_play_campaign_level(payload, msg_sender.to_string(), storage, time_stamp).await
         }
         "buy_charm" => handle_buy_charm(payload, msg_sender.to_string(), storage).await,
+        "claim_daily_reward" => {
+            handle_claim_daily_reward(msg_sender.to_string(), storage, time_stamp).await
+        }
+        "ghost_battle" => {
+            handle_ghost_battle(payload, msg_sender.to_string(), storage, time_stamp).await
+        }
         _ => Err(format!("Method '{}' does not exist", function)),
     };
 
@@ -287,7 +311,7 @@ pub async fn handle_create_duel(
     let obj = as_object(payload)?;
     let char_ids = get_char_ids(obj)?;
     let has_staked = get_bool(obj, "has_staked")?;
-    let stake_amount = get_f64(obj, "stake_amount")?;
+    let stake_amount = get_amount_wei(obj, "stake_amount")?;
 
     battle_challenge::create_duel(
         &mut storage.all_duels,
@@ -414,6 +438,83 @@ pub async fn handle_set_strategy(
     Ok(())
 }
 
+// {"func": "commit_strategy", "duel_id": 1, "commit": "0x.."}
+pub async fn handle_commit_strategy(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) -> Result<(), String> {
+    let obj = as_object(payload)?;
+    let duel_id = get_u128(obj, "duel_id")?;
+    let commit = get_str(obj, "commit")?;
+
+    battle_challenge::commit_strategy(&mut storage.all_duels, duel_id, msg_sender.clone(), commit)?;
+
+    storage.record_tx(
+        String::from("commit_strategy"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+    let json_data = duels_to_json(storage.all_duels.to_vec());
+    structure_notice(
+        String::from("commit_strategy"),
+        &mut storage.total_transactions,
+        msg_sender,
+        json_data,
+        &mut storage.server_addr,
+    );
+    Ok(())
+}
+
+// {"func": "reveal_strategy", "duel_id": 1, "strategy_id": 2, "salt": "abc123"}
+pub async fn handle_reveal_strategy(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+) -> Result<(), String> {
+    let obj = as_object(payload)?;
+    let duel_id = get_u128(obj, "duel_id")?;
+    let strategy_id = get_u128(obj, "strategy_id")?;
+    let salt = get_str(obj, "salt")?;
+    let strategy = strategy_simulation::decode_strategy(strategy_id)
+        .ok_or_else(|| format!("Invalid strategy id: {}", strategy_id))?;
+
+    let both_revealed = battle_challenge::reveal_strategy(
+        &mut storage.all_duels,
+        duel_id,
+        msg_sender.clone(),
+        strategy,
+        strategy_id,
+        salt,
+    )?;
+
+    if both_revealed {
+        battle_challenge::fight(
+            &mut storage.all_duels,
+            &mut storage.all_characters,
+            duel_id,
+            &mut storage.all_players,
+            &mut storage.available_duels,
+            &mut storage.profit_from_stake,
+        )?;
+    }
+
+    storage.record_tx(
+        String::from("reveal_strategy"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+    let json_data = duels_to_json(storage.all_duels.to_vec());
+    structure_notice(
+        String::from("reveal_strategy"),
+        &mut storage.total_transactions,
+        msg_sender,
+        json_data,
+        &mut storage.server_addr,
+    );
+    Ok(())
+}
+
 // {"func": "fight", "duel_id": 1}
 pub async fn handle_fight(
     payload: &JsonValue,
@@ -422,6 +523,18 @@ pub async fn handle_fight(
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
     let duel_id = get_u128(obj, "duel_id")?;
+
+    // Only the two participants may resolve a duel.
+    {
+        let duel = battle_challenge::get_duel(&mut storage.all_duels, duel_id)
+            .ok_or_else(|| format!("Duel with id {} not found", duel_id))?;
+        let caller = msg_sender.to_lowercase();
+        if duel.duel_creator.to_lowercase() != caller
+            && duel.duel_opponent.to_lowercase() != caller
+        {
+            return Err("Only duel participants can start this fight".to_string());
+        }
+    }
 
     battle_challenge::fight(
         &mut storage.all_duels,
@@ -446,6 +559,82 @@ pub async fn handle_fight(
         json_data,
         &mut storage.server_addr,
     );
+    Ok(())
+}
+
+// {"func": "ghost_battle", "char_id1": 1, "char_id2": 2, "char_id3": 3, "strategy_id": 2}
+pub async fn handle_ghost_battle(
+    payload: &JsonValue,
+    msg_sender: String,
+    storage: &mut Storage,
+    time_stamp: u128,
+) -> Result<(), String> {
+    let obj = as_object(payload)?;
+    let char_ids = get_char_ids(obj)?;
+    let strategy_id = get_u128(obj, "strategy_id")?;
+    let strategy = strategy_simulation::decode_strategy(strategy_id)
+        .ok_or_else(|| format!("Invalid strategy id: {}", strategy_id))?;
+
+    battle_challenge::ghost_battle(
+        &mut storage.all_duels,
+        &mut storage.all_characters,
+        &mut storage.all_players,
+        &mut storage.total_duels,
+        msg_sender.clone(),
+        char_ids,
+        strategy,
+        time_stamp,
+    )?;
+
+    storage.record_tx(
+        String::from("ghost_battle"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+
+    let json_data = duels_to_json(storage.all_duels.to_vec());
+    structure_notice(
+        String::from("ghost_battle"),
+        &mut storage.total_transactions,
+        msg_sender,
+        json_data,
+        &mut storage.server_addr,
+    );
+    Ok(())
+}
+
+// {"func": "claim_daily_reward"}
+pub async fn handle_claim_daily_reward(
+    msg_sender: String,
+    storage: &mut Storage,
+    time_stamp: u128,
+) -> Result<(), String> {
+    let (reward, streak) = {
+        let player = get_profile(&mut storage.all_players, msg_sender.clone())
+            .ok_or("Player not registered. Please register first")?;
+        player.claim_daily(time_stamp)?
+    };
+    println!(
+        "Daily reward claimed by {}: +{} points (streak {})",
+        msg_sender, reward, streak
+    );
+
+    storage.record_tx(
+        String::from("claim_daily_reward"),
+        msg_sender.clone(),
+        TransactionStatus::Success,
+    );
+
+    if let Some(player) = get_profile(&mut storage.all_players, msg_sender.clone()) {
+        let data = single_player_profile_to_json(player);
+        structure_notice(
+            String::from("claim_daily_reward"),
+            &mut storage.total_transactions,
+            msg_sender,
+            data,
+            &mut storage.server_addr,
+        );
+    }
     Ok(())
 }
 
@@ -670,7 +859,7 @@ pub async fn handle_transfer_tokens(
     storage: &mut Storage,
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
-    let trf_amount = get_f64(obj, "trf_amount")?;
+    let trf_amount = get_amount_wei(obj, "trf_amount")?;
     let receiver_add = get_str(obj, "receiver_add")?;
 
     market_place::transfer_tokens(
@@ -867,7 +1056,18 @@ pub async fn handle_listing_character(
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
     let character_id = get_u128(obj, "character_id")?;
-    let price = get_f64(obj, "price")?;
+    let price = get_amount_wei(obj, "price")?;
+
+    // A warrior locked in an active duel cannot be sold out from under it.
+    let in_active_duel = storage.all_duels.iter().any(|d| {
+        d.is_active
+            && !d.is_completed
+            && (d.creator_warriors.contains(&character_id)
+                || d.opponent_warriors.contains(&character_id))
+    });
+    if in_active_duel {
+        return Err("This warrior is fighting in an active duel and cannot be listed".to_string());
+    }
 
     market_place::list_character(
         &mut storage.all_characters,
@@ -956,7 +1156,7 @@ pub async fn handle_purchase_points(
     storage: &mut Storage,
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
-    let amount = get_f64(obj, "amount")?;
+    let amount = get_amount_wei(obj, "amount")?;
 
     market_place::purchase_points(
         &mut storage.all_players,
@@ -991,7 +1191,7 @@ pub async fn handle_modify_list_price(
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
     let character_id = get_u128(obj, "character_id")?;
-    let price = get_f64(obj, "price")?;
+    let price = get_amount_wei(obj, "price")?;
 
     market_place::modify_list_price(
         &mut storage.listed_characters,
@@ -1125,7 +1325,7 @@ pub async fn handle_withdraw_profit_from_stake(
     storage: &mut Storage,
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
-    let amount = get_f64(obj, "amount")?;
+    let amount = get_amount_wei(obj, "amount")?;
 
     admin_functions::withdraw_profit_from_stake(
         &mut storage.admin_address,
@@ -1133,6 +1333,13 @@ pub async fn handle_withdraw_profit_from_stake(
         &mut storage.profit_from_stake,
         amount,
     )?;
+
+    // Real treasury: pay the admin on L1 via a v2 voucher (previously the
+    // counter decremented but funds could never leave the machine).
+    let admin = storage.admin_address.clone();
+    market_place::transfer_token(storage, admin, amount)
+        .await
+        .map_err(|e| format!("Treasury voucher failed: {}", e))?;
 
     storage.record_tx(
         String::from("withdraw_profit_from_stake"),
@@ -1158,7 +1365,7 @@ pub async fn handle_withdraw_profit_from_p2p_sales(
     storage: &mut Storage,
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
-    let amount = get_f64(obj, "amount")?;
+    let amount = get_amount_wei(obj, "amount")?;
 
     admin_functions::withdraw_profit_from_p2p_sales(
         &mut storage.admin_address,
@@ -1166,6 +1373,13 @@ pub async fn handle_withdraw_profit_from_p2p_sales(
         &mut storage.profit_from_p2p_sales,
         amount,
     )?;
+
+    // Real treasury: pay the admin on L1 via a v2 voucher (previously the
+    // counter decremented but funds could never leave the machine).
+    let admin = storage.admin_address.clone();
+    market_place::transfer_token(storage, admin, amount)
+        .await
+        .map_err(|e| format!("Treasury voucher failed: {}", e))?;
 
     storage.record_tx(
         String::from("withdraw_profit_from_p2p_sales"),
@@ -1191,7 +1405,7 @@ pub async fn handle_withdraw_profit_from_points_purchase(
     storage: &mut Storage,
 ) -> Result<(), String> {
     let obj = as_object(payload)?;
-    let amount = get_f64(obj, "amount")?;
+    let amount = get_amount_wei(obj, "amount")?;
 
     admin_functions::withdraw_profit_from_points_purchase(
         &mut storage.admin_address,
@@ -1199,6 +1413,13 @@ pub async fn handle_withdraw_profit_from_points_purchase(
         &mut storage.profit_from_points_purchase,
         amount,
     )?;
+
+    // Real treasury: pay the admin on L1 via a v2 voucher (previously the
+    // counter decremented but funds could never leave the machine).
+    let admin = storage.admin_address.clone();
+    market_place::transfer_token(storage, admin, amount)
+        .await
+        .map_err(|e| format!("Treasury voucher failed: {}", e))?;
 
     storage.record_tx(
         String::from("withdraw_profit_from_points_purchase"),
@@ -1234,6 +1455,27 @@ pub async fn handle_withdraw_character_as_nft(
         &mut storage.all_offchain_characters,
     )?;
 
+    // Emit the real ERC-721 mint voucher so the character actually leaves the
+    // machine as an on-chain NFT (closes the bridge the README promised).
+    if let Some(character) = storage
+        .all_characters
+        .iter()
+        .find(|c| c.id == character_id)
+        .cloned()
+    {
+        if let Err(e) = market_place::mint_nft_voucher(storage, &msg_sender, &character).await {
+            // Roll back the off-chain move so state and L1 stay consistent.
+            market_place::deposit_character_as_nft(
+                &mut storage.all_players,
+                &mut storage.all_characters,
+                msg_sender.clone(),
+                character_id,
+                &mut storage.all_offchain_characters,
+            )?;
+            return Err(e);
+        }
+    }
+
     storage.record_tx(
         String::from("withdraw_character_as_nft"),
         msg_sender.clone(),
@@ -1259,7 +1501,7 @@ pub async fn handle_withdraw(
 ) -> Result<(), String> {
     println!("handling withdrawal function: {:?}", msg_sender);
     let obj = as_object(payload)?;
-    let amount = get_f64(obj, "amount")?;
+    let amount = get_amount_wei(obj, "amount")?;
 
     market_place::withdraw(storage, msg_sender.clone(), amount).await?;
 
@@ -1366,7 +1608,7 @@ pub async fn handle_deposit(
     println!("Receiver Address: {}", receiver);
     println!("Amount: {}", amount);
 
-    let deposit_amount: f64 = amount as f64;
+    let deposit_amount: u128 = amount;
     let deposit_token = format!("0x{}", token).to_lowercase();
     let token_receiver = format!("0x{}", receiver).to_lowercase();
 

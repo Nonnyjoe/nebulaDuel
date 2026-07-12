@@ -22,7 +22,8 @@ pub struct Duel {
     pub is_active: bool,
     pub is_completed: bool,
     pub has_stake: bool,
-    pub stake_amount: f64,
+    /// Stake in integer CTSI base units (wei).
+    pub stake_amount: u128,
     pub difficulty: Difficulty,
     pub duel_creator: String,
     pub creator_warriors: Vec<u128>,
@@ -30,6 +31,10 @@ pub struct Duel {
     pub duel_opponent: String,
     pub opponent_warriors: Vec<u128>,
     pub opponents_strategy: AllStrategies,
+    /// Commit–reveal hashes (`keccak256("id:salt")`, empty = not committed).
+    /// Used by the optional commit-reveal flow for staked duels.
+    pub creators_commit: String,
+    pub opponents_commit: String,
     /// Rich, campaign-format battle report (events + final squads) emitted by
     /// the unified engine. Empty until the duel is fought. Serialized to the
     /// frontend as `battle_events` so the 3D replay shows elements, powers and
@@ -49,16 +54,16 @@ pub fn create_duel(
     creators_warriors: Vec<u128>,
     available_duels: &mut Vec<Duel>,
     has_stake: bool,
-    stake_amount: f64,
+    stake_amount: u128,
     time_stamp: u128,
 ) -> Result<u128, String> {
     if creators_warriors.len() != 3 {
         return Err("Player must present exactly 3 characters for each battle".to_string());
     }
-    if !has_stake && stake_amount > 0.0 {
+    if !has_stake && stake_amount > 0 {
         return Err("Stake amount must be 0 if stake is deactivated".to_string());
     }
-    if has_stake && stake_amount <= 0.0 {
+    if has_stake && stake_amount == 0 {
         return Err("Stake amount must be positive when staking is enabled".to_string());
     }
 
@@ -91,6 +96,8 @@ pub fn create_duel(
         duel_opponent: String::new(),
         opponent_warriors: Vec::new(),
         opponents_strategy: AllStrategies::YetToSelect,
+        creators_commit: String::new(),
+        opponents_commit: String::new(),
         battle_events: String::new(),
         duel_winner: String::new(),
         duel_loser: String::new(),
@@ -105,7 +112,7 @@ pub fn create_duel(
 fn enforce_stake(
     all_players: &mut Vec<Player>,
     user_address: String,
-    stake_amount: f64,
+    stake_amount: u128,
 ) -> Result<(), String> {
     let player = all_players
         .iter_mut()
@@ -215,13 +222,90 @@ pub fn set_strategy(
 /// neutral (no biome bias) to keep staked duels environmentally fair. The
 /// result is stored as a rich `battle_events` report the frontend replays in
 /// full 3D, then win/loss/stake settlement runs.
+/// Commit phase: store `keccak256("id:salt")` for the caller. Both sides must
+/// commit before either may reveal, so neither can react to the other's pick.
+pub fn commit_strategy(
+    all_duels: &mut Vec<Duel>,
+    duel_id: u128,
+    wallet_address: String,
+    commit_hash: String,
+) -> Result<bool, String> {
+    if commit_hash.trim().is_empty() {
+        return Err("Commitment hash cannot be empty".to_string());
+    }
+    let duel = find_duel(all_duels, duel_id)
+        .ok_or_else(|| format!("Duel with id {} not found", duel_id))?;
+    if !duel.is_active {
+        return Err("Duel not active".to_string());
+    }
+    if duel.is_completed {
+        return Err("Duel already completed".to_string());
+    }
+    if duel.duel_opponent.is_empty() {
+        return Err("You can only commit once you have an opponent".to_string());
+    }
+
+    let caller = wallet_address.to_lowercase();
+    if duel.duel_creator.to_lowercase() == caller {
+        duel.creators_commit = commit_hash;
+    } else if duel.duel_opponent.to_lowercase() == caller {
+        duel.opponents_commit = commit_hash;
+    } else {
+        return Err("You are not a participant in this duel".to_string());
+    }
+    // Both committed?
+    Ok(!duel.creators_commit.is_empty() && !duel.opponents_commit.is_empty())
+}
+
+/// Reveal phase: verify `(strategy, salt)` against the stored commitment, then
+/// record the plaintext strategy. Returns Ok(true) when both sides have
+/// revealed and the fight can start.
+pub fn reveal_strategy(
+    all_duels: &mut Vec<Duel>,
+    duel_id: u128,
+    wallet_address: String,
+    strategy: AllStrategies,
+    strategy_id: u128,
+    salt: String,
+) -> Result<bool, String> {
+    let duel = find_duel(all_duels, duel_id)
+        .ok_or_else(|| format!("Duel with id {} not found", duel_id))?;
+    if !duel.is_active || duel.is_completed {
+        return Err("Duel is not awaiting a reveal".to_string());
+    }
+    if duel.creators_commit.is_empty() || duel.opponents_commit.is_empty() {
+        return Err("Both players must commit before anyone reveals".to_string());
+    }
+
+    let caller = wallet_address.to_lowercase();
+    let commit = if duel.duel_creator.to_lowercase() == caller {
+        &duel.creators_commit
+    } else if duel.duel_opponent.to_lowercase() == caller {
+        &duel.opponents_commit
+    } else {
+        return Err("You are not a participant in this duel".to_string());
+    };
+
+    if !crate::strategy_commit::verify_reveal(commit, strategy_id, &salt) {
+        return Err("Reveal does not match your committed strategy".to_string());
+    }
+
+    if duel.duel_creator.to_lowercase() == caller {
+        duel.creators_strategy = strategy;
+        Ok(duel.opponents_strategy != AllStrategies::YetToSelect)
+    } else {
+        duel.opponents_strategy = strategy;
+        Ok(duel.creators_strategy != AllStrategies::YetToSelect)
+    }
+}
+
 pub fn fight(
     all_duels: &mut Vec<Duel>,
     all_characters: &mut Vec<Character>,
     duel_id: u128,
     all_players: &mut Vec<Player>,
     available_duels: &mut Vec<Duel>,
-    profit_from_stake: &mut f64,
+    profit_from_stake: &mut u128,
 ) -> Result<Duel, String> {
     // Phase 1: read-only validation + snapshot the inputs we need.
     let (creator_strategy, opponent_strategy, creator_ids, opponent_ids, seed) = {
@@ -328,7 +412,7 @@ fn register_battle_details(
     duel_winner: String,
     duel_looser: String,
     duel: Duel,
-    profit_from_stake: &mut f64,
+    profit_from_stake: &mut u128,
 ) {
     println!(
         "=== RESULTS ARE IN!! WINNER: {}, LOSER: {} ===",
@@ -374,12 +458,142 @@ fn register_battle_details(
     if duel.has_stake {
         println!("=== RELEASING STAKE TO WINNER ===");
         if let Some(winner) = get_profile(all_players, duel_winner) {
-            winner.increase_cartesi_token_balance((duel.stake_amount * 2.0) * 0.90);
-            *profit_from_stake += (duel.stake_amount * 2.0) * 0.10;
+            // Pot = both stakes; winner gets 90%, the house rakes 10%
+            // (integer math — the winner gets any rounding remainder).
+            let pot = duel.stake_amount.saturating_mul(2);
+            let rake = pot.saturating_mul(10) / 100;
+            winner.increase_cartesi_token_balance(pot - rake);
+            *profit_from_stake = profit_from_stake.saturating_add(rake);
         } else {
             println!("Could not release stake: winner profile missing");
         }
     }
+}
+
+/// Async "ghost" battle: the challenger fights a frozen SNAPSHOT of another
+/// registered player's squad — no live opponent required. The defender's record
+/// is untouched (they didn't consent to the match); only the challenger's
+/// win/loss, points and fighter XP move. Reuses the unified engine, so a ghost
+/// match looks and resolves exactly like a live duel. Returns the completed,
+/// replayable Duel.
+#[allow(clippy::too_many_arguments)]
+pub fn ghost_battle(
+    all_duels: &mut Vec<Duel>,
+    all_characters: &mut Vec<Character>,
+    all_players: &mut Vec<Player>,
+    total_duels: &mut u128,
+    challenger: String,
+    challenger_warriors: Vec<u128>,
+    challenger_strategy: AllStrategies,
+    time_stamp: u128,
+) -> Result<Duel, String> {
+    if challenger_warriors.len() != 3 {
+        return Err("You must field exactly 3 warriors".to_string());
+    }
+    if challenger_strategy == AllStrategies::YetToSelect {
+        return Err("Choose a strategy before challenging".to_string());
+    }
+
+    // Ownership of the challenger's squad.
+    let challenger_ids = select_fighters(
+        all_characters,
+        all_players,
+        challenger.clone(),
+        challenger_warriors[0],
+        challenger_warriors[1],
+        challenger_warriors[2],
+    )?;
+
+    // Pick a deterministic opponent snapshot: a registered, non-AI player who
+    // isn't the challenger and fields at least 3 warriors.
+    let seed = time_stamp
+        .wrapping_add(total_duels.wrapping_mul(7919))
+        .wrapping_add(1);
+    let (opponent_address, opponent_ids) =
+        pick_ghost_opponent(all_players, &challenger, seed)
+            .ok_or("No opponents are available to ghost-battle yet — check back once more players have squads")?;
+
+    let creator_squad = squad_spec(all_characters, &challenger_ids)?;
+    let opponent_squad = squad_spec(all_characters, &opponent_ids)?;
+    let empty = build_loadout(&[])?;
+    // The frozen defender plays a fixed, fair heuristic (focus the weakest).
+    let battle = simulate_duel(
+        creator_squad,
+        opponent_squad,
+        challenger_strategy.clone(),
+        AllStrategies::LowestHealthToMax,
+        seed,
+        &empty,
+        &empty,
+    );
+
+    *total_duels += 1;
+    let challenger_won = battle.winner_side == 0;
+    let mut duel = Duel {
+        duel_id: *total_duels,
+        is_active: false,
+        is_completed: true,
+        has_stake: false,
+        stake_amount: 0,
+        difficulty: Difficulty::P2P,
+        duel_creator: challenger.clone(),
+        creator_warriors: challenger_ids.clone(),
+        creators_strategy: challenger_strategy,
+        duel_opponent: opponent_address.clone(),
+        opponent_warriors: opponent_ids,
+        opponents_strategy: AllStrategies::LowestHealthToMax,
+        creators_commit: String::new(),
+        opponents_commit: String::new(),
+        battle_events: battle.report.dump(),
+        duel_winner: if challenger_won {
+            challenger.clone()
+        } else {
+            opponent_address.clone()
+        },
+        duel_loser: if challenger_won {
+            opponent_address
+        } else {
+            challenger.clone()
+        },
+        creation_time: time_stamp,
+    };
+
+    // Credit ONLY the challenger (the defender is a passive snapshot).
+    if let Some(p) = get_profile(all_players, challenger.clone()) {
+        if challenger_won {
+            p.register_win(all_characters, &challenger_ids);
+            p.points += DUEL_WIN_REWARD_POINTS;
+        } else {
+            p.register_loss(all_characters, &challenger_ids);
+        }
+    }
+
+    duel.is_active = false;
+    all_duels.push(duel.clone());
+    Ok(duel)
+}
+
+/// Deterministically choose an opponent squad snapshot from the player pool.
+fn pick_ghost_opponent(
+    all_players: &[Player],
+    challenger: &str,
+    seed: u128,
+) -> Option<(String, Vec<u128>)> {
+    let eligible: Vec<&Player> = all_players
+        .iter()
+        .filter(|p| {
+            p.wallet_address.to_lowercase() != challenger.to_lowercase()
+                && p.wallet_address != AI_ADDRESS
+                && p.characters.len() >= 3
+        })
+        .collect();
+    if eligible.is_empty() {
+        return None;
+    }
+    let idx = (seed % eligible.len() as u128) as usize;
+    let opp = eligible[idx];
+    let ids = opp.characters.iter().take(3).cloned().collect();
+    Some((opp.wallet_address.clone(), ids))
 }
 
 pub fn reveal_both_warriors(all_duels: &mut Vec<Duel>, duel_id: u128) -> Option<Vec<Vec<u128>>> {
@@ -396,4 +610,40 @@ pub fn get_duel(all_duels: &mut Vec<Duel>, duel_id: u128) -> Option<&mut Duel> {
 
 fn find_duel(all_duels: &mut Vec<Duel>, duel_id: u128) -> Option<&mut Duel> {
     all_duels.iter_mut().find(|d| d.duel_id == duel_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::players_profile::create_player;
+
+    fn player(addr: &str, char_ids: Vec<u128>) -> Player {
+        let mut players = Vec::new();
+        let mut total = 0;
+        let mut p =
+            create_player("n".into(), addr.into(), "".into(), &mut players, &mut total).unwrap();
+        p.characters = char_ids;
+        p
+    }
+
+    #[test]
+    fn ghost_opponent_excludes_self_ai_and_squadless() {
+        let players = vec![
+            player("0xchallenger", vec![1, 2, 3]),
+            player("0xnebula", vec![10, 11, 12]), // AI excluded
+            player("0xtoosmall", vec![4, 5]),     // < 3 warriors excluded
+            player("0xrival", vec![6, 7, 8]),     // the only valid opponent
+        ];
+        let pick = pick_ghost_opponent(&players, "0xchallenger", 42);
+        assert!(pick.is_some());
+        let (addr, ids) = pick.unwrap();
+        assert_eq!(addr, "0xrival");
+        assert_eq!(ids, vec![6, 7, 8]);
+    }
+
+    #[test]
+    fn ghost_opponent_none_when_pool_empty() {
+        let players = vec![player("0xlonely", vec![1, 2, 3])];
+        assert!(pick_ghost_opponent(&players, "0xlonely", 1).is_none());
+    }
 }

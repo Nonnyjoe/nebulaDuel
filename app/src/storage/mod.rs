@@ -21,10 +21,9 @@ pub struct Storage {
     pub points_rate: f64,
     /// Marketplace platform fee in basis points (300 = 3%).
     pub marketplace_fee_bps: u128,
-    pub who_plays_first: u128,
-    pub profit_from_stake: f64,
-    pub profit_from_p2p_sales: f64,
-    pub profit_from_points_purchase: f64,
+    pub profit_from_stake: u128,
+    pub profit_from_p2p_sales: u128,
+    pub profit_from_points_purchase: u128,
     pub all_offchain_characters: Vec<u128>,
     pub cartesi_token_address: String,
     pub nebula_token_address: String,
@@ -38,12 +37,23 @@ pub struct Storage {
     pub has_relayed_address: bool,
 }
 
+/// Address-book entries are env-configurable so the same machine image works
+/// on local Anvil AND production (Base Sepolia etc.). Defaults match the
+/// local `cartesi run` deployment.
+pub fn env_or(key: &str, default: &str) -> String {
+    std::env::var(key)
+        .unwrap_or_else(|_| default.to_string())
+        .to_lowercase()
+}
+
 impl Storage {
     pub fn new(server_addr: String, client: &hyper::Client<hyper::client::HttpConnector>) -> Self {
         Self {
             total_players: 0,
-            admin_address: String::from("0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8")
-                .to_lowercase(),
+            admin_address: env_or(
+                "ADMIN_ADDRESS",
+                "0xA771E1625DD4FAa2Ff0a41FA119Eb9644c9A46C8",
+            ),
             all_players: Vec::new(),
             all_characters: Vec::new(),
             listed_characters: Vec::new(),
@@ -54,14 +64,22 @@ impl Storage {
             total_duels: 0,
             points_rate: 100.00,
             marketplace_fee_bps: 300,
-            who_plays_first: 1,
-            profit_from_stake: 0.0,
-            profit_from_p2p_sales: 0.0,
-            profit_from_points_purchase: 0.0,
+            profit_from_stake: 0,
+            profit_from_p2p_sales: 0,
+            profit_from_points_purchase: 0,
             all_offchain_characters: Vec::new(),
-            cartesi_token_address: String::from("0x92c6bca388e99d6b304f1af3c3cd749ff0b591e2"),
-            nebula_token_address: String::from("0x92c6bca388e99d6b304f1af3c3cd749ff0b591e2"),
-            nebula_nft_address: String::from("0xc6582A9b48F211Fa8c2B5b16CB615eC39bcA653B"),
+            cartesi_token_address: env_or(
+                "CTSI_TOKEN_ADDRESS",
+                "0x92c6bca388e99d6b304f1af3c3cd749ff0b591e2",
+            ),
+            nebula_token_address: env_or(
+                "NEBULA_TOKEN_ADDRESS",
+                "0x92c6bca388e99d6b304f1af3c3cd749ff0b591e2",
+            ),
+            nebula_nft_address: env_or(
+                "NEBULA_NFT_ADDRESS",
+                "0xc6582A9b48F211Fa8c2B5b16CB615eC39bcA653B",
+            ),
             dapp_contract_address: String::from("0xNebulaNftAddress"),
             // relayer_addr: String::from("0xbD8Eba8Bf9e56ad92F4C4Fc89D6CB88902535749").to_lowercase(), // base sepolia
             relayer_addr: String::from("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266").to_lowercase(),
@@ -101,11 +119,22 @@ pub struct BaseContracts {
 impl BaseContracts {
     pub fn new() -> Self {
         Self {
-            erc20_portal: String::from("0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB").to_lowercase(),
-            erc721_portal: String::from("0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87")
-                .to_lowercase(),
-            dapp_relayer: String::from("0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE").to_lowercase(),
-            input_box: String::from("0x59b22D57D4f067708AB0c00552767405926dc768").to_lowercase(),
+            erc20_portal: env_or(
+                "ERC20_PORTAL_ADDRESS",
+                "0x9C21AEb2093C32DDbC53eEF24B873BDCd1aDa1DB",
+            ),
+            erc721_portal: env_or(
+                "ERC721_PORTAL_ADDRESS",
+                "0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87",
+            ),
+            dapp_relayer: env_or(
+                "DAPP_RELAYER_ADDRESS",
+                "0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE",
+            ),
+            input_box: env_or(
+                "INPUT_BOX_ADDRESS",
+                "0x59b22D57D4f067708AB0c00552767405926dc768",
+            ),
         }
     }
 }

@@ -68,11 +68,11 @@ pub fn set_nebula_token_address(
 pub fn withdraw_profit_from_stake(
     admin_address: &mut String,
     caller_address: String,
-    profit_from_stake: &mut f64,
-    amount: f64,
+    profit_from_stake: &mut u128,
+    amount: u128,
 ) -> Result<(), String> {
     require_admin(&caller_address, admin_address)?;
-    if amount <= 0.0 {
+    if amount == 0 {
         return Err("Withdrawal amount must be positive".to_string());
     }
     if amount > *profit_from_stake {
@@ -85,11 +85,11 @@ pub fn withdraw_profit_from_stake(
 pub fn withdraw_profit_from_p2p_sales(
     admin_address: &mut String,
     caller_address: String,
-    profit_from_p2p_sales: &mut f64,
-    amount: f64,
+    profit_from_p2p_sales: &mut u128,
+    amount: u128,
 ) -> Result<(), String> {
     require_admin(&caller_address, admin_address)?;
-    if amount <= 0.0 {
+    if amount == 0 {
         return Err("Withdrawal amount must be positive".to_string());
     }
     if amount > *profit_from_p2p_sales {
@@ -102,11 +102,11 @@ pub fn withdraw_profit_from_p2p_sales(
 pub fn withdraw_profit_from_points_purchase(
     admin_address: &mut String,
     caller_address: String,
-    profit_from_points_purchase: &mut f64,
-    amount: f64,
+    profit_from_points_purchase: &mut u128,
+    amount: u128,
 ) -> Result<(), String> {
     require_admin(&caller_address, admin_address)?;
-    if amount <= 0.0 {
+    if amount == 0 {
         return Err("Withdrawal amount must be positive".to_string());
     }
     if amount > *profit_from_points_purchase {

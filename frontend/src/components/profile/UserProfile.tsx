@@ -97,7 +97,6 @@ const UserProfile = () => {
     setUploading(true);
 
     if(avatar) {
-        console.log(avatar, 'avatar is already set');
       try {
         const formData = new FormData();
         formData.append("file", avatar!);
@@ -121,12 +120,10 @@ const UserProfile = () => {
         }
         setUploading(false);
       } catch(err) {
-        console.log('Pinata API error', err);
         toast.error('upload error');
         setUploading(false);
       }
     }
-    console.log(imgUrl, 'avatar url');
     setUploading(false);
   }, [avatar]);
 
@@ -154,8 +151,7 @@ const UserProfile = () => {
 
     setUploading(true);
     try {
-        const txhash = await signMessages(togglePlayer);
-        console.log("Profile tx hash:", txhash);
+        await signMessages(togglePlayer);
         // After sending input, poll notices to confirm profile exists, then route to purchase page
         let request_payload = await fetchNotices("all_profiles");
         if (request_payload && Array.isArray(request_payload)) {
@@ -165,7 +161,6 @@ const UserProfile = () => {
           );
         }
         if (request_payload && request_payload.length > 0) {
-          console.log(request_payload);
           toast.success("Transaction Successful.. Profile Created", {
             position: "top-right",
           });

@@ -3,14 +3,14 @@ import { toast } from "sonner";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Text } from "../atom/Text";
 import { Button } from "../atom/Button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 // import readGameState from "../../utils/readState.js"
 import signMessages from "../../utils/relayTransaction.tsx";
 import WarriorPickCard from "../shared/WarriorPickCard";
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
@@ -51,7 +51,6 @@ interface ProfileData {
 }
 
 const JoinDuelComp = () => {
-  const location = useLocation();
   const { duelId } = useParams();
   const [selectedCharacters, setSelectedCharacters] = useState<
     CharacterDetails[]
@@ -81,6 +80,13 @@ const JoinDuelComp = () => {
     return array;
   }
 
+  // Shuffle once per roster load — not on every render.
+  const shuffledRoster = useMemo(
+    () => shuffleArray(characterDetails),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [characterDetails],
+  );
+
   useEffect(() => {
     async function rigPage() {
       let myCharacters: CharacterDetails[] = [];
@@ -97,10 +103,8 @@ const JoinDuelComp = () => {
           (character: CharacterDetails) =>
             character.owner == activeAccount?.address.toLowerCase()
         );
-        console.log("Players characters: " + request_payload);
 
         setPlayersCharacters(request_payload);
-        console.log(request_payload);
         myCharacters = request_payload;
 
         if (request_payload.length == 0) {
@@ -109,39 +113,29 @@ const JoinDuelComp = () => {
       }
 
       if (profile && profile.characters) {
-        const characters = JSON.parse(profile.characters.replace(/\\/g, ""));
-
-        console.log(characters, "characters");
-
-        const charIds = characters.map((character: any) => character.char_id);
-
-        console.log(charIds, "charIds");
-
         const newArray: CharacterDetails[] = [];
         for (let i = 0; i < myCharacters.length; i++) {
           const characterData = charactersdata.find(
             (character) => character.name === myCharacters[i].name
           );
-          console.log(characterData, "characterData");
-          console.log(myCharacters, "myCharacters");
 
           const details = {
             ...myCharacters[i],
             img: characterData ? characterData.img : undefined,
           };
-          console.log(details);
           newArray.push(details);
         }
-        console.log(newArray);
         setCharacterDetails(newArray);
       }
     }
     rigPage();
-  }, [location]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAccount?.address, profile]);
 
-  if (!profileData) {
-    navigate("/profile");
-  }
+  // Redirect must happen in an effect, never during render.
+  useEffect(() => {
+    if (!profileData) navigate("/profile");
+  }, [profileData, navigate]);
 
   if (!profileData?.characters) {
     return (
@@ -199,8 +193,6 @@ const JoinDuelComp = () => {
       duel_id: Number(+(duelId as string)),
     };
 
-    console.log(dataObject, "dataObject");
-    console.log("active account:", activeAccount?.address);
 
     // const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
     setSubmiting(true);
@@ -321,7 +313,7 @@ const JoinDuelComp = () => {
               Your Characters
             </Text>
             <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-5 p-1.5 -m-1.5">
-              {shuffleArray(characterDetails).map((item, index) => (
+              {shuffledRoster.map((item, index) => (
                 <WarriorPickCard
                   key={`${item.id}-${index}`}
                   warrior={item}
