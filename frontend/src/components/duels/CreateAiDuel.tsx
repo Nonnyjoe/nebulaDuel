@@ -3,10 +3,11 @@ import { toast } from "sonner";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Text } from "../atom/Text";
 import { Button } from "../atom/Button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 // import readGameState from "../../utils/readState.js"
 import signMessages from "../../utils/relayTransaction.tsx";
+import WarriorPickCard from "../shared/WarriorPickCard";
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -15,6 +16,7 @@ import { Link } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
+import readGameState from "../../utils/readState.tsx";
 
 // interface Duel {
 //   duel_id: number;
@@ -60,17 +62,15 @@ const CreateAiDuel = () => {
     []
   );
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>(
-    []
-  );
-  const [, setPlayersCharacters] = useState<CharacterDetails[]>([]);
+  const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>([]);
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
   const [acceptStake] = useState(false);
   const [stakeAmount] = useState<number>(0.0);
-  const { profile, setProfile } = useProfileContext();
+  const { setProfile } = useProfileContext();
   const [submiting, setSubmiting] = useState<boolean>(false);
   const [difficulty, setDifficulty] = useState<"easy" | "hard">("hard");
+  const [initialised, setInitialised] = useState<boolean>(false);
 
   function shuffleArray(array: CharacterDetails[]) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -80,92 +80,103 @@ const CreateAiDuel = () => {
     return array;
   }
 
+  // Shuffle once per roster load — not on every render.
+  const shuffledRoster = useMemo(
+    () => shuffleArray(characterDetails),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [characterDetails],
+  );
+
   useEffect(() => {
     async function rigPage() {
-      let myCharacters: CharacterDetails[] = [];
+      if (initialised) return;
 
-      if (
-        activeAccount?.address?.toLowerCase() !=
-        profile?.wallet_address?.toLowerCase()
-      ) {
-        try {
-          let request_payload = await fetchNotices("all_profiles");
-          request_payload = request_payload.filter(
-            (player: any) =>
-              player.wallet_address == activeAccount?.address.toLowerCase()
-          );
-          if (request_payload.length > 0) {
-            setProfile(request_payload[0]);
-          } else {
-            navigate("/profile");
-          }
-        } catch (e) {
-          navigate("/profile");
-          console.log(e);
-        }
-      } else {
-        setProfileData(profile);
-        let request_payload = await fetchNotices("all_characters");
-        request_payload = request_payload.filter(
-          (character: CharacterDetails) =>
-            character.owner == activeAccount?.address.toLowerCase()
-        );
-        console.log("Players characters: " + request_payload);
-
-        setPlayersCharacters(request_payload);
-        console.log(request_payload);
-        myCharacters = request_payload;
-
-        if (request_payload.length == 0) {
-          navigate("/profile/purchasecharacter");
-        }
+      if (!activeAccount?.address) {
+        toast.error("You are not connected to an account.", {
+          position: "top-right",
+        });
+        navigate("/profile");
+        return;
       }
 
-      if (profile && profile.characters) {
-        const characters = JSON.parse(profile.characters.replace(/\\/g, ""));
+      const wallet = activeAccount.address.toLowerCase();
 
-        console.log(characters, "characters");
-
-        const charIds = characters.map((character: any) => character.char_id);
-
-        console.log(charIds, "charIds");
-
-        const newArray: CharacterDetails[] = [];
-        for (let i = 0; i < myCharacters.length; i++) {
-          const characterData = charactersdata.find(
-            (character) => character.name === myCharacters[i].name
-          );
-          console.log(characterData, "characterData");
-          console.log(myCharacters, "myCharacters");
-
-          const details = {
-            ...myCharacters[i],
-            img: characterData ? characterData.img : undefined,
-          };
-          console.log(details);
-          newArray.push(details);
-        }
-        console.log(newArray);
-        setCharacterDetails(newArray);
+      // First, confirm profile exists using has_profile
+      const hasProfileResp = await readGameState(`has_profile/${wallet}`);
+      if (!hasProfileResp.Status || hasProfileResp.request_payload !== true) {
+        toast.error("You don't have a profile. Please create one.", {
+          position: "top-right",
+        });
+        navigate("/profile");
+        return;
       }
+
+      // Then fetch full profile details via inspect
+      const { Status, request_payload: profilePayload } = await readGameState(
+        `profile/${wallet}`,
+      );
+      if (!Status || !profilePayload) {
+        toast.error("Failed to fetch profile. Please try again.", {
+          position: "top-right",
+        });
+        return;
+      }
+
+      setProfile(profilePayload);
+      setProfileData(profilePayload);
+
+      // Prefer inspect players_characters/<wallet> for this player
+      const charsResp = await readGameState(`players_characters/${wallet}`);
+      if (!charsResp.Status || !charsResp.request_payload) {
+        // No characters yet; UI will show the fallback CTA
+        return;
+      }
+
+      const payload = charsResp.request_payload;
+      const rawCharacters: CharacterDetails[] = Array.isArray(payload)
+        ? payload
+        : typeof payload === "string"
+          ? (() => {
+              try {
+                return JSON.parse(payload.startsWith("[") ? payload : `[${payload}]`);
+              } catch {
+                return [];
+              }
+            })()
+          : [];
+
+      const enriched: CharacterDetails[] = rawCharacters.map((ch) => {
+        const meta = charactersdata.find((c) => c.name === ch.name);
+        return {
+          ...ch,
+          img: meta ? meta.img : undefined,
+        };
+      });
+
+      setCharacterDetails(enriched);
     }
-    rigPage();
-  }, [location]);
+    rigPage().finally(() => setInitialised(true));
+  }, [location, activeAccount?.address, navigate, setProfile, initialised]);
 
   // if (!profileData) {
   //     navigate('/profile');
   // }
 
-  if (!profileData?.characters) {
+  if (initialised && characterDetails.length === 0 && profileData) {
     return (
-      <div>
-        <Link
-          to="/profile/purchasecharacter"
-          className="bg-[#45f882] text-black font-bold py-2 px-4 rounded-full hover:bg-green-500"
-        >
-          You don't have any characters. Click here to create one.
-        </Link>
-      </div>
+      <section className="w-full min-h-[50vh] flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full text-center">
+          <p className="text-gray-400 font-poppins text-lg mb-6">
+            You don't have any characters yet.
+          </p>
+          <Link
+            to="/profile/purchasecharacter"
+            className="inline-flex items-center justify-center bg-myGreen text-navBg font-bold font-poppins py-3 px-6 rounded-lg hover:bg-myGreen/90 transition-colors"
+          >
+            Create your first character
+          </Link>
+        </div>
+      </section>
     );
   }
 
@@ -209,10 +220,6 @@ const CreateAiDuel = () => {
   //     return highestIdDuel;
   //   }
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   const submitTx = async () => {
     if (selectedCharactersId.length < 3) {
       toast.error("You can have to select 3 characters.", {
@@ -239,20 +246,43 @@ const CreateAiDuel = () => {
       difficulty_id: difficulty == "easy" ? 1 : 2,
     };
 
-    console.log(dataObject, "dataObject");
-    console.log("active account:", activeAccount?.address);
 
     setSubmiting(true);
     const txhash = await signMessages(dataObject);
-    console.log("txHash", txhash);
 
-    delay(4000);
+    if (!txhash) {
+      toast.error("Transaction failed or was rejected. Please try again.", {
+        position: "top-right",
+      });
+      setSubmiting(false);
+      return;
+    }
 
+    // signMessages waits for the node to process the input — the new duel is
+    // already queryable.
     let request_payload = await fetchNotices("ai_duels");
+
+    if (!Array.isArray(request_payload)) {
+      toast.error(
+        "Unable to load your AI duels yet. Please wait a few seconds and try again.",
+        { position: "top-right" },
+      );
+      setSubmiting(false);
+      return;
+    }
+
     request_payload = request_payload.filter(
-      (tx: any) => tx.duel_creator == activeAccount?.address.toLowerCase()
+      (tx: any) => tx.duel_creator === activeAccount?.address.toLowerCase(),
     );
-    console.log(request_payload);
+
+    if (request_payload.length === 0) {
+      toast.error(
+        "Your duel was created but it isn’t visible yet. Please wait a moment and try again from the Duels page.",
+        { position: "top-right" },
+      );
+      setSubmiting(false);
+      return;
+    }
 
     let highestTx = request_payload[0];
     for (let i = 0; i < request_payload.length; i++) {
@@ -260,7 +290,6 @@ const CreateAiDuel = () => {
         highestTx = request_payload[i];
       }
     }
-    console.log(highestTx);
     navigate(`/strategy/${highestTx?.duel_id}`);
   };
 
@@ -380,175 +409,154 @@ const CreateAiDuel = () => {
   };
 
   return (
-    <section className="w-full h-auto bg-bodyBg">
-      <main className="w-full lg:py-24 md:py-24 py-20 md:px-6 px-3 flex flex-col items-center gap-4">
+    <section className="w-full min-h-screen">
+      <main className="w-full max-w-[1500px] mx-auto py-8 sm:py-10 md:py-12 lg:py-16 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <Text
-          as="h2"
-          className="font-bold text-center uppercase lg:text-4xl md:text-3xl text-2xl font-belanosima"
+          as="h1"
+          className="reveal-up font-belanosima text-center uppercase text-2xl sm:text-3xl md:text-4xl text-white mb-2 sm:mb-4"
         >
-          Choose your warriors!
+          Choose your warriors
         </Text>
+        <p className="text-gray-400 font-poppins text-sm sm:text-base text-center max-w-lg mb-8 sm:mb-10 md:mb-12">
+          Select 3 characters for your AI duel. Tap a character to add or remove.
+        </p>
 
-        <section className=" w-full mt-20 flex flex-row lg:gap-10 md:gap-20 gap-14">
-          <main className=" w-7/12 flex flex-col gap-4">
-            <Text
-              as="h3"
-              className="font-semibold font-belanosima text-2xl tracking-wide text-center"
-            >
-              Your Characters
-            </Text>
-            <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
-              {shuffleArray(characterDetails).map((item, index) => (
-                <div
-                  key={index}
-                  className={`w-full border ${
-                    selectedCharactersId.includes(item.id)
-                      ? "border-myGreen"
-                      : "border-gray-800"
-                  } border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`}
+        {/* Responsive: stack on small/medium, side-by-side on large */}
+        <div className="w-full flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 xl:gap-16">
+          {/* Your Characters — full width when stacked, then ~58% on lg+ */}
+          <div className="w-full lg:flex-[7] lg:min-w-0 flex flex-col">
+            <div className="flex items-center gap-2 mb-4 sm:mb-6">
+              <span className="h-0.5 w-8 sm:w-12 bg-myGreen rounded" />
+              <Text
+                as="h2"
+                className="font-semibold font-belanosima text-lg sm:text-xl md:text-2xl text-white tracking-wide"
+              >
+                Your characters
+              </Text>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-5 p-1.5 -m-1.5">
+              {shuffledRoster.map((item, index) => (
+                <WarriorPickCard
+                  key={`${item.id}-${index}`}
+                  warrior={item}
+                  selected={selectedCharactersId.includes(item.id)}
+                  slot={selectedCharactersId.indexOf(item.id)}
                   onClick={() => toggleCharacterSelection(item)}
-                >
-                  <ImageWrap
-                    image={item.img as string}
-                    className="w-full"
-                    alt={item.name}
-                    objectStatus="object-contain"
-                  />
-                  <Text as="h5" className="font-belanosima">
-                    {item.name}
-                  </Text>
-                  <div className="w-full grid grid-cols-2 gap-1">
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Health: {item.health}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Attack: {item.attack}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Strength: {item.strength}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Speed: {item.speed}
-                    </Text>
-                  </div>
-                </div>
+                />
               ))}
             </div>
-          </main>
+          </div>
 
-          <main className="w-5/12 flex flex-col items-center gap-4">
-            <Text
-              as="h3"
-              className="font-semibold font-belanosima text-2xl tracking-wide text-center"
-            >
-              Selected Characters
-            </Text>
+          {/* Selected + options + CTA — full width when stacked, then ~42% on lg+ */}
+          <div className="w-full lg:flex-[5] lg:min-w-0 lg:sticky lg:top-8 flex flex-col gap-6 sm:gap-8">
+            <div className="flex items-center gap-2">
+              <span className="h-0.5 w-8 sm:w-12 bg-myGreen rounded" />
+              <Text
+                as="h2"
+                className="font-semibold font-belanosima text-lg sm:text-xl md:text-2xl text-white tracking-wide"
+              >
+                Selected ({selectedCharacters.length}/3)
+              </Text>
+            </div>
 
-            <div className="w-full relative md:w-[70%] lg:w-full grid grid-cols-3 md:gap-3 border border-gray-800 bg-gray-900 min-h-[240px] h-fit py-5 px-10 rounded-md">
-              {selectedCharacters?.map((character) => (
-                <div
-                  key={character.id}
-                  className="w-full bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md md:p-4 p-2"
-                >
-                  <ImageWrap
-                    image={character.img as string}
-                    className="w-full"
-                    alt={character.name}
-                    objectStatus="object-contain"
-                  />
-                  <Text as="h5" className="font-belanosima">
-                    {character.name}
-                  </Text>
-                </div>
-              ))}
+            <div className="w-full relative rounded-xl border-2 border-gray-700/80 bg-myBlack/80 min-h-[200px] sm:min-h-[240px] p-4 sm:p-6">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 h-full">
+                {[0, 1, 2].map((slot) => {
+                  const character = selectedCharacters[slot];
+                  return (
+                    <div
+                      key={slot}
+                      className="rounded-lg border border-dashed border-gray-600 bg-gray-900/50 min-h-[120px] sm:min-h-[140px] flex flex-col items-center justify-center p-2 overflow-hidden"
+                    >
+                      {character ? (
+                        <>
+                          <div className="aspect-square w-full max-w-[80px] flex-shrink-0">
+                            <ImageWrap
+                              image={character.img as string}
+                              className="w-full h-full"
+                              alt={character.name}
+                              objectStatus="object-cover object-top"
+                            />
+                          </div>
+                          <Text as="span" className="font-belanosima text-white text-xs sm:text-sm truncate w-full text-center">
+                            {character.name}
+                          </Text>
+                        </>
+                      ) : (
+                        <span className="text-gray-500 text-xs font-poppins">Slot {slot + 1}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
               {selectedCharacters.length > 0 && (
                 <Button
                   type="button"
-                  className="bg-myGreen text-gray-950 p-2 rounded-full absolute right-2 bottom-2 z-10 font-bold text-lg"
+                  aria-label="Clear selection"
+                  className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-full transition-colors z-10"
                   onClick={handleReset}
                 >
-                  <HiOutlineArrowPath />
+                  <HiOutlineArrowPath className="w-5 h-5" />
                 </Button>
               )}
             </div>
 
-            <div className=" w-full mx-auto shadow-md rounded-lg">
-              <Text
-                as="p"
-                className=" text-gray-400 font-thin font-poppins text-md tracking-wide text-center"
-              >
-                Your Availabe CTSI balance: {profileData?.cartesi_token_balance}{" "}
-                CTSI
-              </Text>
-              <div className=" text-center mt-5">
-                <label className="block text-md font-poppins font-medium text-gray-400">
-                  Select Difficulty
+            <div className="rounded-xl border border-gray-700/60 bg-myBlack/60 p-4 sm:p-5 space-y-4">
+              <p className="text-gray-400 font-poppins text-sm sm:text-base text-center">
+                Available balance: <span className="text-white font-medium">{profileData?.cartesi_token_balance ?? 0} CTSI</span>
+              </p>
+              <div>
+                <label className="block text-sm font-poppins font-medium text-gray-400 mb-3">
+                  Difficulty
                 </label>
-                <div className=" flex space-x-4 text-center px-auto mt-5 w-fit mx-auto">
-                  <div className="flex flex-row">
+                <div className="flex gap-3">
+                  <label className="flex-1 cursor-pointer">
                     <input
                       type="radio"
-                      id="easy"
                       name="difficulty"
                       value="easy"
                       checked={difficulty === "easy"}
                       onChange={(e) => setDifficulty(e.target.value as "easy")}
-                      className="focus:ring-green-600 h-4 w-4 text-green-600 border-yellow-300"
+                      className="sr-only peer"
                     />
-                    <label
-                      htmlFor="easy"
-                      className="ml-2 block text-sm text-gray-400"
-                    >
+                    <span className="block rounded-lg border-2 border-gray-600 bg-gray-800/50 py-2.5 text-center text-sm font-poppins text-gray-400 transition-all peer-checked:border-myGreen peer-checked:bg-myGreen/10 peer-checked:text-myGreen">
                       Easy
-                    </label>
-                  </div>
-                  <div className="flex flex-row">
+                    </span>
+                  </label>
+                  <label className="flex-1 cursor-pointer">
                     <input
                       type="radio"
-                      id="hard"
                       name="difficulty"
                       value="hard"
                       checked={difficulty === "hard"}
                       onChange={(e) => setDifficulty(e.target.value as "hard")}
-                      className="focus:ring-green-600 h-4 w-4 text-green-600 border-yellow-300"
+                      className="sr-only peer"
                     />
-                    <label
-                      htmlFor="hard"
-                      className="ml-2 block text-sm text-gray-400"
-                    >
+                    <span className="block rounded-lg border-2 border-gray-600 bg-gray-800/50 py-2.5 text-center text-sm font-poppins text-gray-400 transition-all peer-checked:border-myGreen peer-checked:bg-myGreen/10 peer-checked:text-myGreen">
                       Hard
-                    </label>
-                  </div>
+                    </span>
+                  </label>
                 </div>
               </div>
             </div>
 
             <Button
               type="button"
-              className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+              className="w-full text-navBg uppercase font-bold font-poppins text-sm sm:text-base tracking-wide py-3.5 sm:py-4 rounded-xl bg-myGreen hover:bg-myYellow transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={handleSelectWarriors}
               disabled={submiting}
             >
               {submiting ? (
-                <div className="animate-spin rounded-full ml-auto mr-auto h-6 w-6 border-t-2 border-b-2 border-yellow-900"></div>
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin rounded-full h-5 w-5 border-2 border-navBg border-t-transparent" />
+                  Creating…
+                </span>
               ) : (
-                "Create Duel"
+                "Create duel"
               )}
             </Button>
-          </main>
-        </section>
+          </div>
+        </div>
       </main>
     </section>
   );

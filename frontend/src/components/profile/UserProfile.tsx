@@ -4,14 +4,13 @@ import userImg from "../../assets/img/team01.png";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Button } from "../atom/Button";
 import { toast } from "sonner";
-import signMessages from "../../utils/relayTransaction.tsx"
-// import readGameState from "../../utils/readState.js";
+import signMessages from "../../utils/relayTransaction.tsx";
+import readGameState from "../../utils/readState.tsx";
 import axios from "axios";
 import { useActiveAccount } from "thirdweb/react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { useProfileContext } from "../contexts/ProfileContext.js";
 import fetchNotices from "../../utils/readSubgraph.js";
-// import readGameState from "../../utils/readState.tsx";
 
 
 const UserProfile = () => {
@@ -24,40 +23,52 @@ const UserProfile = () => {
   const [uploading, setUploading] = useState<boolean>(false);
   const navigate = useNavigate();
   const userAccount = useActiveAccount();
-  const {profile, setProfile} = useProfileContext();
+  const { setProfile } = useProfileContext();
 
   const fetchData = async () => {
-    let request_payload = await fetchNotices("all_profiles");
-    request_payload = request_payload.filter((player: any) => player.wallet_address == userAccount?.address.toLowerCase());
-    if (request_payload.length > 0) {
-        setProfile(request_payload[0]);
-        console.log(request_payload[0], 'user profile data');
-          setProfileData(request_payload[0]);
-          setCreatedProfile(true);
-    } else {
-        setCreatedProfile(false);   
+    const address = userAccount?.address?.toLowerCase();
+    if (!address) {
+      setCreatedProfile(false);
+      return;
     }
-}
+
+    // Prefer inspect (Cartesi backend) as source of truth for profile card
+    const { Status, request_payload } = await readGameState(`profile/${address}`);
+    if (Status && request_payload && typeof request_payload === "object") {
+      setProfile(request_payload);
+      setProfileData(request_payload);
+      setCreatedProfile(true);
+      return;
+    }
+
+    // Fallback: JSON-RPC notices (in case inspect path differs or is slow)
+    const notices = await fetchNotices("all_profiles");
+    if (notices && Array.isArray(notices)) {
+      const match = notices.filter(
+        (p: any) => p.wallet_address === address
+      );
+      if (match.length > 0) {
+        setProfile(match[0]);
+        setProfileData(match[0]);
+        setCreatedProfile(true);
+        return;
+      }
+    }
+
+    setCreatedProfile(false);
+  };
 
   useEffect(() => {
-    const getAllData = async() => {
-        await fetchData(); 
-        const address = userAccount?.address;
-        if (userAccount && address) {
-            setUserAddress(address);
-            if (address.toLowerCase() == profile?.wallet_address?.toLowerCase()) {
-                console.log(profile, 'user profile data');
-                setProfileData(profile);
-                setCreatedProfile(true);
-            } else {
-                setCreatedProfile(false);   
-            }
-        }
+    async function loadProfile() {
+      if (userAccount?.address) {
+        setUserAddress(userAccount.address);
+        await fetchData();
+      } else {
+        setCreatedProfile(false);
+      }
     }
-
-    getAllData()
-
-  }, [userAccount, navigate]);
+    loadProfile();
+  }, [userAccount?.address]);
 
 
 
@@ -86,7 +97,6 @@ const UserProfile = () => {
     setUploading(true);
 
     if(avatar) {
-        console.log(avatar, 'avatar is already set');
       try {
         const formData = new FormData();
         formData.append("file", avatar!);
@@ -110,12 +120,10 @@ const UserProfile = () => {
         }
         setUploading(false);
       } catch(err) {
-        console.log('Pinata API error', err);
         toast.error('upload error');
         setUploading(false);
       }
     }
-    console.log(imgUrl, 'avatar url');
     setUploading(false);
   }, [avatar]);
 
@@ -143,19 +151,27 @@ const UserProfile = () => {
 
     setUploading(true);
     try {
-         const txhash = await signMessages(togglePlayer);
-        if (txhash.message === "Transaction added successfully") {
-            let request_payload = await fetchNotices("all_tx");
-            request_payload = request_payload.filter((tx: any) => tx.caller == userAccount?.address.toLowerCase());
-            if (request_payload.length > 0) {
-                console.log(request_payload);
-                toast.success("Transaction Successful.. Profile Created", {
-                position: 'top-right'
-             })
-            }
-            navigate("/");
+        await signMessages(togglePlayer);
+        // After sending input, poll notices to confirm profile exists, then route to purchase page
+        let request_payload = await fetchNotices("all_profiles");
+        if (request_payload && Array.isArray(request_payload)) {
+          request_payload = request_payload.filter(
+            (player: any) =>
+              player.wallet_address == userAccount?.address?.toLowerCase()
+          );
         }
-
+        if (request_payload && request_payload.length > 0) {
+          toast.success("Transaction Successful.. Profile Created", {
+            position: "top-right",
+          });
+          setProfile(request_payload[0]);
+          navigate("/profile/purchasecharacter");
+        } else {
+          toast.info(
+            "Profile transaction sent. It may take a moment to appear.",
+            { position: "top-right" }
+          );
+        }
     } catch(err) {
         toast.error("Transaction Failed.. Try again later.", {
             position: 'top-right'
@@ -170,17 +186,17 @@ const UserProfile = () => {
 
 
   return (
-    <section className="w-full h-auto bg-bodyBg">
-      <main className="w-full lg:py-32 md:py-24 py-20 px-6 flex flex-col items-center gap-4">
+    <section className="w-full h-auto">
+      <main className="container-game section flex flex-col items-center gap-4">
         <Text
           as="h2"
-          className="font-bold text-center uppercase lg:text-5xl md:text-4xl text-2xl font-barlow"
+          className="reveal-up text-center"
         >
           { profileData != null && profileData != undefined ? "Update your profile" : "Create your profile"}
         </Text>
         <Text
           as="p"
-          className="font-bold text-center text-lg text-gray-400 font-barlow"
+          className="reveal-up d2 text-center text-base text-gray-400 font-poppins"
         >
           Are you ready to be a Gamer? Create your profile and let's get started
         </Text>
@@ -217,43 +233,47 @@ const UserProfile = () => {
                   Player
                 </span>
               </div>
-              <div className="mt-4 flex flex-col gap-1">
-                <Text
-                  as="p"
-                  className="text-gray-400 text-base font-belanosima"
-                >
-                  No of Characters:{" "}
-                  <Text
-                    as="span"
-                    className="text-myGreen/70 font-poppins"
+              <div className="mt-5 grid grid-cols-2 gap-2 text-left">
+                {[
+                  {
+                    label: "Warriors",
+                    value: `${getArrayLength(profileData.characters) || 0}`,
+                  },
+                  { label: "Points", value: `${profileData.points || 0}` },
+                  {
+                    label: "CTSI balance",
+                    value: Number(profileData.cartesi_token_balance || 0).toFixed(2),
+                  },
+                  {
+                    label: "Campaign",
+                    value: `Lv ${profileData.campaign_progress ?? 0} / 20`,
+                  },
+                  {
+                    label: "Duels",
+                    value: `${profileData.total_wins ?? 0}W / ${profileData.total_losses ?? 0}L`,
+                  },
+                  {
+                    label: "Rank",
+                    value:
+                      (Array.isArray(profileData.campaign_titles) &&
+                        profileData.campaign_titles[
+                          profileData.campaign_titles.length - 1
+                        ]) ||
+                      "Nebula Initiate",
+                  },
+                ].map((s) => (
+                  <div
+                    key={s.label}
+                    className="rounded-xl border border-gray-800 bg-myBlack/70 px-3 py-2"
                   >
-                    {getArrayLength(profileData.characters) || 0}
-                  </Text>
-                </Text>
-                <Text
-                  as="p"
-                  className="text-gray-400 text-base font-belanosima"
-                >
-                  Game Points:{" "}
-                  <Text
-                    as="span"
-                    className="text-myGreen/70 font-poppins"
-                  >
-                    {profileData.points || 0} pts
-                  </Text>
-                </Text>
-                <Text
-                  as="p"
-                  className="text-gray-400 text-base font-belanosima"
-                >
-                  Nebula Balance:{" "}
-                  <Text
-                    as="span"
-                    className="text-myGreen/70 font-poppins"
-                  >
-                    {profileData.cartesi_token_balance || 0} $Neb
-                  </Text>
-                </Text>
+                    <p className="text-[9px] uppercase tracking-widest text-gray-500 font-belanosima">
+                      {s.label}
+                    </p>
+                    <p className="text-myGreen font-belanosima text-sm truncate">
+                      {s.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

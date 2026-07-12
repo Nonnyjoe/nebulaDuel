@@ -31,14 +31,14 @@ const Services = () => {
     };
     const imageList = useMemo(() => [Img1, Img2, Img3, Img4], []);
     return (
-        <section className="w-full h-auto bg-bodyBg">
+        <section className="w-full h-auto">
             <main className="w-full py-32 px-6 flex flex-col md:grid md:grid-cols-2 gap-4">
                 <div className="w-full flex flex-col items-center md:items-start gap-3">
                     <Text as={`h4`} className="uppercase font-semibold text-center md:text-left text-sm text-myGreen">
                         POWERFUL SERVICES
                     </Text>
                     <Text as={`h1`} className="lg:text-5xl text-center md:text-left font-extrabold tracking-[1px]
-                            text-4xl font-barlow">
+                            text-4xl font-poppins">
                         OUR POWERFUL SERVICES DONE ON TIME
                     </Text>
                     <div className="w-20 h-1.5 mt-3 bg-myGreen"></div>
@@ -51,7 +51,7 @@ const Services = () => {
                                         {item.icon}
                                     </div>
                                     <Text as="h3" className="text-gray-100 font-medium text-xl font-belanosima">{item.title}</Text>
-                                    <Text as="p" className="text-gray-300 font-barlow text-lg">{item.description}</Text>
+                                    <Text as="p" className="text-gray-300 font-poppins text-lg">{item.description}</Text>
                                 </div>
                             ))
                         }

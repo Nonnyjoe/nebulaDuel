@@ -49,33 +49,56 @@ const Header = () => {
         };
     }, []);
 
+    const isActive = (path?: string, dropdown?: { path: string }[]) => {
+        if (path && (pathname === path || (path !== "/" && pathname.startsWith(path)))) return true;
+        if (dropdown?.some((d) => pathname === d.path || pathname.startsWith(d.path + "/"))) return true;
+        return false;
+    };
+
     return (
-        <header className={`w-full h-auto ${isNavVisible ? "sticky top-0 left-0 z-[80] bg-navBg" : "static"}`}>
-            <div className="w-full relative bg-navBg flex justify-between items-center py-4 md:px-8 px-3">
+        <header className={`w-full h-auto sticky top-0 left-0 z-[80] ${isNavVisible ? "shadow-[0_4px_24px_rgba(0,0,0,0.55)]" : ""}`}>
+            <div className="w-full relative bg-navBg/90 backdrop-blur-md border-b border-gray-800/80 flex justify-between items-center py-3.5 md:px-8 px-3">
                 <Link to='/'>
-                    <ImageWrap className="md:w-[180px] w-[130px]" objectStatus="object-cover" alt="logo" image={Logo} />
+                    <ImageWrap className="md:w-[170px] w-[120px]" objectStatus="object-cover" alt="logo" image={Logo} />
                 </Link>
 
-                <ul className="lg:flex hidden items-center gap-8 -ml-44">
-                    {NavLinks.map(({ name, path, dropdown }, index) => (
-                        <li className="block relative list-none group" key={index}>
-                            <Link
-                                className={`text-sm font-bold uppercase text-gray-100 block leading-none relative tracking-[0.8px] z-[1] font-barlow before:content-[''] before:absolute before:w-[42px] before:h-px before:-translate-y-2/4 before:rotate-0 before:opacity-0 before:transition-all before:duration-[0.3s] before:ease-[ease-out] before:delay-[0s] before:mx-auto before:my-0 before:top-2/4 before:inset-x-0 before:bg-myGreen group-hover:text-myGreen group-hover:before:opacity-100 group-hover:before:-translate-y-2/4 group-hover:before:rotate-[-40deg] ${pathname === path && "text-myGreen before:opacity-100 before:-translate-y-2/4 before:rotate-[-40deg]"}`}
-                                to={path ? path : pathname}
-                            >
-                                {name}
-                            </Link>
-                            {dropdown && (
-                                <ul className="dropdown-menu absolute z-10 -left-3 mt-3 w-48 bg-navBg border-b border-gray-800 rounded-md shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
-                                    {dropdown.map(({ path, name }, idx) => (
-                                        <li key={idx}>
-                                            <Link to={path} className="block px-4 py-2 text-gray-200 hover:text-myGreen">{name}</Link>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </li>
-                    ))}
+                <ul className="lg:flex hidden items-center gap-1.5 -ml-44">
+                    {NavLinks.map(({ name, path, dropdown }, index) => {
+                        const active = isActive(path, dropdown as any);
+                        return (
+                            <li className="block relative list-none group" key={index}>
+                                <Link
+                                    className={`font-belanosima text-xs uppercase tracking-wider px-4 py-2 rounded-lg border transition-colors block leading-none ${
+                                        active
+                                            ? "text-navBg bg-myGreen border-myGreen shadow-[0_0_14px_rgba(69,248,130,0.35)]"
+                                            : "text-gray-300 border-transparent hover:text-myGreen hover:border-myGreen/50"
+                                    }`}
+                                    to={path ? path : pathname}
+                                >
+                                    {name}
+                                    {dropdown && <span className="ml-1 opacity-70">▾</span>}
+                                </Link>
+                                {dropdown && (
+                                    <ul className="dropdown-menu absolute z-10 left-0 mt-2 w-56 bg-myBlack/95 backdrop-blur border border-gray-800 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.6)] py-2 opacity-0 invisible translate-y-1 transition-all duration-200 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
+                                        {dropdown.map(({ path, name }, idx) => (
+                                            <li key={idx}>
+                                                <Link
+                                                    to={path}
+                                                    className={`block px-4 py-2.5 font-belanosima text-xs uppercase tracking-wider transition-colors ${
+                                                        pathname === path
+                                                            ? "text-myGreen bg-myGreen/10"
+                                                            : "text-gray-300 hover:text-myGreen hover:bg-myGreen/5"
+                                                    }`}
+                                                >
+                                                    {name}
+                                                </Link>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </li>
+                        );
+                    })}
                 </ul>
 
                 <aside className="flex items-center lg:gap-6 gap-2">
@@ -116,7 +139,7 @@ const Header = () => {
                             {NavLinks.map(({ name, path, dropdown }, index) => (
                                 <li className="block relative list-none group" key={index}>
                                     <Link
-                                        className={`text-sm font-bold uppercase text-gray-100 block leading-none relative tracking-[0.8px] z-[1] font-barlow before:content-[''] before:absolute before:w-[7px] before:h-[7px]
+                                        className={`text-sm font-bold uppercase text-gray-100 block leading-none relative tracking-[0.8px] z-[1] font-poppins before:content-[''] before:absolute before:w-[7px] before:h-[7px]
                                             before:rounded-full before:opacity-0 before:transition-all before:duration-[0.3s] before:ease-[ease-out] before:delay-[0s] before:top-1 before:-left-3 before:bg-myGreen group-hover:text-myGreen group-hover:before:opacity-100 ${pathname === path && "text-myGreen before:opacity-100"}`}
                                         to={path ? path : pathname}
                                     >
@@ -174,7 +197,7 @@ export const Search = ({ openSearch, handleSearch }: SearchTypes) => {
                 <div className="flex flex-wrap w-full">
                     <div className="w-full flex flex-col justify-center items-center basis-full relative px-[15px]">
                         <Text as={`h2`}
-                            className="title text-[47px] font-extrabold uppercase text-mgGreen tracking-[-1px] mt-0 mb-[70px] mx-0 font-barlow">
+                            className="title text-[47px] font-extrabold uppercase text-mgGreen tracking-[-1px] mt-0 mb-[70px] mx-0 font-poppins">
                             ...
                             <Text as={`span`}
                                 className="text-[#fff] tracking-[5px] drop-shadow-[-2px_2.5px_0px_rgba(69,248,130,0.66)]">Search Here</Text> ...

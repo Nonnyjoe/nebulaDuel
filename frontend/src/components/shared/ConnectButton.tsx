@@ -1,28 +1,31 @@
+import { useEffect } from "react";
 import { Button } from "../atom/Button";
-import { createThirdwebClient } from "thirdweb";
-import { darkTheme } from "thirdweb/react";
-import { ConnectButton } from "thirdweb/react";
-import { useActiveAccount } from "thirdweb/react";
+import { createThirdwebClient, defineChain } from "thirdweb";
+import { darkTheme, ConnectButton, useActiveAccount, useActiveWalletConnectionStatus } from "thirdweb/react";
 import { useProfileContext } from "../contexts/ProfileContext";
-import { useActiveWalletConnectionStatus } from "thirdweb/react";
-// import readGameState from "../../utils/readState.js"
 import fetchNotices from "../../utils/readSubgraph.js";
-import { anvil } from "thirdweb/chains";
-
-// import { ethers } from "ethers";
+import { CHAIN_ID, CHAIN_NAME, CHAIN_RPC } from "../../utils/cartesi";
 
 const clientId = "5555e76cfe72676f69d044a91ce98d30";
 const client = createThirdwebClient({ clientId });
+
+// Chain config comes from .env (VITE_CHAIN_RPC / VITE_CHAIN_ID / VITE_CHAIN_NAME).
+// Cartesi CLI v2 proxies the anvil chain at <node-url>/anvil — do NOT use
+// thirdweb's built-in `anvil` chain, which points at localhost:8545.
+const localChain = defineChain({
+  id: CHAIN_ID,
+  name: CHAIN_NAME,
+  rpc: CHAIN_RPC,
+  nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+});
 
 const customTheme = darkTheme({
   colors: {
     primaryText: "white",
     secondaryText: "#FFFFFFFF",
     accentText: "#FFFFFFFF",
-
     primaryButtonBg: "",
     primaryButtonText: "#FFFFFFFF",
-
     borderColor: "FFFFFF",
     skeletonBg: "green",
     connectedButtonBg: "",
@@ -31,42 +34,35 @@ const customTheme = darkTheme({
 
 const ConnectButton2 = () => {
   const activeAccount = useActiveAccount();
-  const { profile, setProfile } = useProfileContext();
+  const { setProfile } = useProfileContext();
   const status = useActiveWalletConnectionStatus();
 
-  // console.log("Connected account is " + activeAccount?.address);
-  // console.log("Status is........... " + status);
+  useEffect(() => {
+    const syncProfile = async () => {
+      const walletAddress = activeAccount?.address?.toLowerCase();
+      if (status !== "connected" || !walletAddress) return;
 
-  async function syncProfile() {
-    if (status === "connected") {
-      if (
-        profile?.wallet_address?.toLowerCase() !=
-        activeAccount?.address?.toLowerCase()
-      ) {
-        // console.log("Different wallet address.......");
-        console.log("last recorded wallet is: ", profile?.wallet_address);
 
-        let request_payload = await fetchNotices("all_profiles");
-        request_payload = request_payload.filter(
-          (profile: any) =>
-            profile.wallet_address == activeAccount?.address.toLowerCase()
-        );
-
-        console.log(request_payload, "request_payload");
-        setProfile(request_payload[0]);
-        console.log(
-          "new wallet address is: ",
-          request_payload[0]?.wallet_address
-        );
+      let request_payload = await fetchNotices("all_profiles");
+      if (!request_payload || !Array.isArray(request_payload)) {
+        return;
       }
-    }
-  }
 
-  syncProfile();
+      request_payload = request_payload.filter(
+        (p: any) => p.wallet_address === walletAddress,
+      );
+
+      if (request_payload.length > 0) {
+        setProfile(request_payload[0]);
+      }
+    };
+
+    syncProfile();
+  }, [status, activeAccount?.address, setProfile]);
 
   return (
-    <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-barlow px-4 py-2 flex justify-center items-center">
-      <ConnectButton client={client} theme={customTheme} chain={anvil} />
+    <Button className="tg-border-btn text-gray-100 text-[0.7rem] font-bold font-poppins px-4 py-2 flex justify-center items-center">
+      <ConnectButton client={client} theme={customTheme} chain={localChain} />
     </Button>
   );
 };

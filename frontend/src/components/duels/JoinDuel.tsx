@@ -3,13 +3,14 @@ import { toast } from "sonner";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Text } from "../atom/Text";
 import { Button } from "../atom/Button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 // import readGameState from "../../utils/readState.js"
 import signMessages from "../../utils/relayTransaction.tsx";
+import WarriorPickCard from "../shared/WarriorPickCard";
 import { useActiveAccount } from "thirdweb/react";
 import { useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
@@ -50,7 +51,6 @@ interface ProfileData {
 }
 
 const JoinDuelComp = () => {
-  const location = useLocation();
   const { duelId } = useParams();
   const [selectedCharacters, setSelectedCharacters] = useState<
     CharacterDetails[]
@@ -80,6 +80,13 @@ const JoinDuelComp = () => {
     return array;
   }
 
+  // Shuffle once per roster load — not on every render.
+  const shuffledRoster = useMemo(
+    () => shuffleArray(characterDetails),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [characterDetails],
+  );
+
   useEffect(() => {
     async function rigPage() {
       let myCharacters: CharacterDetails[] = [];
@@ -96,10 +103,8 @@ const JoinDuelComp = () => {
           (character: CharacterDetails) =>
             character.owner == activeAccount?.address.toLowerCase()
         );
-        console.log("Players characters: " + request_payload);
 
         setPlayersCharacters(request_payload);
-        console.log(request_payload);
         myCharacters = request_payload;
 
         if (request_payload.length == 0) {
@@ -108,39 +113,29 @@ const JoinDuelComp = () => {
       }
 
       if (profile && profile.characters) {
-        const characters = JSON.parse(profile.characters.replace(/\\/g, ""));
-
-        console.log(characters, "characters");
-
-        const charIds = characters.map((character: any) => character.char_id);
-
-        console.log(charIds, "charIds");
-
         const newArray: CharacterDetails[] = [];
         for (let i = 0; i < myCharacters.length; i++) {
           const characterData = charactersdata.find(
             (character) => character.name === myCharacters[i].name
           );
-          console.log(characterData, "characterData");
-          console.log(myCharacters, "myCharacters");
 
           const details = {
             ...myCharacters[i],
             img: characterData ? characterData.img : undefined,
           };
-          console.log(details);
           newArray.push(details);
         }
-        console.log(newArray);
         setCharacterDetails(newArray);
       }
     }
     rigPage();
-  }, [location]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeAccount?.address, profile]);
 
-  if (!profileData) {
-    navigate("/profile");
-  }
+  // Redirect must happen in an effect, never during render.
+  useEffect(() => {
+    if (!profileData) navigate("/profile");
+  }, [profileData, navigate]);
 
   if (!profileData?.characters) {
     return (
@@ -173,10 +168,6 @@ const JoinDuelComp = () => {
   //     }
   // }
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   const submitTx = async () => {
     if (selectedCharactersId.length < 3) {
       toast.error("You can have to select 3 characters.", {
@@ -202,18 +193,17 @@ const JoinDuelComp = () => {
       duel_id: Number(+(duelId as string)),
     };
 
-    console.log(dataObject, "dataObject");
-    console.log("active account:", activeAccount?.address);
 
     // const prevNoOfTx = getArrayLength(profile?.transaction_history as string) as number;
     setSubmiting(true);
     const txhash = await signMessages(dataObject);
 
     if (txhash) {
-      toast.success("Transaction Successful.. Duel Created", {
+      // signMessages waits until the node has processed the input, so duel
+      // state is already up to date when we land on the strategy page.
+      toast.success("Duel joined! Now choose your strategy.", {
         position: "top-right",
       });
-      await delay(4000);
       navigate(`/strategy/${duelId}`);
 
       // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
@@ -305,75 +295,37 @@ const JoinDuelComp = () => {
   };
 
   return (
-    <section className="w-full h-auto bg-bodyBg">
-      <main className="w-full lg:py-24 md:py-24 py-20 md:px-6 px-3 flex flex-col items-center gap-4">
+    <section className="w-full h-auto">
+      <main className="container-game section flex flex-col items-center gap-4">
         <Text
           as="h2"
-          className="font-bold text-center uppercase lg:text-4xl md:text-3xl text-2xl font-belanosima"
+          className="reveal-up font-belanosima text-center uppercase lg:text-4xl md:text-3xl text-2xl text-white"
         >
           Choose your warriors!
         </Text>
 
-        <section className=" w-full mt-20 flex flex-row lg:gap-10 md:gap-20 gap-14">
-          <main className=" w-7/12 flex flex-col gap-4">
+        <section className=" w-full mt-10 flex flex-col lg:flex-row gap-10">
+          <main className="w-full lg:w-7/12 flex flex-col gap-4">
             <Text
               as="h3"
               className="font-semibold font-belanosima text-2xl tracking-wide text-center"
             >
               Your Characters
             </Text>
-            <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
-              {shuffleArray(characterDetails).map((item, index) => (
-                <div
-                  key={index}
-                  className={`w-full border ${
-                    selectedCharactersId.includes(item.id)
-                      ? "border-myGreen"
-                      : "border-gray-800"
-                  } border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`}
+            <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-5 p-1.5 -m-1.5">
+              {shuffledRoster.map((item, index) => (
+                <WarriorPickCard
+                  key={`${item.id}-${index}`}
+                  warrior={item}
+                  selected={selectedCharactersId.includes(item.id)}
+                  slot={selectedCharactersId.indexOf(item.id)}
                   onClick={() => toggleCharacterSelection(item)}
-                >
-                  <ImageWrap
-                    image={item.img as string}
-                    className="w-full"
-                    alt={item.name}
-                    objectStatus="object-contain"
-                  />
-                  <Text as="h5" className="font-belanosima">
-                    {item.name}
-                  </Text>
-                  <div className="w-full grid grid-cols-2 gap-1">
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Health: {item.health}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Attack: {item.attack}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Strength: {item.strength}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Speed: {item.speed}
-                    </Text>
-                  </div>
-                </div>
+                />
               ))}
             </div>
           </main>
 
-          <main className="w-5/12 flex flex-col items-center gap-4">
+          <main className="w-full lg:w-5/12 flex flex-col items-center gap-4">
             <Text
               as="h3"
               className="font-semibold font-belanosima text-2xl tracking-wide text-center"
@@ -391,7 +343,7 @@ const JoinDuelComp = () => {
                     image={character.img as string}
                     className="w-full"
                     alt={character.name}
-                    objectStatus="object-contain"
+                    objectStatus="object-cover object-top"
                   />
                   <Text as="h5" className="font-belanosima">
                     {character.name}
@@ -421,7 +373,7 @@ const JoinDuelComp = () => {
 
             <Button
               type="button"
-              className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+              className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-poppins hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
               onClick={handleSelectWarriors}
               disabled={submiting}
             >

@@ -8,9 +8,9 @@ import { IoSend } from "react-icons/io5";
 const Footer = () => {
     return (
         <footer className="w-full">
-            <div className="pt-20 pb-[30px] md:px-14 px-5 border-t-[#151d23] border-t border-solid">
-                <div className="container">
-                    <div className="w-full grid lg:grid-cols-4 md:grid-cols-2">
+            <div className="pt-20 pb-[30px] md:px-6 px-5 border-t-[#151d23] border-t border-solid">
+                <div className="w-full max-w-[1500px] mx-auto">
+                    <div className="w-full grid lg:grid-cols-4 md:grid-cols-2 gap-8">
 
                         <div className=" mt-0 mb-[50px] mx-0 ">
                             <div className="footer-logo logo mt-0 mb-[30px] mx-0">
@@ -90,12 +90,16 @@ const Footer = () => {
                 </div>
             </div>
             <div className="px-4 py-6 bg-[#090d10]">
-                <div className="container">
-                    <div className="flex flex-wrap  items-center ">
-                        <div className=" text-center ">
-                            <p className=" md:text-[14px] text-xs font-semibold uppercase text-[#9f9f9f] m-0 font-poppins  w-[90vw]">
-                                <span className="ml-20 float-left"> Copyright © 2023 - All Rights Reserved By <span className=" text-[#45f882]">Nebula</span> </span> <span className=" text-right float-right font-poppins">  MODEL REFERNCES FROM <span className="text-[#45f882]">MAXIMO </span> </span> </p> 
-                        </div>
+                <div className="w-full max-w-[1500px] mx-auto">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-2">
+                        <p className="md:text-[14px] text-xs font-semibold uppercase text-[#9f9f9f] m-0 font-poppins text-center md:text-left">
+                            Copyright © 2023 - All Rights Reserved By{" "}
+                            <span className="text-[#45f882]">Nebula</span>
+                        </p>
+                        <p className="md:text-[14px] text-xs font-semibold uppercase text-[#9f9f9f] m-0 font-poppins text-center md:text-right">
+                            Model references from{" "}
+                            <span className="text-[#45f882]">Maximo</span>
+                        </p>
                     </div>
                 </div>
             </div>

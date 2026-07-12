@@ -10,13 +10,15 @@ import { Toaster } from 'sonner';
 import PageNotFound from "./utils/PageNotFound"
 import ScrollToTop from "./utils/ScrollToTop"
 import { ProfileProvider } from "./components/contexts/ProfileContext"
+import ErrorBoundary from "./components/shared/ErrorBoundary"
 
 function App() {
 
   return (
     <ProfileProvider>
-      <main className='w-full min-h-screen bg-bodyBg text-gray-100'>
+      <main className='nebula-app w-full min-h-screen text-gray-100'>
         <Header />
+        <ErrorBoundary>
         <Suspense fallback={<Preloader />}>
           <Routes>
             {routes.map(({ path, component: Component }, index) => (
@@ -25,6 +27,7 @@ function App() {
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
         <Footer />
         <ScrollToTop />
         <ScrollButton />

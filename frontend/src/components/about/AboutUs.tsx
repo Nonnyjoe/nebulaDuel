@@ -9,7 +9,7 @@ const AboutUs = () => {
         <section className="w-full h-auto bg-navBg relative z-10 flex flex-col">
             <main className="w-full h-full pt-32 pb-48 md:px-6 px-3 grid gap-6 md:gap-0 md:grid-cols-2">
                 <aside className="w-full flex flex-col lg:gap-20 gap-12">
-                    <Text as={`h1`} className=" uppercase font-extralight font-barlow lg:text-[55px] text-4xl tracking-[3.5px] leading-none md:text-left text-center">
+                    <Text as={`h1`} className=" uppercase font-extralight font-poppins lg:text-[55px] text-4xl tracking-[3.5px] leading-none md:text-left text-center">
                         WE ARE <br className="hidden md:block" />
                         <span className="font-semibold text-myGreen">DEVELOPERS</span>
                         <br className="hidden md:block" /> OF THE <span className="font-semibold text-myGreen">Nebula</span>
@@ -77,7 +77,7 @@ const AboutUs = () => {
                     </div>
                 </aside>
             </main>
-            <Text as={`h1`} className=" absolute bottom-[60px] left-0 -z-10 uppercase md:text-left text-center font-extrabold font-barlow lg:text-[252px] text-[21vw] max-w-[1270px] tracking-[20px] leading-[0.8] opacity-[0.01] shadow-[0px_3px_7px_rgba(0,0,0,0.004)] pointer-events-none">Online</Text>
+            <Text as={`h1`} className=" absolute bottom-[60px] left-0 -z-10 uppercase md:text-left text-center font-extrabold font-poppins lg:text-[252px] text-[21vw] max-w-[1270px] tracking-[20px] leading-[0.8] opacity-[0.01] shadow-[0px_3px_7px_rgba(0,0,0,0.004)] pointer-events-none">Online</Text>
         </section>
     )
 }

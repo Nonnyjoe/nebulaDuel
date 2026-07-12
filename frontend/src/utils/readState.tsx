@@ -1,70 +1,81 @@
-import axios from "axios";
-import { hexToString } from "viem";
+/**
+ * Inspect-based state reads. The backend's inspect_router always answers with
+ * exactly one report: either the requested data or `{"error": ...}`.
+ *
+ * Kept the `readGameState(path)` -> { Status, request_payload } signature so
+ * existing imports keep working.
+ */
+import { inspectState } from "./cartesi";
 
 async function readGameState(data: any) {
-  console.log("Inspecting state from Cartesi........");
+  const path = typeof data === "string" ? data : JSON.stringify(data);
+  const { ok, reports, error } = await inspectState(path);
+
+  if (!ok) {
+    return { Status: false, request_payload: error ?? "Inspect failed" };
+  }
+  if (!reports.length) {
+    return { Status: false, request_payload: "Empty response" };
+  }
+
+  return destructureResponse(reports[0], path);
+}
+
+function destructureResponse(raw: string, path: string) {
+  if (!raw) {
+    return { Status: false, request_payload: "Invalid or empty report payload" };
+  }
+
+  // Structured error from the backend (always JSON: {"error": "...", ...})
+  const asJson = tryParseJson(raw);
+  if (asJson && typeof asJson === "object" && !Array.isArray(asJson) && asJson.error) {
+    return { Status: false, request_payload: asJson.error };
+  }
+
+  // Route-specific shapes (see inspect_router.rs):
+  // - has_profile/<addr>               -> "true" | "false"
+  // - admin | relayer | check_relayed_dapp_address -> plain string
+  // - profile/<addr>                   -> JSON object
+  // - everything else                  -> JSON array (or object)
+
+  if (path.startsWith("has_profile/")) {
+    return { Status: true, request_payload: raw.trim().toLowerCase() === "true" };
+  }
+
+  if (
+    path.startsWith("check_relayed_dapp_address") ||
+    path.startsWith("admin") ||
+    path.startsWith("relayer")
+  ) {
+    return { Status: true, request_payload: raw.trim() };
+  }
+
+  if (path.startsWith("profile/")) {
+    if (asJson && typeof asJson === "object") {
+      return { Status: true, request_payload: asJson };
+    }
+    return { Status: false, request_payload: "Invalid profile JSON" };
+  }
+
+  // Array-shaped routes: characters, duels, players_characters,
+  // get_duel_characters, listed_characters, available_duels, profile (all)
+  if (asJson !== undefined) {
+    if (Array.isArray(asJson)) {
+      return { Status: true, request_payload: asJson };
+    }
+    return { Status: true, request_payload: asJson };
+  }
+
+  // Last resort: hand back the raw string.
+  return { Status: true, request_payload: raw };
+}
+
+function tryParseJson(raw: string): any {
   try {
-    // const response = await axios.get( `https://nebuladuel.fly.dev/inspect/${data}`, {
-    const response = await axios.get(`http://localhost:8080/inspect/${data}`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    console.log("Transaction successful:", response.data);
-    const { Status, request_payload } = destructureResponse(
-      response.data.reports,
-      data
-    );
-    console.log(Status, request_payload);
-    return { Status, request_payload };
-  } catch (error: any) {
-    console.error(
-      "Error sending transaction:",
-      error.response ? error.response.data : error.message
-    );
-    return { Status: false, request_payload: error.message };
+    return JSON.parse(raw);
+  } catch {
+    return undefined;
   }
-}
-
-function destructureResponse(reports: any, data: any) {
-  if (data.includes("/")) {
-    console.log("returning a single response");
-    if (data.includes("players_characters")) {
-      console.log("fetching all characters belonging to user.....");
-      // console.log(reports[0].payload);
-      const payload = hexToArray(reports[0].payload);
-      // console.log(payload);
-      return { Status: true, request_payload: payload };
-    } else if (data.includes("get_duel_characters")) {
-      // console.log("fetching characters participating in duel......");
-      // console.log(reports[0].payload);
-      const payload = hexToArray(reports[0].payload);
-      return { Status: true, request_payload: payload };
-    }
-    // console.log(reports[0].payload);
-    if (reports[0].payload) {
-      let payload = hexToString(reports[0].payload);
-      payload = JSON.parse(`{${payload}`);
-      return { Status: true, request_payload: payload };
-    } else {
-      return { Status: false, request_payload: "Empty response" };
-    }
-  } else {
-    if (data.includes("check_relayed_dapp_address")) {
-      return { Status: true, request_payload: hexToString(reports[0].payload) };
-    } else {
-      // console.log(reports[0].payload);
-      const payload = hexToArray(reports[0].payload);
-      return { Status: true, request_payload: payload };
-    }
-  }
-}
-
-function hexToArray(hexString: any) {
-  const jsonString = `[${hexToString(hexString)}`;
-  // console.log(jsonString);
-  const data = JSON.parse(jsonString);
-  return data;
 }
 
 export default readGameState;

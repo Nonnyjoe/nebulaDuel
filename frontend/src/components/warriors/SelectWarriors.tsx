@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { ImageWrap } from "../atom/ImageWrap";
 import { Text } from "../atom/Text";
 import { Button } from "../atom/Button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { HiOutlineArrowPath } from "react-icons/hi2";
 // import readGameState from "../../utils/readState.js"
 import signMessages from "../../utils/relayTransaction.tsx";
@@ -14,7 +14,9 @@ import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import charactersdata from "../../utils/Charactersdata";
 import { useProfileContext } from "../contexts/ProfileContext.js";
-import fetchNotices from "../../utils/readSubgraph.tsx";
+import readGameState from "../../utils/readState.tsx";
+import fetchNotices from "../../utils/readSubgraph.js";
+import WarriorPickCard from "../shared/WarriorPickCard";
 
 // interface Character {
 //     id: number;
@@ -22,11 +24,11 @@ import fetchNotices from "../../utils/readSubgraph.tsx";
 //     img: string;
 //     price: number;
 // }
-interface Duel {
-  duel_id: number;
-  duel_creator: string;
-  // duel_data: string;
-}
+// interface Duel {
+//   duel_id: number;
+//   duel_creator: string;
+//   // duel_data: string;
+// }
 
 interface CharacterDetails {
   id: number;
@@ -66,16 +68,14 @@ const SelectWarriors = () => {
     []
   );
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>(
-    []
-  );
-  const [, setPlayersCharacters] = useState<CharacterDetails[]>([]);
+  const [characterDetails, setCharacterDetails] = useState<CharacterDetails[]>([]);
   const navigate = useNavigate();
   const activeAccount = useActiveAccount();
   const [acceptStake, setAcceptStake] = useState(false);
   const [stakeAmount, setStakeAmount] = useState<number>(0.0);
   const [submiting, setSubmiting] = useState<boolean>(false);
-  const { profile, setProfile } = useProfileContext();
+  const { setProfile } = useProfileContext();
+  const [initialised, setInitialised] = useState<boolean>(false);
 
   function shuffleArray(array: CharacterDetails[]) {
     for (let i = array.length - 1; i > 0; i--) {
@@ -85,101 +85,100 @@ const SelectWarriors = () => {
     return array;
   }
 
+  // Shuffle once per roster load — not on every render.
+  const shuffledRoster = useMemo(
+    () => shuffleArray(characterDetails),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [characterDetails],
+  );
+
   useEffect(() => {
     async function rigPage() {
-      let myCharacters: CharacterDetails[] = [];
-
-      if (
-        activeAccount?.address?.toLowerCase() !=
-        profile?.wallet_address?.toLowerCase()
-      ) {
-        try {
-          let request_payload = await fetchNotices("all_profiles");
-          request_payload = request_payload.filter(
-            (player: any) =>
-              player.wallet_address == activeAccount?.address.toLowerCase()
-          );
-          if (request_payload.length > 0) {
-            setProfile(request_payload[0]);
-          } else {
-            navigate("/profile");
-          }
-        } catch (e) {
-          navigate("/profile");
-          console.log(e);
-        }
-      } else {
-        setProfileData(profile);
-        let request_payload = await fetchNotices("all_characters");
-        request_payload = request_payload.filter(
-          (character: CharacterDetails) =>
-            character.owner == activeAccount?.address.toLowerCase()
-        );
-        console.log("Players characters: " + request_payload);
-        setPlayersCharacters(request_payload);
-        myCharacters = request_payload;
-
-        if (request_payload.length == 0) {
-          navigate("/profile/purchasecharacter");
-        }
+      if (initialised) return;
+      if (!activeAccount?.address) {
+        navigate("/profile");
+        return;
       }
 
-      if (profile && profile.characters) {
-        const characters = JSON.parse(profile.characters.replace(/\\/g, ""));
+      const wallet = activeAccount.address.toLowerCase();
 
-        console.log(characters, "characters");
-
-        const charIds = characters.map((character: any) => character.char_id);
-
-        console.log(charIds, "charIds");
-
-        const newArray: CharacterDetails[] = [];
-        for (let i = 0; i < myCharacters.length; i++) {
-          const characterData = charactersdata.find(
-            (character) => character.name === myCharacters[i].name
-          );
-          console.log(characterData, "characterData");
-          console.log(myCharacters, "myCharacters");
-
-          const details = {
-            ...myCharacters[i],
-            img: characterData ? characterData.img : undefined,
-          };
-          console.log(details);
-          newArray.push(details);
-        }
-        console.log(newArray);
-        setCharacterDetails(newArray);
+      // Use inspect has_profile to validate profile exists
+      const hasProfileResp = await readGameState(`has_profile/${wallet}`);
+      if (!hasProfileResp.Status || hasProfileResp.request_payload !== true) {
+        navigate("/profile");
+        return;
       }
-    }
-    rigPage();
-  }, [location]);
 
-  function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
-    // Filter duels by the given duel_creator
-    const filteredDuels = duels.filter(
-      (duel) => duel.duel_creator.toLowerCase() === creator.toLowerCase()
-    );
-
-    if (filteredDuels.length === 0) {
-      return null; // Return null if no duels are found for the given creator
-    }
-    console.log("see them", filteredDuels);
-    // Find the duel with the highest id
-    let highestIdDuel = filteredDuels[0];
-
-    for (let i = 0; i < filteredDuels.length; i++) {
-      if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
-        highestIdDuel = filteredDuels[i];
+      // Fetch full profile details
+      const { Status, request_payload: profilePayload } = await readGameState(
+        `profile/${wallet}`,
+      );
+      if (!Status || !profilePayload) {
+        return;
       }
+
+      setProfile(profilePayload);
+      setProfileData(profilePayload);
+
+      // Fetch the player's characters directly via inspect (players_characters/<wallet>)
+      const charsResp = await readGameState(`players_characters/${wallet}`);
+      if (!charsResp.Status || !charsResp.request_payload) {
+        // No characters yet; keep the UI fallback below
+        return;
+      }
+
+      const payload = charsResp.request_payload;
+      const rawCharacters: CharacterDetails[] = Array.isArray(payload)
+        ? payload
+        : typeof payload === "string"
+          ? (() => {
+              try {
+                return JSON.parse(payload.startsWith("[") ? payload : `[${payload}]`);
+              } catch {
+                return [];
+              }
+            })()
+          : [];
+
+      const enriched: CharacterDetails[] = rawCharacters.map((ch) => {
+        const meta = charactersdata.find((c) => c.name === ch.name);
+        return {
+          ...ch,
+          img: meta ? meta.img : undefined,
+        };
+      });
+
+      setCharacterDetails(enriched);
     }
+      rigPage().finally(() => setInitialised(true));
+    }, [location, activeAccount?.address, navigate, setProfile, initialised]);
 
-    return highestIdDuel;
-  }
+  // function findHighestIdDuel(duels: Duel[], creator: string): Duel | null {
+  //   // Filter duels by the given duel_creator
+  //   const filteredDuels = duels.filter(
+  //     (duel) => duel.duel_creator.toLowerCase() === creator.toLowerCase()
+  //   );
 
-  if (!profileData) {
-    navigate("/profile");
-  }
+  //   if (filteredDuels.length === 0) {
+  //     return null; // Return null if no duels are found for the given creator
+  //   }
+  //   console.log("see them", filteredDuels);
+  //   // Find the duel with the highest id
+  //   let highestIdDuel = filteredDuels[0];
+
+  //   for (let i = 0; i < filteredDuels.length; i++) {
+  //     if (Number(filteredDuels[i].duel_id) > Number(highestIdDuel.duel_id)) {
+  //       highestIdDuel = filteredDuels[i];
+  //     }
+  //   }
+
+  //   return highestIdDuel;
+  // }
+
+  // Redirect must happen in an effect, never during render.
+  useEffect(() => {
+    if (!profileData) navigate("/profile");
+  }, [profileData, navigate]);
 
   if (!profileData?.characters) {
     return (
@@ -212,10 +211,6 @@ const SelectWarriors = () => {
   //     }
   // }
 
-  function delay(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   const submitTx = async () => {
     if (selectedCharactersId.length < 3) {
       toast.error("You can have to select 3 characters.", {
@@ -241,64 +236,48 @@ const SelectWarriors = () => {
       has_staked: acceptStake,
       stake_amount: stakeAmount ? stakeAmount : 0,
     };
-    console.log(dataObject, "dataObject");
-    console.log("active account:", activeAccount?.address);
 
     setSubmiting(true);
-    const txhash = await signMessages(dataObject);
+    try {
+      // signMessages resolves only after the Cartesi node has processed the
+      // input, so the duel is guaranteed to be visible in the next fetch.
+      const txhash = await signMessages(dataObject);
 
-    if (txhash) {
-      await delay(4000);
+      if (txhash) {
+        const duels = await fetchNotices("all_duels");
+        const myDuels = (Array.isArray(duels) ? duels : []).filter(
+          (duel: any) =>
+            duel.duel_creator?.toLowerCase() ===
+            activeAccount?.address?.toLowerCase(),
+        );
 
-      const duels = await fetchNotices("all_duels");
-      const userDuels = findHighestIdDuel(
-        duels,
-        activeAccount?.address as string
-      );
-      navigate(`/strategy/${userDuels?.duel_id}`);
-      // const {Status, request_payload} = await readGameState(`profile/${activeAccount?.address}`); // Call your function
-      //   try {
-      //     let request_payload = await fetchNotices("all_tx");
-      //     request_payload = request_payload.filter(
-      //       (tx: any) => tx.caller == activeAccount?.address.toLowerCase()
-      //     );
-      //     let Highest_tx;
-      //     for (let i = 0; i < request_payload.length; i++) {
-      //       Highest_tx = request_payload[i];
-      //       if (request_payload[i].tx_id > Highest_tx.tx_id) {
-      //         Highest_tx = request_payload[i];
-      //       }
-      //     }
+        if (myDuels.length > 0) {
+          let latest = myDuels[0];
+          for (const duel of myDuels) {
+            if (Number(duel.duel_id) > Number(latest.duel_id)) latest = duel;
+          }
+          toast.success("Duel created! Now choose your strategy.", {
+            position: "top-right",
+          });
+          setTotalCharacterPrice(0);
+          setSelectedCharacters([]);
+          setSelectedCharactersId([]);
+          navigate(`/strategy/${latest.duel_id}`);
+          return;
+        }
 
-      //     if (Highest_tx.method == "create_duel") {
-      //       toast.success("Transaction Successful.. Duel Created", {
-      //         position: "top-right",
-      //       });
-      //       setTotalCharacterPrice(0);
-      //       setSelectedCharacters([]);
-      //       setSelectedCharactersId([]);
-      //       const duels = await fetchNotices("all_duels");
-      //       const userDuels = findHighestIdDuel(
-      //         duels,
-      //         activeAccount?.address as string
-      //       );
-      //       navigate(`/strategy/${userDuels?.duel_id}`);
-      //     } else {
-      //       toast.error("Transaction Failed.. Try again later.", {
-      //         position: "top-right",
-      //       });
-      //       setSubmiting(false);
-      //     }
-      //   } catch (err) {
-      //     console.log(err);
-      //     setSubmiting(false);
-      //     toast.error("Transaction Failed.. Try again later.", {
-      //       position: "top-right",
-      //     });
-      //     setSubmiting(false);
-      //   }
+        toast.error(
+          "Duel was submitted but isn't visible yet. Check the Duels page shortly.",
+          { position: "top-right" },
+        );
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Transaction failed. Try again later.", {
+        position: "top-right",
+      });
+    } finally {
+      setSubmiting(false);
     }
-    setSubmiting(false);
   };
 
   const toggleCharacterSelection = (character: CharacterDetails) => {
@@ -337,75 +316,37 @@ const SelectWarriors = () => {
   };
 
   return (
-    <section className="w-full h-auto bg-bodyBg">
-      <main className="w-full lg:py-24 md:py-24 py-20 md:px-6 px-3 flex flex-col items-center gap-4">
+    <section className="w-full h-auto">
+      <main className="container-game section flex flex-col items-center gap-4">
         <Text
           as="h2"
-          className="font-bold text-center uppercase lg:text-4xl md:text-3xl text-2xl font-belanosima"
+          className="reveal-up font-belanosima text-center uppercase lg:text-4xl md:text-3xl text-2xl text-white"
         >
           Choose your warriors!
         </Text>
 
-        <section className=" w-full mt-20 flex flex-row lg:gap-10 md:gap-20 gap-14">
-          <main className=" w-7/12 flex flex-col gap-4">
+        <section className=" w-full mt-10 flex flex-col lg:flex-row gap-10">
+          <main className="w-full lg:w-7/12 flex flex-col gap-4">
             <Text
               as="h3"
               className="font-semibold font-belanosima text-2xl tracking-wide text-center"
             >
               Your Characters
             </Text>
-            <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-6 lg:gap-4 md:px-2 lg:px-0">
-              {shuffleArray(characterDetails).map((item, index) => (
-                <div
-                  key={index}
-                  className={`w-full border ${
-                    selectedCharactersId.includes(item.id)
-                      ? "border-myGreen"
-                      : "border-gray-800"
-                  } border-gray-800 bg-gray-900 flex flex-col items-center gap-2 cursor-pointer hover:border-myGreen/40 transition-all duration-200 rounded-md p-4`}
+            <div className="w-full grid md:grid-cols-4 grid-cols-2 gap-4 md:gap-5 p-1.5 -m-1.5">
+              {shuffledRoster.map((item, index) => (
+                <WarriorPickCard
+                  key={`${item.id}-${index}`}
+                  warrior={item}
+                  selected={selectedCharactersId.includes(item.id)}
+                  slot={selectedCharactersId.indexOf(item.id)}
                   onClick={() => toggleCharacterSelection(item)}
-                >
-                  <ImageWrap
-                    image={item.img as string}
-                    className="w-full"
-                    alt={item.name}
-                    objectStatus="object-contain"
-                  />
-                  <Text as="h5" className="font-belanosima">
-                    {item.name}
-                  </Text>
-                  <div className="w-full grid grid-cols-2 gap-1">
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Health: {item.health}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Attack: {item.attack}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Strength: {item.strength}
-                    </Text>
-                    <Text
-                      as="span"
-                      className="text-gray-300 text-xs font-poppins"
-                    >
-                      Speed: {item.speed}
-                    </Text>
-                  </div>
-                </div>
+                />
               ))}
             </div>
           </main>
 
-          <main className="w-5/12 flex flex-col items-center gap-4">
+          <main className="w-full lg:w-5/12 flex flex-col items-center gap-4">
             <Text
               as="h3"
               className="font-semibold font-belanosima text-2xl tracking-wide text-center"
@@ -423,7 +364,7 @@ const SelectWarriors = () => {
                     image={character.img as string}
                     className="w-full"
                     alt={character.name}
-                    objectStatus="object-contain"
+                    objectStatus="object-cover object-top"
                   />
                   <Text as="h5" className="font-belanosima">
                     {character.name}
@@ -480,7 +421,7 @@ const SelectWarriors = () => {
 
             <Button
               type="button"
-              className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-barlow hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
+              className=" text-[#0f161b] uppercase font-bold tracking-[1px] text-sm px-[30px] py-3.5 border-[none] bg-[#45f882]  font-poppins hover:bg-[#ffbe18] clip-path-polygon-[100%_0,100%_65%,89%_100%,0_100%,0_0]"
               onClick={handleSelectWarriors}
               disabled={submiting}
             >

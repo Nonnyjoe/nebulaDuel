@@ -1,10 +1,13 @@
 import YourCharacters from "../components/profile/YourCharacters"
+import MaxWrapper from "../components/shared/MaxWrapper"
 
 
 const Characters = () => {
     return (
         <main className="w-full flex flex-col">
-            <YourCharacters />
+            <MaxWrapper className="w-full px-4 md:px-6 lg:px-8">
+                <YourCharacters />
+            </MaxWrapper>
         </main>
     )
 }

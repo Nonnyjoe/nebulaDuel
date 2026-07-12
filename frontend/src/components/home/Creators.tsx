@@ -27,17 +27,17 @@ const Creators = () => {
                         <div key={index} className="flex md:flex-row flex-col gap-4 md:p-6 p-8 bg-[#121a23] bg-[linear-gradient(0deg,#0c0e12_0%,rgba(31,41,53,0.36078)_100%)] rounded-md cursor-pointer border border-[rgba(76,76,76,0.2)] hover:border-[rgba(69,248,130,0.4)]">
                             <ImageWrap image={imgList[index]} alt="Creator" className="md:w-[180px] w-full h-[187px]" objectStatus="object-cover rounded-md" />
                             <div className="w-full h-full flex-1 flex-col justify-center items-start">
-                                <Text as="h4" className="uppercase text-gray-100 font-bold font-barlow text-xl">{creator.title}</Text>
+                                <Text as="h4" className="uppercase text-gray-100 font-bold font-poppins text-xl">{creator.title}</Text>
                                 <div className="w-full flex gap-4 items-center my-4">
                                     <ImageWrap image={avatartList[index]} alt="Avatar" className="w-[40px] h-[40px] rounded-full" objectStatus="object-cover" />
-                                    <Text as="span" className="text-gray-400 font-medium font-barlow text-xl">{creator.createdBy}</Text>
+                                    <Text as="span" className="text-gray-400 font-medium font-poppins text-xl">{creator.createdBy}</Text>
                                     <Text as="span" className="flex border-l-2 uppercase border-gray-500 text-sm pl-4">creator</Text>
                                 </div>
 
                                 <div className="w-full py-4 flex justify-between px-4 items-center gap-4 rounded-md border border-[rgba(76,76,76,0.4)]">
                                     <Text as="p" className="flex items-center gap-2 font-bold text-gray-100">
                                         {creator.amount}
-                                        <Text as="span" className=" text-myYellow font-bold font-barlow text-lg">ETH</Text>
+                                        <Text as="span" className=" text-myYellow font-bold font-poppins text-lg">ETH</Text>
                                     </Text>
                                     <Button type="button" className="flex items-center gap-1 bg-myYellow hover:bg-myGreen text-myBlack px-4 rounded-md py-2">
                                         <Text as="span" className="text-lg font-poppins">Buy</Text>
